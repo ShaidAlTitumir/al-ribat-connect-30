@@ -154,6 +154,11 @@ const Partners = () => {
         } catch {}
       }
 
+      await supabase.from("activity_log").insert({
+        action: "Removed partner",
+        details: { partner_name: partner.name },
+        business_id: businessId, user_id: user.id,
+      });
       toast.success(`${partner.name} removed`);
       fetchData();
     } catch (err: any) {

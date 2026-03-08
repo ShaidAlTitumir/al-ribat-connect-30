@@ -63,7 +63,15 @@ const Expenses = () => {
 
   const handleDelete = async (id: string) => {
     try {
+      const exp = expenses.find(e => e.id === id);
       await supabase.from("expenses").delete().eq("id", id);
+      if (businessId && user && exp) {
+        await supabase.from("activity_log").insert({
+          action: "Deleted expense",
+          details: { title: exp.title, amount: exp.amount, currency: exp.currency },
+          business_id: businessId, user_id: user.id,
+        });
+      }
       toast.success("Expense deleted");
       fetchExpenses();
     } catch (err: any) {

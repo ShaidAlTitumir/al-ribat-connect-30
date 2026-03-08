@@ -146,6 +146,13 @@ const Customers = () => {
     const { error } = await supabase.from("customers").delete().eq("id", c.id);
     if (error) { toast.error(error.message); return; }
     if (selectedCustomerId === c.id) setSelectedCustomerId("");
+    if (businessId && user) {
+      await supabase.from("activity_log").insert({
+        action: "Deleted customer",
+        details: { customer_name: c.name },
+        business_id: businessId, user_id: user.id,
+      });
+    }
     toast.success(`${c.name} deleted`);
     fetchCustomers();
   };
