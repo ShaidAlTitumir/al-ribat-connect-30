@@ -451,14 +451,28 @@ const Customers = () => {
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-sm">৳{(sale.quantity * sale.unit_price_bdt).toFixed(0)}</p>
-                          {sale.due > 0 && (
-                            <p className="text-xs text-destructive font-medium">Due: ৳{sale.due}</p>
-                          )}
-                          {sale.due === 0 && (
-                            <p className="text-xs text-emerald-600 font-medium">Paid</p>
-                          )}
+                        <div className="flex items-center gap-2">
+                          <div className="text-right">
+                            <p className="font-bold text-sm">৳{(sale.quantity * sale.unit_price_bdt).toFixed(0)}</p>
+                            {sale.due > 0 && (
+                              <p className="text-xs text-destructive font-medium">Due: ৳{sale.due}</p>
+                            )}
+                            {sale.due === 0 && (
+                              <p className="text-xs text-emerald-600 font-medium">Paid</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => setInvoiceData({
+                              sale,
+                              itemName: sale.inventory_items?.name || "Item",
+                              customerName: selectedCustomer?.name || "Customer",
+                              business: { name: businessName, phone: businessPhone, address: businessAddress },
+                            })}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                            title="Download Receipt"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">receipt</span>
+                          </button>
                         </div>
                       </div>
                     ))}
