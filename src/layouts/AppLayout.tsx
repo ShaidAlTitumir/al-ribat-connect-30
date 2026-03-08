@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import AppSidebar from "@/components/AppSidebar";
+import { useBusiness } from "@/contexts/BusinessContext";
 
 const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
