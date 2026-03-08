@@ -66,10 +66,10 @@ const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
             <span className="text-xs text-muted-foreground">1¥ =</span>
             <input
               type="number"
-              value={exchangeRate}
+              value={exchangeRate.toFixed(2)}
               onChange={(e) => setExchangeRate(parseFloat(e.target.value) || 0)}
-              className="w-12 text-center text-sm font-bold bg-transparent border-none outline-none text-foreground"
-              step="0.5"
+              className="w-14 text-center text-sm font-bold bg-transparent border-none outline-none text-foreground"
+              step="0.01"
             />
             <span className="text-xs text-muted-foreground">৳</span>
             <button
