@@ -494,6 +494,7 @@ const Customers = () => {
           </div>
         </div>
       </div>
+      <InvoiceModal data={invoiceData} onClose={() => setInvoiceData(null)} />
     </div>
   );
 };
