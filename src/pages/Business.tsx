@@ -324,6 +324,13 @@ const Business = () => {
     await supabase.from("inventory_items").delete().eq("business_id", b.id);
     await supabase.from("partners").delete().eq("business_id", b.id);
     await supabase.from("notifications").delete().eq("business_id", b.id);
+    // Delete votes before requests (FK constraint: votes -> requests)
+    const { data: delReqs } = await supabase.from("business_deletion_requests").select("id").eq("business_id", b.id);
+    if (delReqs && delReqs.length > 0) {
+      for (const dr of delReqs) {
+        await supabase.from("business_deletion_votes").delete().eq("request_id", dr.id);
+      }
+    }
     await supabase.from("business_deletion_requests").delete().eq("business_id", b.id);
     const { error } = await supabase.from("businesses").delete().eq("id", b.id);
     if (error) { toast.error(error.message); return; }
@@ -484,6 +491,13 @@ const Business = () => {
           await supabase.from("inventory_items").delete().eq("business_id", bid);
           await supabase.from("partners").delete().eq("business_id", bid);
           await supabase.from("notifications").delete().eq("business_id", bid);
+          // Delete votes before requests (FK constraint: votes -> requests)
+          const { data: delReqs2 } = await supabase.from("business_deletion_requests").select("id").eq("business_id", bid);
+          if (delReqs2 && delReqs2.length > 0) {
+            for (const dr of delReqs2) {
+              await supabase.from("business_deletion_votes").delete().eq("request_id", dr.id);
+            }
+          }
           await supabase.from("business_deletion_requests").delete().eq("business_id", bid);
           await supabase.from("businesses").delete().eq("id", bid);
 
