@@ -256,9 +256,22 @@ const Sales = () => {
                           {" • "}{format(new Date(sale.created_at), "MMM d, h:mm a")}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-sm">৳{(sale.quantity * sale.unit_price_bdt).toFixed(0)}</p>
-                        {sale.due > 0 && <p className="text-xs text-destructive">Due: ৳{sale.due}</p>}
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="font-bold text-sm">৳{(sale.quantity * sale.unit_price_bdt).toFixed(0)}</p>
+                          {sale.due > 0 && <p className="text-xs text-destructive">Due: ৳{sale.due}</p>}
+                        </div>
+                        <button
+                          onClick={() => setInvoiceData({
+                            sale,
+                            itemName: (sale as any).inventory_items?.name || "Item",
+                            customerName: (sale as any).customers?.name || "Walk-in",
+                            business: businessInfo,
+                          })}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                          title="View Invoice">
+                          <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+                        </button>
                       </div>
                     </div>
                   ))}
