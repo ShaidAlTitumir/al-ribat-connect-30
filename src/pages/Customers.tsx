@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
+import InvoiceModal from "@/components/InvoiceModal";
 import { format } from "date-fns";
 import { ChevronDown, ChevronUp, Phone, MapPin, Store, Edit2, Trash2, X, Check } from "lucide-react";
 
