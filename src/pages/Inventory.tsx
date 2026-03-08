@@ -408,16 +408,46 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col gap-1.5 md:col-span-2">
-                  <label className="text-sm font-semibold text-foreground">Select Item</label>
-                  <select className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground"
-                    value={selectedItemId} onChange={(e) => setSelectedItemId(e.target.value)}>
-                    <option value="">Choose an item...</option>
-                    {existingItems.map((item) => (
-                      <option key={item.id} value={item.id}>{item.name} ({item.current_stock} in stock)</option>
-                    ))}
-                  </select>
-                </div>
+                <>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-foreground">Item Name</label>
+                    <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      placeholder="e.g. Existing product name" value={form.name} onChange={(e) => updateForm("name", e.target.value)} />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-foreground">Category</label>
+                    {showCustomCategory ? (
+                      <div className="flex gap-2">
+                        <input className="flex-1 rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          placeholder="Enter new category" value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} />
+                        <button onClick={() => {
+                          if (customCategory.trim()) {
+                            setSavedCategories((prev) => [...prev, customCategory.trim()]);
+                            updateForm("category", customCategory.trim());
+                            setCustomCategory("");
+                            setShowCustomCategory(false);
+                          }
+                        }} className="px-3 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold">Add</button>
+                        <button onClick={() => setShowCustomCategory(false)} className="px-3 py-2 bg-muted border border-border rounded-lg text-sm text-muted-foreground">✕</button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <select className="flex-1 rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" value={form.category} onChange={(e) => updateForm("category", e.target.value)}>
+                          {savedCategories.map((c) => <option key={c}>{c}</option>)}
+                        </select>
+                        <button onClick={() => setShowCustomCategory(true)} className="px-3 py-2 bg-muted border border-border rounded-lg text-muted-foreground hover:text-foreground" title="Add custom category">
+                          <span className="material-symbols-outlined text-[18px]">add</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="md:col-span-2 bg-muted/50 border border-border rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px]">info</span>
+                      Existing items are products you already have — no wallet balance needed. Costing section is optional.
+                    </p>
+                  </div>
+                </>
               )}
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-foreground">Quantity</label>
