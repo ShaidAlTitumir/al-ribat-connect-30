@@ -28,6 +28,7 @@ import JoinBusiness from "./pages/JoinBusiness";
 import NotFound from "./pages/NotFound";
 import Returns from "./pages/Returns";
 import Profile from "./pages/Profile";
+import VerifyEmail from "./pages/VerifyEmail";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/join-business" element={<JoinBusiness />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
             </Route>
 
             {/* Protected app routes */}

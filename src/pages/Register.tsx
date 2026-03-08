@@ -73,8 +73,8 @@ const Register = () => {
         },
       });
       if (error) throw error;
-      toast.success("Account created! Please check your email to verify, then join your business.");
-      navigate("/join-business");
+      toast.success("Account created! Please check your email to verify.");
+      navigate("/verify-email");
     } catch (error: any) {
       toast.error(error.message || "Registration failed");
     } finally {
