@@ -88,7 +88,7 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
 
         const { data: biz } = await supabase
           .from("businesses")
-          .select("exchange_rate, name, phone, address")
+          .select("exchange_rate, name, phone, address, business_type")
           .eq("id", activeBizId)
           .maybeSingle();
 
@@ -97,6 +97,7 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
           setBusinessName(biz.name || "");
           setBusinessPhone(biz.phone || "");
           setBusinessAddress(biz.address || "");
+          setBusinessType(biz.business_type || "");
         }
       }
       setLoading(false);
