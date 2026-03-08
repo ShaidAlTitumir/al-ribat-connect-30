@@ -972,6 +972,59 @@ export type Database = {
           },
         ]
       }
+      sample_orders: {
+        Row: {
+          business_id: string
+          cost_rmb: number
+          created_at: string
+          customer_name: string | null
+          id: string
+          item_name: string
+          notes: string | null
+          quantity: number
+          status: string
+          supplier_name: string | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          business_id: string
+          cost_rmb?: number
+          created_at?: string
+          customer_name?: string | null
+          id?: string
+          item_name: string
+          notes?: string | null
+          quantity?: number
+          status?: string
+          supplier_name?: string | null
+          type?: string
+          user_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          cost_rmb?: number
+          created_at?: string
+          customer_name?: string | null
+          id?: string
+          item_name?: string
+          notes?: string | null
+          quantity?: number
+          status?: string
+          supplier_name?: string | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sample_orders_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
