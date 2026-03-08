@@ -113,6 +113,23 @@ const Register = () => {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Username</label>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xl">alternate_email</span>
+              <Input
+                name="username"
+                placeholder="john_doe"
+                value={form.username}
+                onChange={handleChange}
+                className="pl-10 py-2.5 h-11 bg-card border-border focus-visible:ring-primary"
+                maxLength={20}
+              />
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">Partners can find you by this username.</p>
+            {errors.username && <p className="text-xs text-destructive mt-1">{errors.username}</p>}
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-foreground mb-1">Email Address</label>
             <div className="relative">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xl">mail</span>
