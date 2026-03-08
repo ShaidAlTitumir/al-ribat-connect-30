@@ -27,6 +27,7 @@ import ResetPassword from "./pages/ResetPassword";
 import JoinBusiness from "./pages/JoinBusiness";
 import NotFound from "./pages/NotFound";
 import Returns from "./pages/Returns";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,7 @@ const App = () => (
               <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/returns" element={<ProtectedRoute><Returns /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

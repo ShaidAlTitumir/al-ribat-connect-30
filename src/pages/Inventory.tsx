@@ -7,18 +7,21 @@ import { format } from "date-fns";
 import { Pencil, Trash2 } from "lucide-react";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 
-type InventoryTab = "list" | "add" | "samples";
+type InventoryTab = "list" | "add" | "samples" | "edit";
 
 const Inventory = () => {
   const [activeTab, setActiveTab] = useState<InventoryTab>("list");
+  const [editingItem, setEditingItem] = useState<any>(null);
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <ExchangeRateHeader title="Inventory" />
       {activeTab === "list" ? (
-        <InventoryList onAdd={() => setActiveTab("add")} onSamples={() => setActiveTab("samples")} />
+        <InventoryList onAdd={() => setActiveTab("add")} onSamples={() => setActiveTab("samples")} onEdit={(item: any) => { setEditingItem(item); setActiveTab("edit"); }} />
       ) : activeTab === "samples" ? (
         <SampleOrders onBack={() => setActiveTab("list")} />
+      ) : activeTab === "edit" ? (
+        <EditItem item={editingItem} onBack={() => setActiveTab("list")} onSaved={() => setActiveTab("list")} />
       ) : (
         <AddItem onBack={() => setActiveTab("list")} onSaved={() => setActiveTab("list")} />
       )}
@@ -27,26 +30,40 @@ const Inventory = () => {
 };
 
 /* ─── Inventory List View ─── */
-const InventoryList = ({ onAdd, onSamples }: { onAdd: () => void; onSamples: () => void }) => {
+const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamples: () => void; onEdit: (item: any) => void }) => {
   const { businessId } = useBusiness();
+  const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchItems = async () => {
     if (!businessId) return;
-    const fetchItems = async () => {
-      const { data } = await supabase
-        .from("inventory_items")
-        .select("*")
-        .eq("business_id", businessId)
-        .order("created_at", { ascending: false });
-      setItems(data || []);
-      setLoading(false);
-    };
+    const { data } = await supabase
+      .from("inventory_items")
+      .select("*")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false });
+    setItems(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchItems();
   }, [businessId]);
+
+  const handleDelete = async (itemId: string) => {
+    if (!confirm("Are you sure you want to delete this item? Related purchase records will also be removed.")) return;
+    try {
+      await supabase.from("purchase_transactions").delete().eq("item_id", itemId);
+      await supabase.from("inventory_items").delete().eq("id", itemId);
+      setItems(prev => prev.filter(i => i.id !== itemId));
+      toast.success("Item deleted!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete");
+    }
+  };
 
   const filtered = items.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
@@ -162,15 +179,17 @@ const InventoryList = ({ onAdd, onSamples }: { onAdd: () => void; onSamples: () 
                   <h4 className="font-bold text-foreground text-sm">{item.name}</h4>
                   {item.category && <span className="text-[10px] text-muted-foreground">{item.category}</span>}
                 </div>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ml-2 ${
-                  item.current_stock === 0 ? "bg-destructive/10 text-destructive" :
-                  item.current_stock <= threshold ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
-                  "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                }`}>
-                  {item.current_stock} in stock
-                </span>
+                <div className="flex items-center gap-1 shrink-0 ml-2">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    item.current_stock === 0 ? "bg-destructive/10 text-destructive" :
+                    item.current_stock <= threshold ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                  }`}>
+                    {item.current_stock}
+                  </span>
+                </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="grid grid-cols-3 gap-2 text-xs mb-3">
                 <div>
                   <span className="text-muted-foreground text-[10px]">Weight</span>
                   <p className="font-semibold text-foreground">{item.weight_per_unit} kg</p>
@@ -183,6 +202,15 @@ const InventoryList = ({ onAdd, onSamples }: { onAdd: () => void; onSamples: () 
                   <span className="text-muted-foreground text-[10px]">Alert at</span>
                   <p className="font-semibold text-foreground">≤ {threshold}</p>
                 </div>
+              </div>
+              <div className="flex items-center gap-2 border-t border-border pt-2.5">
+                <button onClick={() => onEdit(item)} className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-primary hover:bg-primary/10 rounded-lg py-1.5 transition-all active:scale-95">
+                  <span className="material-symbols-outlined text-[16px]">edit</span> Edit
+                </button>
+                <div className="w-px h-5 bg-border" />
+                <button onClick={() => handleDelete(item.id)} className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 rounded-lg py-1.5 transition-all active:scale-95">
+                  <span className="material-symbols-outlined text-[16px]">delete</span> Delete
+                </button>
               </div>
             </div>
             );
@@ -966,6 +994,98 @@ const SampleOrders = ({ onBack }: { onBack: () => void }) => {
           ))}
         </div>
       )}
+    </div>
+  );
+};
+
+/* ─── Edit Item View ─── */
+const EditItem = ({ item, onBack, onSaved }: { item: any; onBack: () => void; onSaved: () => void }) => {
+  const { businessId } = useBusiness();
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    name: item?.name || "",
+    category: item?.category || "",
+    current_stock: String(item?.current_stock || 0),
+    weight_per_unit: String(item?.weight_per_unit || 0),
+    default_selling_price: String(item?.default_selling_price || 0),
+    low_stock_threshold: String(item?.low_stock_threshold || 5),
+  });
+
+  const handleSave = async () => {
+    if (!item?.id || !businessId) return;
+    if (!form.name.trim()) { toast.error("Item name is required"); return; }
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("inventory_items").update({
+        name: form.name.trim(),
+        category: form.category || null,
+        current_stock: parseInt(form.current_stock) || 0,
+        weight_per_unit: parseFloat(form.weight_per_unit) || 0,
+        default_selling_price: parseFloat(form.default_selling_price) || 0,
+        low_stock_threshold: parseInt(form.low_stock_threshold) || 5,
+      }).eq("id", item.id);
+      if (error) throw error;
+      toast.success("Item updated!");
+      onSaved();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="p-4 lg:p-8 max-w-2xl mx-auto w-full space-y-4">
+      <button onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95">
+        <span className="material-symbols-outlined text-[18px]">arrow_back</span> Back to Inventory
+      </button>
+
+      <div className="bg-card rounded-xl border border-border overflow-hidden">
+        <div className="px-4 py-3 sm:p-5 flex items-center gap-2.5 border-b border-border">
+          <span className="material-symbols-outlined text-primary text-xl">edit</span>
+          <h3 className="font-bold text-base sm:text-lg">Edit Item</h3>
+        </div>
+        <div className="p-4 sm:p-5 space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Item Name</label>
+            <input className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+              value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Category</label>
+            <input className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+              value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Current Stock</label>
+              <input type="number" className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                value={form.current_stock} onChange={(e) => setForm({ ...form, current_stock: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Weight/Unit (kg)</label>
+              <input type="number" step="0.01" className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                value={form.weight_per_unit} onChange={(e) => setForm({ ...form, weight_per_unit: e.target.value })} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Selling Price (৳)</label>
+              <input type="number" className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                value={form.default_selling_price} onChange={(e) => setForm({ ...form, default_selling_price: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Low Stock Alert</label>
+              <input type="number" className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: e.target.value })} />
+            </div>
+          </div>
+          <button onClick={handleSave} disabled={saving}
+            className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-lg hover:bg-primary/90 disabled:opacity-50 active:scale-[0.98] transition-all text-sm">
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
