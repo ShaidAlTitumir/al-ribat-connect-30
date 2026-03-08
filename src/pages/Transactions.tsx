@@ -77,7 +77,7 @@ const TransactionList = ({ onSend }: { onSend: () => void }) => {
   };
 
   return (
-    <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
+    <div className="p-3 lg:p-8 space-y-4 lg:space-y-6 max-w-7xl mx-auto w-full">
       {/* Summary Cards */}
       <section className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-6">
         <div className="bg-card p-4 lg:p-6 rounded-xl border border-border">
