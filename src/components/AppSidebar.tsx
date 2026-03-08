@@ -24,8 +24,12 @@ const navItems = [
 
 const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
+  const { userRole } = useBusiness();
   const { theme, toggleTheme } = useTheme();
+
+  const displayName = user?.user_metadata?.full_name || user?.email || "User";
+  const initials = displayName.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
 
   const linkClass = (path: string) => {
     const isActive = location.pathname === path;
