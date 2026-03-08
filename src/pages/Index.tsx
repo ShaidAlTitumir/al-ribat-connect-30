@@ -49,6 +49,24 @@ const Index = () => {
     fetchDashboard();
   }, [businessId, exchangeRate]);
 
+  const handleSaveCash = async () => {
+    if (!businessId) return;
+    const val = parseFloat(cashInput);
+    if (isNaN(val)) { toast.error("Enter a valid amount"); return; }
+    await supabase.from("businesses").update({ cash_balance: val } as any).eq("id", businessId);
+    setCashBalance(val);
+    setEditingCash(false);
+    toast.success("Cash balance updated");
+  };
+
+  const handleResetCash = async () => {
+    if (!businessId) return;
+    await supabase.from("businesses").update({ cash_balance: null } as any).eq("id", businessId);
+    setCashBalance(null);
+    setEditingCash(false);
+    toast.success("Using auto-calculated cash balance");
+  };
+
   const fetchDashboard = async () => {
     const sevenDaysAgo = startOfDay(subDays(new Date(), 6)).toISOString();
     const [capsRes, salesRes, paymentsRes, expsRes, purchasesRes, invRes, custsRes, exchRes, partnersRes, actsRes, recentSalesRes, bizRes] = await Promise.all([
