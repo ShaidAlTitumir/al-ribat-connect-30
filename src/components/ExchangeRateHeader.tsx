@@ -94,10 +94,10 @@ const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
               <span className="text-sm font-medium text-muted-foreground">1¥ =</span>
               <input
                 type="number"
-                value={exchangeRate}
+                value={exchangeRate.toFixed(2)}
                 onChange={(e) => setExchangeRate(parseFloat(e.target.value) || 0)}
                 className="flex-1 text-center text-lg font-bold bg-card border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-foreground"
-                step="0.5"
+                step="0.01"
                 autoFocus
               />
               <span className="text-sm font-medium text-muted-foreground">৳</span>
