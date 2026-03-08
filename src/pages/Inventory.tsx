@@ -272,7 +272,8 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const handleSave = async () => {
     if (!businessId || !user) return;
     if (itemMode === "new" && !form.name.trim()) { toast.error("Item name is required"); return; }
-    if (itemMode === "restock" && !selectedItemId) { toast.error("Select an item to restock"); return; }
+    if (itemMode === "existing" && !form.name.trim()) { toast.error("Item name is required"); return; }
+    if (qty <= 0) { toast.error("Quantity must be greater than 0"); return; }
     if (qty <= 0) { toast.error("Quantity must be greater than 0"); return; }
 
     // Wallet balance check — only when there's a purchase cost
