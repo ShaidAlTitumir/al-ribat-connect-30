@@ -258,12 +258,13 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const buyRmb = parseFloat(form.buyingCostRmb) || 0;
   const shipRate = parseFloat(form.shippingRate) || 0;
   const addCost = parseFloat(form.additionalCost) || 0;
+  const addCostBdt = additionalCostCurrency === "RMB" ? addCost * activeRate : addCost;
   const sellPrice = parseFloat(form.sellingPrice) || 0;
 
   const buyingPerUnitBdt = buyRmb * activeRate;
   const totalBuyingBdt = buyRmb * qty * activeRate;
   const totalShipping = totalWeight * shipRate;
-  const totalLanded = totalBuyingBdt + totalShipping + addCost;
+  const totalLanded = totalBuyingBdt + totalShipping + addCostBdt;
   const landedPerUnit = qty > 0 ? totalLanded / qty : 0;
   const potentialProfit = qty > 0 ? (sellPrice - landedPerUnit) * qty : 0;
   const margin = sellPrice > 0 ? ((sellPrice - landedPerUnit) / sellPrice * 100) : 0;
