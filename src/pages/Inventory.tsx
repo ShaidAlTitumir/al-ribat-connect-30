@@ -351,15 +351,15 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
           <button onClick={onBack} className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground">
             <span className="material-symbols-outlined text-[20px]">arrow_back</span> Back
           </button>
-          <h2 className="text-xl lg:text-2xl font-black text-foreground">Add / Restock Item</h2>
+          <h2 className="text-xl lg:text-2xl font-black text-foreground">Add Item</h2>
         </div>
         <div className="bg-card border border-border p-1 rounded-xl flex">
-          {(["new", "restock"] as const).map((m) => (
+          {(["new", "existing"] as const).map((m) => (
             <button key={m} onClick={() => setItemMode(m)}
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 itemMode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
               }`}
-            >{m === "new" ? "New Item" : "Restock"}</button>
+            >{m === "new" ? "New Purchase" : "Existing Item"}</button>
           ))}
         </div>
       </header>
