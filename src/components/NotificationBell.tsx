@@ -81,11 +81,11 @@ const NotificationBell = () => {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative flex items-center justify-center w-9 h-9 rounded-lg hover:bg-muted transition-colors"
+        className="relative flex items-center justify-center w-9 h-9 rounded-lg hover:bg-muted transition-all duration-200 active:scale-95"
       >
         <span className="material-symbols-outlined text-[20px] text-foreground">notifications</span>
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center animate-fade-in">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -94,7 +94,7 @@ const NotificationBell = () => {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden">
+          <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden animate-slide-up">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <h4 className="font-bold text-sm text-foreground">Notifications</h4>
               {unreadCount > 0 && (
