@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusiness } from "@/contexts/BusinessContext";
@@ -8,9 +10,12 @@ import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 const Profile = () => {
   const { user } = useAuth();
   const { userRole } = useBusiness();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState({ full_name: "", phone: "", username: "" });
   const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [saving, setSaving] = useState("");
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [deleteAccountText, setDeleteAccountText] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -79,6 +84,28 @@ const Profile = () => {
       toast.success("Password reset link sent to your email!");
     } catch (err: any) { toast.error(err.message); }
     finally { setSaving(""); }
+  };
+
+  const deleteAccount = async () => {
+    if (deleteAccountText !== "DELETE MY ACCOUNT") return;
+    setSaving("delete-account");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error("Not authenticated"); return; }
+      const res = await supabase.functions.invoke("delete-account", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (res.error) throw new Error(res.error.message || "Failed to delete account");
+      const result = res.data as any;
+      if (result?.error) throw new Error(result.error);
+      await supabase.auth.signOut();
+      toast.success("Your account has been permanently deleted");
+      navigate("/login");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete account");
+    } finally {
+      setSaving("");
+    }
   };
 
   const initials = profile.full_name
@@ -190,6 +217,63 @@ const Profile = () => {
             </div>
           </div>
         </section>
+
+        {/* Delete Account */}
+        <section className="bg-card rounded-xl border border-destructive/40 overflow-hidden">
+          <div className="px-4 py-3 sm:p-5 flex items-center gap-2.5 border-b border-destructive/20 bg-destructive/5">
+            <span className="material-symbols-outlined text-destructive text-xl">person_remove</span>
+            <h3 className="font-bold text-base sm:text-lg text-destructive">Delete Account</h3>
+          </div>
+          <div className="p-4 sm:p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground text-sm">Permanently delete your account</p>
+                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">This will delete your account, profile, and all businesses you own (if no other partners). This cannot be undone.</p>
+              </div>
+              <button
+                onClick={() => setShowDeleteAccount(true)}
+                disabled={saving === "delete-account"}
+                className="w-full sm:w-auto shrink-0 bg-destructive text-destructive-foreground font-bold px-5 py-2.5 rounded-lg hover:bg-destructive/90 disabled:opacity-50 active:scale-[0.98] transition-all text-sm"
+              >
+                {saving === "delete-account" ? "Deleting..." : "Delete My Account"}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <Dialog open={showDeleteAccount} onOpenChange={(open) => { setShowDeleteAccount(open); if (!open) setDeleteAccountText(""); }}>
+          <DialogContent className="border-destructive/50 max-w-md mx-3">
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-destructive text-2xl">person_remove</span>
+                <DialogTitle className="text-destructive text-base">Delete your account?</DialogTitle>
+              </div>
+              <DialogDescription className="text-xs sm:text-sm">
+                This will <strong className="text-foreground">permanently delete your account</strong>, your profile, and all businesses you are the sole owner of. If a business has other partners, you will be removed but the business will remain. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Type <span className="text-destructive font-mono">DELETE MY ACCOUNT</span> to confirm</label>
+              <input
+                className="w-full h-10 rounded-lg border border-destructive/50 bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-destructive/20 transition-all"
+                value={deleteAccountText}
+                onChange={(e) => setDeleteAccountText(e.target.value)}
+                placeholder="DELETE MY ACCOUNT"
+              />
+            </div>
+            <div className="flex gap-2.5 justify-end">
+              <button onClick={() => { setShowDeleteAccount(false); setDeleteAccountText(""); }}
+                className="px-4 py-2 rounded-lg border border-border font-semibold hover:bg-muted text-sm active:scale-[0.98] transition-all">Cancel</button>
+              <button
+                onClick={deleteAccount}
+                disabled={deleteAccountText !== "DELETE MY ACCOUNT" || saving === "delete-account"}
+                className="bg-destructive text-destructive-foreground font-bold px-4 py-2 rounded-lg hover:bg-destructive/90 disabled:opacity-50 active:scale-[0.98] transition-all text-sm"
+              >
+                {saving === "delete-account" ? "Deleting..." : "Delete Forever"}
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
