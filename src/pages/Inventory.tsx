@@ -197,8 +197,6 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const [selectedItemId, setSelectedItemId] = useState("");
   const [useManualRate, setUseManualRate] = useState(false);
   const [manualRate, setManualRate] = useState("");
-  const [customCategory, setCustomCategory] = useState("");
-  const [showCustomCategory, setShowCustomCategory] = useState(false);
   const [savedCategories, setSavedCategories] = useState<string[]>([]);
   const [walletBdt, setWalletBdt] = useState(0);
   const [walletRmb, setWalletRmb] = useState(0);
