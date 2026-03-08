@@ -24,6 +24,7 @@ const navItems = [
 const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
   const location = useLocation();
   const { signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const linkClass = (path: string) => {
     const isActive = location.pathname === path;
