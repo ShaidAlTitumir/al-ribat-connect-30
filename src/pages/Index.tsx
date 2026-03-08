@@ -14,8 +14,10 @@ const quickActions = [
 
 interface PartnerEquity {
   name: string;
+  role: string;
   totalBdt: number;
   percentage: number;
+  profitShare: number;
 }
 
 const Index = () => {
