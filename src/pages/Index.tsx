@@ -47,7 +47,7 @@ const Index = () => {
       supabase.from("customers").select("total_due").eq("business_id", businessId!),
       supabase.from("exchanges").select("*").eq("business_id", businessId!),
       supabase.from("partners").select("id, name, status").eq("business_id", businessId!),
-      supabase.from("activity_log").select("*").eq("business_id", businessId!).order("created_at", { ascending: false }).limit(5),
+      supabase.from("activity_log").select("*").eq("business_id", businessId!).order("created_at", { ascending: false }).limit(15),
     ]);
 
     const caps = capsRes.data || [];
