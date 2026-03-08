@@ -279,7 +279,7 @@ const Settings = () => {
           </div>
         </section>
 
-        {showCleanConfirm && (
+        {showCleanConfirm && createPortal(
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
             <div className="bg-card border border-destructive/50 rounded-xl p-6 max-w-md w-full mx-4 space-y-4">
               <div className="flex items-center gap-3">
