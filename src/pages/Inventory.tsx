@@ -76,6 +76,31 @@ const InventoryList = ({ onAdd }: { onAdd: () => void }) => {
         ))}
       </section>
 
+      {/* Low Stock Alert Banner */}
+      {lowStockItems.length > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
+          <span className="material-symbols-outlined text-amber-600 text-[24px] mt-0.5">warning</span>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-amber-800 dark:text-amber-300 text-sm">Low Stock Alert</p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+              {lowStockItems.map(i => `${i.name} (${i.current_stock} left)`).join(", ")}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {outOfStock > 0 && (
+        <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-4 flex items-start gap-3">
+          <span className="material-symbols-outlined text-destructive text-[24px] mt-0.5">error</span>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-destructive text-sm">Out of Stock</p>
+            <p className="text-xs text-destructive/80 mt-0.5">
+              {items.filter(i => i.current_stock === 0).map(i => i.name).join(", ")} — need restocking
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">
@@ -88,15 +113,15 @@ const InventoryList = ({ onAdd }: { onAdd: () => void }) => {
           />
         </div>
         <div className="flex items-center gap-2">
-          {["all", "low"].map((f) => (
+          {[{ key: "all", label: "All Items" }, { key: "low", label: "Low Stock" }, { key: "out", label: "Out of Stock" }].map((f) => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
+              key={f.key}
+              onClick={() => setFilter(f.key)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium ${
-                filter === f ? "bg-primary text-primary-foreground" : "bg-card border border-border text-muted-foreground"
+                filter === f.key ? "bg-primary text-primary-foreground" : "bg-card border border-border text-muted-foreground"
               }`}
             >
-              {f === "all" ? "All Items" : "Low Stock"}
+              {f.label}
             </button>
           ))}
           <button onClick={onAdd} className="flex items-center gap-1 bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-bold">
