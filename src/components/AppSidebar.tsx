@@ -71,7 +71,7 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 sm:px-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
+        {navItems.filter(item => !isSolo || !item.soloHidden).map((item) => (
           <NavLink key={item.path} to={item.path} className={linkClass(item.path)}>
             <span className="material-symbols-outlined text-[22px]" style={iconStyle(item.path)}>
               {item.icon}
