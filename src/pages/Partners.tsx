@@ -64,6 +64,31 @@ const Partners = () => {
     setPartners(partnersList);
     const { data: c } = await supabase.from("capital_contributions").select("*, partners(name)").eq("business_id", businessId!);
     setContributions(c || []);
+
+    // Fetch pending leave requests
+    const { data: lr } = await (supabase
+      .from("partner_leave_requests")
+      .select("*") as any)
+      .eq("business_id", businessId!)
+      .eq("status", "pending");
+    setLeaveRequests(lr || []);
+
+    // Fetch votes for pending leave requests
+    const reqIds = (lr || []).map((r: any) => r.id);
+    if (reqIds.length > 0) {
+      const { data: votes } = await (supabase
+        .from("partner_leave_votes")
+        .select("*") as any)
+        .in("request_id", reqIds);
+      const voteMap: Record<string, any[]> = {};
+      (votes || []).forEach((v: any) => {
+        if (!voteMap[v.request_id]) voteMap[v.request_id] = [];
+        voteMap[v.request_id].push(v);
+      });
+      setLeaveVotes(voteMap);
+    } else {
+      setLeaveVotes({});
+    }
   };
 
   const handleSearchUser = async () => {
