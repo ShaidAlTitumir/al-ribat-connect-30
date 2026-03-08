@@ -89,8 +89,17 @@ const Profile = () => {
 
   const deleteAccount = async () => {
     if (deleteAccountText !== "DELETE MY ACCOUNT") return;
+    if (!deletePassword) { toast.error("Enter your password to confirm"); return; }
+    if (!user?.email) { toast.error("User not found"); return; }
     setSaving("delete-account");
     try {
+      // Verify password first
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: deletePassword,
+      });
+      if (authError) { toast.error("Incorrect password"); setSaving(""); return; }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { toast.error("Not authenticated"); return; }
       const res = await supabase.functions.invoke("delete-account", {
