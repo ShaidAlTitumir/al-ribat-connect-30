@@ -172,7 +172,7 @@ const Index = () => {
   const colors = ["bg-sky-500", "bg-orange-500", "bg-emerald-500", "bg-rose-500", "bg-violet-500"];
 
   return (
-    <>
+    <div className="flex-1 flex flex-col min-w-0">
       <ExchangeRateHeader title="Dashboard" />
       <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
         {/* Business Snapshot */}
@@ -566,7 +566,7 @@ const Index = () => {
           )}
         </section>
       </div>
-    </>
+    </div>
   );
 };
 
