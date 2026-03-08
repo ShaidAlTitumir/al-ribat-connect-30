@@ -3,9 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -16,7 +15,6 @@ const loginSchema = z.object({
 const Login = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -45,9 +43,7 @@ const Login = () => {
         email: form.email.trim(),
         password: form.password,
       });
-
       if (error) throw error;
-
       toast.success("Welcome back!");
       navigate("/");
     } catch (error: any) {
@@ -59,64 +55,71 @@ const Login = () => {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-foreground mb-1">Welcome Back</h2>
-      <p className="text-sm text-muted-foreground mb-6">Sign in to your Al-Ribat account</p>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="you@example.com"
-            value={form.email}
-            onChange={handleChange}
-            className="mt-1.5"
-          />
-          {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
+      {/* Header */}
+      <div className="pt-10 pb-6 px-8 flex flex-col items-center text-center">
+        <div className="mb-6 flex items-center justify-center w-16 h-16 bg-primary/10 rounded-xl">
+          <span className="material-symbols-outlined text-primary text-4xl">domain</span>
         </div>
+        <h2 className="text-foreground text-3xl font-black tracking-tight mb-2">Welcome Back</h2>
+        <p className="text-muted-foreground text-sm">Al-Ribat Manager: Access your dashboard</p>
+      </div>
 
-        <div>
-          <Label htmlFor="password">Password</Label>
-          <div className="relative mt-1.5">
-            <Input
-              id="password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="Enter your password"
-              value={form.password}
-              onChange={handleChange}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
+      {/* Form */}
+      <div className="px-8 pb-10">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="flex flex-col gap-2">
+            <label className="text-foreground text-sm font-semibold">Email Address</label>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xl">mail</span>
+              <Input
+                name="email"
+                type="email"
+                placeholder="name@company.com"
+                value={form.email}
+                onChange={handleChange}
+                className="pl-11 py-3 h-12 bg-muted border-border focus-visible:ring-primary"
+              />
+            </div>
+            {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
           </div>
-          {errors.password && <p className="text-xs text-destructive mt-1">{errors.password}</p>}
-        </div>
 
-        <div className="flex justify-end">
-          <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-            Forgot Password?
-          </Link>
-        </div>
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              <label className="text-foreground text-sm font-semibold">Password</label>
+              <Link to="/forgot-password" className="text-primary text-xs font-semibold hover:underline">
+                Forgot Password?
+              </Link>
+            </div>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xl">lock</span>
+              <Input
+                name="password"
+                type="password"
+                placeholder="••••••••"
+                value={form.password}
+                onChange={handleChange}
+                className="pl-11 py-3 h-12 bg-muted border-border focus-visible:ring-primary"
+              />
+            </div>
+            {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+          </div>
 
-        <Button type="submit" className="w-full gradient-gold text-accent-foreground font-semibold" disabled={loading}>
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Sign In
-        </Button>
-      </form>
+          <Button
+            type="submit"
+            className="w-full py-3 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/20"
+            disabled={loading}
+          >
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Sign In
+            <span className="material-symbols-outlined text-sm ml-1">arrow_forward</span>
+          </Button>
+        </form>
 
-      <p className="text-sm text-muted-foreground text-center mt-6">
-        Don't have an account?{" "}
-        <Link to="/register" className="text-primary font-medium hover:underline">
-          Sign up
-        </Link>
-      </p>
+        <p className="mt-8 text-center text-muted-foreground text-sm">
+          Don't have an account?{" "}
+          <Link to="/register" className="text-primary font-bold hover:underline">Create Account</Link>
+        </p>
+      </div>
     </div>
   );
 };

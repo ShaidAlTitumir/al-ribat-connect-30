@@ -3,9 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
 const registerSchema = z.object({
@@ -22,7 +21,6 @@ const registerSchema = z.object({
 const Register = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -64,9 +62,7 @@ const Register = () => {
           },
         },
       });
-
       if (error) throw error;
-
       toast.success("Account created! Please check your email to verify, then join your business.");
       navigate("/join-business");
     } catch (error: any) {
@@ -78,99 +74,116 @@ const Register = () => {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-foreground mb-1">Create Account</h2>
-      <p className="text-sm text-muted-foreground mb-6">Sign up to manage your partnership business</p>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <Label htmlFor="fullName">Full Name</Label>
-          <Input
-            id="fullName"
-            name="fullName"
-            placeholder="Enter your full name"
-            value={form.fullName}
-            onChange={handleChange}
-            className="mt-1.5"
-          />
-          {errors.fullName && <p className="text-xs text-destructive mt-1">{errors.fullName}</p>}
-        </div>
-
-        <div>
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="you@example.com"
-            value={form.email}
-            onChange={handleChange}
-            className="mt-1.5"
-          />
-          {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
-        </div>
-
-        <div>
-          <Label htmlFor="phone">Phone</Label>
-          <Input
-            id="phone"
-            name="phone"
-            type="tel"
-            placeholder="+880 1XXX XXXXXX"
-            value={form.phone}
-            onChange={handleChange}
-            className="mt-1.5"
-          />
-          {errors.phone && <p className="text-xs text-destructive mt-1">{errors.phone}</p>}
-        </div>
-
-        <div>
-          <Label htmlFor="password">Password</Label>
-          <div className="relative mt-1.5">
-            <Input
-              id="password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="Min 6 characters"
-              value={form.password}
-              onChange={handleChange}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
+      {/* Header */}
+      <div className="px-8 pt-8 pb-6 text-center">
+        <div className="flex justify-center items-center gap-2 mb-6">
+          <div className="bg-primary text-primary-foreground p-2 rounded-lg">
+            <span className="material-symbols-outlined text-2xl">account_balance</span>
           </div>
-          {errors.password && <p className="text-xs text-destructive mt-1">{errors.password}</p>}
+          <h2 className="text-foreground text-xl font-bold tracking-tight">Al-Ribat Manager</h2>
         </div>
+        <h1 className="text-2xl font-bold text-foreground mb-2">Create Account</h1>
+        <p className="text-muted-foreground text-sm">Join us to start managing your workspace</p>
+      </div>
 
-        <div>
-          <Label htmlFor="confirmPassword">Confirm Password</Label>
-          <Input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            placeholder="Re-enter your password"
-            value={form.confirmPassword}
-            onChange={handleChange}
-            className="mt-1.5"
-          />
-          {errors.confirmPassword && <p className="text-xs text-destructive mt-1">{errors.confirmPassword}</p>}
-        </div>
+      {/* Form */}
+      <div className="px-8 pb-8">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Full Name</label>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xl">person</span>
+              <Input
+                name="fullName"
+                placeholder="John Doe"
+                value={form.fullName}
+                onChange={handleChange}
+                className="pl-10 py-2.5 h-11 bg-card border-border focus-visible:ring-primary"
+              />
+            </div>
+            {errors.fullName && <p className="text-xs text-destructive mt-1">{errors.fullName}</p>}
+          </div>
 
-        <Button type="submit" className="w-full gradient-gold text-accent-foreground font-semibold" disabled={loading}>
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Create Account
-        </Button>
-      </form>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Email Address</label>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xl">mail</span>
+              <Input
+                name="email"
+                type="email"
+                placeholder="name@company.com"
+                value={form.email}
+                onChange={handleChange}
+                className="pl-10 py-2.5 h-11 bg-card border-border focus-visible:ring-primary"
+              />
+            </div>
+            {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
+          </div>
 
-      <p className="text-sm text-muted-foreground text-center mt-6">
-        Already have an account?{" "}
-        <Link to="/login" className="text-primary font-medium hover:underline">
-          Sign in
-        </Link>
-      </p>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Phone Number</label>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xl">call</span>
+              <Input
+                name="phone"
+                type="tel"
+                placeholder="+1 (555) 000-0000"
+                value={form.phone}
+                onChange={handleChange}
+                className="pl-10 py-2.5 h-11 bg-card border-border focus-visible:ring-primary"
+              />
+            </div>
+            {errors.phone && <p className="text-xs text-destructive mt-1">{errors.phone}</p>}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Password</label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xl">lock</span>
+                <Input
+                  name="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={form.password}
+                  onChange={handleChange}
+                  className="pl-10 py-2.5 h-11 bg-card border-border focus-visible:ring-primary"
+                />
+              </div>
+              {errors.password && <p className="text-xs text-destructive mt-1">{errors.password}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Confirm</label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xl">check_circle</span>
+                <Input
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                  className="pl-10 py-2.5 h-11 bg-card border-border focus-visible:ring-primary"
+                />
+              </div>
+              {errors.confirmPassword && <p className="text-xs text-destructive mt-1">{errors.confirmPassword}</p>}
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full py-3 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md hover:shadow-lg"
+            disabled={loading}
+          >
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Sign Up
+          </Button>
+        </form>
+
+        <p className="mt-8 text-center text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <Link to="/login" className="text-primary font-semibold hover:underline">Sign In</Link>
+        </p>
+      </div>
     </div>
   );
 };
