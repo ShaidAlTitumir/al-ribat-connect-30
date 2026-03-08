@@ -258,6 +258,16 @@ const Business = () => {
         vote: "approved",
         voted_at: new Date().toISOString(),
       });
+
+      // Send notifications to all partners
+      const notifInserts = partnerUserIds.map((uid: string) => ({
+        user_id: uid,
+        business_id: b.id,
+        title: "Business Deletion Request",
+        message: `A request to delete "${b.name}" has been submitted. Your approval is required.`,
+        type: "deletion_request",
+      }));
+      await (supabase.from("notifications") as any).insert(notifInserts);
     }
 
     toast.success("Deletion request sent to all partners for approval");
