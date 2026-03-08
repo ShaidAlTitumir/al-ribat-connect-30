@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Al-Ribat Manager - Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2463eb",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
+<div class="flex min-h-screen">
+<!-- Sidebar -->
+<aside class="w-64 bg-primary text-white flex flex-col fixed h-full shrink-0">
+<div class="p-6">
+<h1 class="text-xl font-bold tracking-tight">Al-Ribat Manager</h1>
+<p class="text-primary/70 text-xs font-medium uppercase tracking-wider mt-1">Management Suite</p>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-sm font-medium">Home</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="text-sm font-medium">Sales</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm font-medium">Customers</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors" href="#">
+<span class="material-symbols-outlined">handshake</span>
+<span class="text-sm font-medium">Partners</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/20" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</nav>
+<div class="p-4 border-t border-white/10">
+<div class="flex items-center gap-3 px-2">
+<div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">help</span>
+</div>
+<span class="text-sm font-medium">Support</span>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="ml-64 flex-1 flex flex-col">
+<!-- Header -->
+<header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10">
+<div class="flex items-center gap-2">
+<h2 class="text-lg font-bold">Settings</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<label class="text-sm font-medium text-slate-500">Rate:</label>
+<input class="w-16 h-9 rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:ring-primary focus:border-primary" type="number" value="16"/>
+<button class="bg-primary text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">Save</button>
+</div>
+<div class="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden border border-slate-200 dark:border-slate-800">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="User profile circular avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDr9kT4CkaUsk7pZndiveJ2GDxYjffALGrePPWZn1OrTxvftYD3CcdTtbtWqlax7Ukpdb0Zv30YgetcS2OSX-4EfiwazXPN90-E52sqQj1bWKi_39WZ-mNhlY5cOqB7DryPnYc9UMWnhcbrlY5NXwv1FHOfeuQ5pIl2fQvX1AACx4zlyTF_zquSSKSEBxlAyijiOH8c21WNCWUIeK-qrjwnptF6Lifdfl4cg4nXdTrCfORNfCszlFJO5m_nn7zia-SjZoIXBJqcUTI"/>
+</div>
+</div>
+</header>
+<!-- Content Column -->
+<div class="p-8 max-w-[800px] w-full mx-auto space-y-6">
+<!-- Profile Information -->
+<section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800">
+<span class="material-symbols-outlined text-primary">account_circle</span>
+<h3 class="font-bold text-lg">Profile Information</h3>
+</div>
+<div class="p-6">
+<div class="flex flex-col md:flex-row gap-8">
+<div class="relative w-24 h-24 shrink-0 mx-auto md:mx-0">
+<img alt="Alex Johnson" class="w-24 h-24 rounded-full border-4 border-slate-50 dark:border-slate-800 shadow-sm" data-alt="Close up portrait of user avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCp0bq08BpkFuS88C2JA_LfzX2eB5kkP1BSOpYZ7ruu7vmqhE19_Uo2mjT49uDy8FDnDTgEnGTypIWa2bqOSfZBII_6n-L4SmIDUHgIW6JYrbMfRB5-2SyvuLLXz7xegYhe4UZWOodawDmXAYLAB6hYD4u2W3AFMoZVctXEw2Nm-r2uHxwFSvHIo9haURu7jb2GHA_UUuBVhDjSQadeATJ0pG1RVdwKV9cxMF45VjVdbaF-uKfERYfMLvOJ4rrjaBqv0zY8H96Btns"/>
+<button class="absolute bottom-0 right-0 p-1.5 bg-primary text-white rounded-full border-2 border-white dark:border-slate-900 shadow-lg hover:bg-primary/90">
+<span class="material-symbols-outlined text-sm">photo_camera</span>
+</button>
+</div>
+<div class="flex-1 space-y-4">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Full Name</label>
+<input class="w-full h-11 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary" type="text" value="Alex Johnson"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Phone Number</label>
+<input class="w-full h-11 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary" type="tel" value="+880 1712-345678"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Email Address</label>
+<input class="w-full h-11 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary" type="email" value="alex.j@al-ribat.com"/>
+</div>
+<div class="flex justify-end pt-2">
+<button class="bg-primary text-white font-bold px-6 py-2.5 rounded-lg hover:opacity-90 transition-opacity">Save Changes</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Change Password -->
+<section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+<div class="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800">
+<span class="material-symbols-outlined text-primary">lock</span>
+<h3 class="font-bold text-lg">Security</h3>
+</div>
+<div class="p-6 space-y-4">
+<div class="space-y-1.5">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Current Password</label>
+<input class="w-full h-11 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary" placeholder="••••••••" type="password"/>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">New Password</label>
+<input class="w-full h-11 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary" placeholder="••••••••" type="password"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Confirm New Password</label>
+<input class="w-full h-11 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-semibold uppercase tracking-wider text-slate-500">
+<span>Password Strength</span>
+<span class="text-green-600">Strong</span>
+</div>
+<div class="flex gap-1 h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="w-1/3 bg-red-400"></div>
+<div class="w-1/3 bg-yellow-400"></div>
+<div class="w-1/3 bg-green-500"></div>
+</div>
+</div>
+<div class="flex justify-end pt-2">
+<button class="bg-primary text-white font-bold px-6 py-2.5 rounded-lg hover:opacity-90 transition-opacity">Update Password</button>
+</div>
+</div>
+</section>
+<!-- Business Settings -->
+<section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+<div class="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800">
+<span class="material-symbols-outlined text-primary">business_center</span>
+<h3 class="font-bold text-lg">Business Settings</h3>
+</div>
+<div class="p-6 space-y-4">
+<div class="space-y-1.5">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Business Name</label>
+<input class="w-full h-11 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary" type="text" value="Al-Ribat International"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Business Address</label>
+<textarea class="w-full rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary" rows="3">Suite 402, Trade Center, Dhaka 1212, Bangladesh</textarea>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Primary Currency</label>
+<select class="w-full h-11 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary">
+<option>BDT (Taka)</option>
+<option>RMB (Yuan)</option>
+<option>USD (Dollar)</option>
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Exchange Rate Alert (%)</label>
+<input class="w-full h-11 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary" type="number" value="2.5"/>
+</div>
+</div>
+<div class="flex justify-end pt-2">
+<button class="bg-primary text-white font-bold px-6 py-2.5 rounded-lg hover:opacity-90 transition-opacity">Save Business Settings</button>
+</div>
+</div>
+</section>
+<!-- Notification Preferences -->
+<section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+<div class="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800">
+<span class="material-symbols-outlined text-primary">notifications</span>
+<h3 class="font-bold text-lg">Notification Preferences</h3>
+</div>
+<div class="p-6 space-y-6">
+<div class="flex items-center justify-between">
+<div>
+<p class="font-semibold">Email Notifications</p>
+<p class="text-sm text-slate-500 dark:text-slate-400">Receive summaries of new orders and invoices via email.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<p class="font-semibold">WhatsApp Alerts</p>
+<p class="text-sm text-slate-500 dark:text-slate-400">Real-time alerts for due collections and late payments.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<p class="font-semibold">Monthly Reports</p>
+<p class="text-sm text-slate-500 dark:text-slate-400">Comprehensive PDF reports sent on the 1st of every month.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Partner Permissions -->
+<section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+<div class="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800">
+<span class="material-symbols-outlined text-primary">shield_person</span>
+<h3 class="font-bold text-lg">Partner Permissions</h3>
+</div>
+<div class="p-6 space-y-4">
+<div class="flex items-start gap-3">
+<div class="flex items-center h-5">
+<input checked="" class="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary" type="checkbox"/>
+</div>
+<div class="text-sm">
+<label class="font-medium text-slate-700 dark:text-slate-200">Allow partners to invite others</label>
+<p class="text-slate-500">Partners can add sub-users to their own organizational accounts.</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="flex items-center h-5">
+<input checked="" class="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary" type="checkbox"/>
+</div>
+<div class="text-sm">
+<label class="font-medium text-slate-700 dark:text-slate-200">Require admin approval for capital additions</label>
+<p class="text-slate-500">Manual verification needed for any investment or capital infusion.</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="flex items-center h-5">
+<input class="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary" type="checkbox"/>
+</div>
+<div class="text-sm">
+<label class="font-medium text-slate-700 dark:text-slate-200">Grant full export rights</label>
+<p class="text-slate-500">Partners can download raw transaction history in CSV format.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Danger Zone -->
+<section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-red-200 dark:border-red-900 overflow-hidden">
+<div class="p-6 bg-red-50/50 dark:bg-red-950/20 flex items-center gap-3 border-b border-red-100 dark:border-red-900/50">
+<span class="material-symbols-outlined text-red-600">report_problem</span>
+<h3 class="font-bold text-lg text-red-600">Danger Zone</h3>
+</div>
+<div class="p-6 flex items-center justify-between gap-6">
+<div class="flex-1">
+<p class="font-bold text-slate-900 dark:text-slate-100">Delete Account</p>
+<p class="text-sm text-slate-500 dark:text-slate-400">Permanently delete your profile and all associated business data. This action cannot be undone.</p>
+</div>
+<button class="px-6 py-2.5 border-2 border-red-200 dark:border-red-900 text-red-600 font-bold rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors whitespace-nowrap">
+                        Delete Account
+                    </button>
+</div>
+</section>
+<footer class="pt-8 text-center text-slate-400 text-sm">
+<p>© 2024 Al-Ribat International. All rights reserved.</p>
+</footer>
+</div>
+</main>
+</div>
+</body></html>

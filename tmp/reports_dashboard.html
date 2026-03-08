@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Reports Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2463eb",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col">
+<div class="p-6 flex items-center gap-3">
+<div class="size-10 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div>
+<h1 class="text-base font-bold leading-tight">Admin Panel</h1>
+<p class="text-xs text-slate-500 dark:text-slate-400">Management Mode</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined text-[24px]">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary" href="#">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1">description</span>
+<span class="text-sm font-medium">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined text-[24px]">bar_chart</span>
+<span class="text-sm font-medium">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined text-[24px]">handshake</span>
+<span class="text-sm font-medium">Partners</span>
+</a>
+<div class="pt-4 pb-2 px-3">
+<p class="text-[10px] uppercase font-bold tracking-wider text-slate-400">System</p>
+</div>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined text-[24px]">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined text-[24px]">help</span>
+<span class="text-sm font-medium">Support</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3 p-2 rounded-xl bg-slate-50 dark:bg-slate-800">
+<div class="size-8 rounded-full bg-slate-300 dark:bg-slate-700" data-alt="User avatar placeholder profile picture" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBYVQQCywdMyAtOZ8HahWAnDKNFHZ0IcyGhaBArCG81jBV0X50aZIOOkalaDEobb2-BFP1kCreygwgdFQhj4dACRbmArhlOzoIJR333MPpQ00c00Pf8raNL1yGSn6WvQ2jilK21PYqBp0m5s37Sx2YoMDR8_z3KYh82lwDoqMosuMhfOKnTn17hKMYvjmm3GUjXSozdjLjkWpgbOWu206j_G89qVo_EhawLogRMpMI6Mi7cLI-HgQ1F7gM4zT1PNpUkGK6UsEzZPk0')"></div>
+<div class="flex-1 overflow-hidden">
+<p class="text-xs font-bold truncate">Alex Morgan</p>
+<p class="text-[10px] text-slate-500 truncate">alex@company.com</p>
+</div>
+<span class="material-symbols-outlined text-slate-400 text-sm">unfold_more</span>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col h-full overflow-hidden">
+<!-- Header -->
+<header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-8 shrink-0">
+<div class="flex items-center gap-4">
+<h2 class="text-xl font-bold tracking-tight">Reports</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/50 transition-all" placeholder="Search reports..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="size-9 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="size-9 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined">calendar_today</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="flex-1 overflow-y-auto p-8 bg-background-light dark:bg-background-dark">
+<div class="max-w-6xl mx-auto space-y-8">
+<!-- Page Title Section -->
+<div class="flex items-end justify-between">
+<div>
+<h3 class="text-3xl font-black tracking-tight mb-2">Detailed Reports</h3>
+<p class="text-slate-500 dark:text-slate-400">Comprehensive overview of your organizational performance and metrics.</p>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-sm">download</span>
+                        Export PDF
+                    </button>
+</div>
+<!-- Tabs Filter -->
+<div class="border-b border-slate-200 dark:border-slate-800 flex gap-8">
+<button class="pb-3 text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-primary transition-colors">Week</button>
+<button class="pb-3 text-sm font-bold text-primary border-b-2 border-primary">Month</button>
+<button class="pb-3 text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-primary transition-colors">Year</button>
+<button class="pb-3 text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-primary transition-colors">Custom Range</button>
+</div>
+<!-- Performance Grid 2x2 -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Sales -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">trending_up</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">MTD Performance</span>
+</div>
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Sales</p>
+<div class="flex items-baseline gap-3 mt-1">
+<h4 class="text-3xl font-bold">$45,230.50</h4>
+<span class="text-xs font-bold text-emerald-500 flex items-center">+12.5% <span class="material-symbols-outlined text-xs">arrow_upward</span></span>
+</div>
+<div class="mt-4 w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 75%"></div>
+</div>
+</div>
+<!-- Profit -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined p-2 rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">payments</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Profitability</span>
+</div>
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Gross Profit</p>
+<div class="flex items-baseline gap-3 mt-1">
+<h4 class="text-3xl font-bold">$12,840.00</h4>
+<span class="text-xs font-bold text-rose-500 flex items-center">-2.3% <span class="material-symbols-outlined text-xs">arrow_downward</span></span>
+</div>
+<div class="mt-4 w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 62%"></div>
+</div>
+</div>
+<!-- Dues -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined p-2 rounded-lg bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">pending_actions</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Accounts Receivable</span>
+</div>
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Outstanding Dues</p>
+<div class="flex items-baseline gap-3 mt-1">
+<h4 class="text-3xl font-bold">$2,100.25</h4>
+<span class="text-xs font-bold text-emerald-500 flex items-center">+5.0% <span class="material-symbols-outlined text-xs">arrow_downward</span></span>
+</div>
+<div class="mt-4 w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-orange-500 h-full rounded-full" style="width: 25%"></div>
+</div>
+</div>
+<!-- Net Profit -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined p-2 rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">account_balance_wallet</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Net Performance</span>
+</div>
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Net Profit</p>
+<div class="flex items-baseline gap-3 mt-1">
+<h4 class="text-3xl font-bold">$10,740.00</h4>
+<span class="text-xs font-bold text-emerald-500 flex items-center">+8.1% <span class="material-symbols-outlined text-xs">arrow_upward</span></span>
+</div>
+<div class="mt-4 w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-purple-500 h-full rounded-full" style="width: 48%"></div>
+</div>
+</div>
+</div>
+<!-- Partner Profit Share Empty State -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+<div>
+<h5 class="text-lg font-bold">Partner Profit Share</h5>
+<p class="text-xs text-slate-500 dark:text-slate-400">Distribution of profits across active business partners.</p>
+</div>
+<button class="text-xs font-bold text-primary hover:underline">View All Details</button>
+</div>
+<div class="p-12 flex flex-col items-center justify-center text-center">
+<div class="size-24 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 border border-dashed border-slate-200 dark:border-slate-700">
+<span class="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600">pie_chart</span>
+</div>
+<h6 class="text-base font-bold text-slate-900 dark:text-slate-100">No partner data available for this month</h6>
+<p class="text-sm text-slate-500 dark:text-slate-400 max-w-sm mt-2">To see profit distribution, ensure all partner agreements are active and transactions are categorized.</p>
+<button class="mt-6 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 px-6 py-2 rounded-lg text-sm font-bold transition-colors">
+                            Manage Partners
+                        </button>
+</div>
+<!-- Placeholder Chart visualization area -->
+<div class="px-6 pb-6 grid grid-cols-4 gap-4 opacity-20 pointer-events-none grayscale">
+<div class="h-24 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-end p-2">
+<div class="w-full bg-primary/40 h-12 rounded"></div>
+</div>
+<div class="h-24 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-end p-2">
+<div class="w-full bg-primary/40 h-20 rounded"></div>
+</div>
+<div class="h-24 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-end p-2">
+<div class="w-full bg-primary/40 h-8 rounded"></div>
+</div>
+<div class="h-24 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-end p-2">
+<div class="w-full bg-primary/40 h-16 rounded"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

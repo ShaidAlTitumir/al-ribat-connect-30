@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Inventory Manager - Add/Restock</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2463eb",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-size: 24px; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="flex min-h-screen">
+<!-- Sidebar -->
+<aside class="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col fixed h-full">
+<div class="p-6 flex items-center gap-3">
+<div class="bg-primary rounded-lg p-2 text-white">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div>
+<h1 class="font-bold text-lg leading-tight">Admin Pro</h1>
+<p class="text-xs text-slate-500 dark:text-slate-400">Inventory Manager</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-primary/10 text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">add_box</span>
+<span class="text-sm font-semibold">Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="text-sm font-medium">Orders</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-sm font-medium">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="text-sm font-medium">Transactions</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-slate-800">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="ml-64 flex-1 p-8">
+<header class="mb-8 flex justify-between items-center">
+<div>
+<h2 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Add / Restock Item</h2>
+<p class="text-slate-500 mt-1">Manage your warehouse stock and pricing details.</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1 rounded-xl flex">
+<button class="px-6 py-2 rounded-lg bg-primary text-white text-sm font-semibold shadow-sm">New Item</button>
+<button class="px-6 py-2 rounded-lg text-slate-500 dark:text-slate-400 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Restock</button>
+</div>
+</div>
+</header>
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+<!-- Form Section -->
+<div class="xl:col-span-2 space-y-6">
+<section class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+<h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">info</span>
+                            Product Information
+                        </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Item Name</label>
+<input class="form-input rounded-lg border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:border-primary focus:ring-primary/20 transition-all" placeholder="e.g. Wireless Noise Cancelling Headphones" type="text"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Category</label>
+<select class="form-select rounded-lg border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:border-primary focus:ring-primary/20">
+<option>Electronics</option>
+<option>Fashion</option>
+<option>Home Decor</option>
+<option>Accessories</option>
+</select>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Quantity</label>
+<input class="form-input rounded-lg border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:border-primary focus:ring-primary/20" placeholder="0" type="number"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Weight (kg)</label>
+<input class="form-input rounded-lg border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:border-primary focus:ring-primary/20" placeholder="0.00" step="0.01" type="number"/>
+</div>
+</div>
+</section>
+<section class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+<h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">payments</span>
+                            Costing &amp; Shipping
+                        </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Buying Cost (RMB)</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">¥</span>
+<input class="pl-7 form-input w-full rounded-lg border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:border-primary focus:ring-primary/20" placeholder="0.00" type="number"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Shipping Method</label>
+<div class="flex p-1 bg-slate-100 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800">
+<button class="flex-1 py-1.5 text-xs font-bold rounded bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700">Sea</button>
+<button class="flex-1 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">Air</button>
+<button class="flex-1 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">Luggage</button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Shipping Rate (per kg)</label>
+<input class="form-input rounded-lg border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:border-primary focus:ring-primary/20" placeholder="0.00" type="number"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Additional Cost (per unit)</label>
+<input class="form-input rounded-lg border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:border-primary focus:ring-primary/20" placeholder="0.00" type="number"/>
+</div>
+<div class="flex flex-col gap-2 md:col-span-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Target Selling Price</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+<input class="pl-7 form-input w-full rounded-lg border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:border-primary focus:ring-primary/20" placeholder="0.00" type="number"/>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Summary / Calculations Column -->
+<div class="space-y-6">
+<div class="bg-primary text-white rounded-xl p-6 shadow-lg shadow-primary/20 sticky top-8">
+<h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined">calculate</span>
+                            Profit Analysis
+                        </h3>
+<div class="space-y-4">
+<div class="flex justify-between items-center pb-4 border-b border-white/20">
+<span class="text-white/80 text-sm">Landed Cost (Total)</span>
+<span class="font-bold text-xl">$0.00</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-white/80 text-sm">Cost Per Unit</span>
+<span class="font-medium">$0.00</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-white/80 text-sm">Shipping Cost</span>
+<span class="font-medium">$0.00</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-white/80 text-sm">Potential Profit</span>
+<span class="font-medium text-emerald-300">+$0.00</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-white/80 text-sm">Profit Margin</span>
+<span class="bg-white/20 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">0%</span>
+</div>
+</div>
+<div class="mt-8 pt-6 border-t border-white/20">
+<button class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 group">
+<span class="material-symbols-outlined">save</span>
+                                Save Item to Inventory
+                            </button>
+<button class="w-full mt-3 bg-white/10 hover:bg-white/20 text-white font-semibold py-3 rounded-xl transition-all">
+                                Cancel &amp; Discard
+                            </button>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+<h4 class="text-sm font-bold mb-4 text-slate-900 dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400">help_outline</span>
+                            Quick Tips
+                        </h4>
+<ul class="space-y-3 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+<li class="flex gap-2">
+<span class="text-primary">•</span>
+<span>Buying cost is converted from RMB to your local currency based on today's rate (1 RMB = 0.14 USD).</span>
+</li>
+<li class="flex gap-2">
+<span class="text-primary">•</span>
+<span>Shipping costs are calculated based on weight and the selected shipping method.</span>
+</li>
+<li class="flex gap-2">
+<span class="text-primary">•</span>
+<span>Ensure all weights are in Kilograms (kg) for accurate shipping estimates.</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
