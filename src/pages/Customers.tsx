@@ -36,6 +36,7 @@ const Customers = () => {
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
   const [showBulkInvoice, setShowBulkInvoice] = useState(false);
+  const [paymentDate, setPaymentDate] = useState<Date>(new Date());
 
   useEffect(() => {
     if (!businessId) return;
