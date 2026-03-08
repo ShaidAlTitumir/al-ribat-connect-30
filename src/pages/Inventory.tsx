@@ -3,9 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { Pencil, Trash2 } from "lucide-react";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 
-type InventoryTab = "list" | "add";
+type InventoryTab = "list" | "add" | "samples";
 
 const Inventory = () => {
   const [activeTab, setActiveTab] = useState<InventoryTab>("list");
@@ -14,7 +16,9 @@ const Inventory = () => {
     <div className="flex-1 flex flex-col min-w-0">
       <ExchangeRateHeader title="Inventory" />
       {activeTab === "list" ? (
-        <InventoryList onAdd={() => setActiveTab("add")} />
+        <InventoryList onAdd={() => setActiveTab("add")} onSamples={() => setActiveTab("samples")} />
+      ) : activeTab === "samples" ? (
+        <SampleOrders onBack={() => setActiveTab("list")} />
       ) : (
         <AddItem onBack={() => setActiveTab("list")} onSaved={() => setActiveTab("list")} />
       )}
@@ -23,7 +27,7 @@ const Inventory = () => {
 };
 
 /* ─── Inventory List View ─── */
-const InventoryList = ({ onAdd }: { onAdd: () => void }) => {
+const InventoryList = ({ onAdd, onSamples }: { onAdd: () => void; onSamples: () => void }) => {
   const { businessId } = useBusiness();
   const [items, setItems] = useState<any[]>([]);
   const [search, setSearch] = useState("");
@@ -124,6 +128,9 @@ const InventoryList = ({ onAdd }: { onAdd: () => void }) => {
               {f.label}
             </button>
           ))}
+          <button onClick={onSamples} className="flex items-center gap-1 bg-accent text-foreground px-4 py-1.5 rounded-full text-sm font-bold border border-border">
+            <span className="material-symbols-outlined text-[18px]">science</span> Samples
+          </button>
           <button onClick={onAdd} className="flex items-center gap-1 bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-bold">
             <span className="material-symbols-outlined text-[18px]">add</span> Add
           </button>
@@ -638,6 +645,327 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+/* ─── Sample Orders View ─── */
+const SampleOrders = ({ onBack }: { onBack: () => void }) => {
+  const { businessId, exchangeRate } = useBusiness();
+  const { user } = useAuth();
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<any>(null);
+  const [orderType, setOrderType] = useState<"buy" | "send">("buy");
+  const [filterType, setFilterType] = useState<"all" | "buy" | "send">("all");
+  const [form, setForm] = useState({
+    item_name: "", quantity: "1", cost_rmb: "", customer_name: "", supplier_name: "", notes: "",
+  });
+
+  useEffect(() => {
+    if (!businessId) return;
+    fetchOrders();
+  }, [businessId]);
+
+  const fetchOrders = async () => {
+    const { data } = await (supabase.from("sample_orders").select("*") as any)
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false });
+    setOrders(data || []);
+    setLoading(false);
+  };
+
+  const resetForm = () => {
+    setForm({ item_name: "", quantity: "1", cost_rmb: "", customer_name: "", supplier_name: "", notes: "" });
+    setEditingOrder(null);
+    setShowForm(false);
+  };
+
+  const handleSave = async () => {
+    if (!businessId || !user) return;
+    if (!form.item_name.trim()) { toast.error("Item name is required"); return; }
+    const qty = parseInt(form.quantity) || 1;
+    const cost = parseFloat(form.cost_rmb) || 0;
+
+    if (editingOrder) {
+      const { error } = await (supabase.from("sample_orders") as any)
+        .update({
+          type: orderType, item_name: form.item_name.trim(), quantity: qty,
+          cost_rmb: cost, customer_name: form.customer_name.trim() || null,
+          supplier_name: form.supplier_name.trim() || null, notes: form.notes.trim() || null,
+        })
+        .eq("id", editingOrder.id);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Sample order updated!");
+    } else {
+      const { error } = await (supabase.from("sample_orders") as any).insert({
+        business_id: businessId, user_id: user.id, type: orderType,
+        item_name: form.item_name.trim(), quantity: qty, cost_rmb: cost,
+        customer_name: form.customer_name.trim() || null,
+        supplier_name: form.supplier_name.trim() || null, notes: form.notes.trim() || null,
+      });
+      if (error) { toast.error(error.message); return; }
+      await supabase.from("activity_log").insert({
+        action: orderType === "buy" ? "Created sample buy order" : "Created sample send order",
+        details: { item_name: form.item_name, quantity: qty, cost_rmb: cost },
+        business_id: businessId, user_id: user.id,
+      });
+      toast.success("Sample order added!");
+    }
+    resetForm();
+    fetchOrders();
+  };
+
+  const handleEdit = (order: any) => {
+    setEditingOrder(order);
+    setOrderType(order.type);
+    setForm({
+      item_name: order.item_name, quantity: String(order.quantity),
+      cost_rmb: String(order.cost_rmb || ""), customer_name: order.customer_name || "",
+      supplier_name: order.supplier_name || "", notes: order.notes || "",
+    });
+    setShowForm(true);
+  };
+
+  const handleDelete = async (order: any) => {
+    if (!window.confirm(`Delete sample order for "${order.item_name}"?`)) return;
+    const { error } = await (supabase.from("sample_orders") as any).delete().eq("id", order.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Sample order deleted");
+    fetchOrders();
+  };
+
+  const handleStatusChange = async (order: any, status: string) => {
+    const { error } = await (supabase.from("sample_orders") as any)
+      .update({ status })
+      .eq("id", order.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Status updated to ${status}`);
+    fetchOrders();
+  };
+
+  const filtered = orders.filter(o => filterType === "all" || o.type === filterType);
+  const totalCostRmb = filtered.reduce((s, o) => s + (o.cost_rmb || 0), 0);
+  const buyCount = orders.filter(o => o.type === "buy").length;
+  const sendCount = orders.filter(o => o.type === "send").length;
+
+  const statusColors: Record<string, string> = {
+    pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    ordered: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    shipped: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    received: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    delivered: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    cancelled: "bg-destructive/10 text-destructive",
+  };
+
+  return (
+    <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground">
+            <span className="material-symbols-outlined text-[20px]">arrow_back</span> Back
+          </button>
+          <h2 className="text-xl lg:text-2xl font-black text-foreground">Sample Orders</h2>
+        </div>
+        <button onClick={() => { resetForm(); setShowForm(true); }}
+          className="flex items-center gap-1 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-bold">
+          <span className="material-symbols-outlined text-[18px]">add</span> New Sample Order
+        </button>
+      </header>
+
+      {/* Stats */}
+      <section className="grid grid-cols-3 gap-3 lg:gap-6">
+        {[
+          { label: "Buy Orders", value: String(buyCount), icon: "shopping_cart", iconColor: "text-primary" },
+          { label: "Send Orders", value: String(sendCount), icon: "local_shipping", iconColor: "text-primary" },
+          { label: "Total Cost", value: `¥${totalCostRmb.toFixed(0)}`, icon: "currency_yuan", iconColor: "text-primary" },
+        ].map((card) => (
+          <div key={card.label} className="bg-card p-4 lg:p-6 rounded-xl border border-border">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-muted-foreground text-xs lg:text-sm font-medium">{card.label}</span>
+              <span className={`material-symbols-outlined ${card.iconColor} text-[20px]`}>{card.icon}</span>
+            </div>
+            <div className="text-2xl lg:text-3xl font-bold text-foreground">{card.value}</div>
+          </div>
+        ))}
+      </section>
+
+      {/* Filter */}
+      <div className="flex items-center gap-2">
+        {[{ key: "all", label: "All" }, { key: "buy", label: "Buy" }, { key: "send", label: "Send" }].map((f) => (
+          <button key={f.key} onClick={() => setFilterType(f.key as any)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium ${
+              filterType === f.key ? "bg-primary text-primary-foreground" : "bg-card border border-border text-muted-foreground"
+            }`}>
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Add/Edit Form */}
+      {showForm && (
+        <section className="bg-card rounded-xl p-4 lg:p-6 border border-border space-y-4">
+          <h3 className="font-bold text-lg flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary">science</span>
+            {editingOrder ? "Edit Sample Order" : "New Sample Order"}
+          </h3>
+          <div className="flex p-1 bg-muted rounded-lg w-fit">
+            {(["buy", "send"] as const).map((t) => (
+              <button key={t} onClick={() => setOrderType(t)}
+                className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors ${
+                  orderType === t ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
+                }`}>
+                {t === "buy" ? "Buy from Supplier" : "Send to Customer"}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-foreground">Item Name</label>
+              <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground"
+                placeholder="e.g. Product sample" value={form.item_name}
+                onChange={(e) => setForm({ ...form, item_name: e.target.value })} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-foreground">Quantity</label>
+              <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number"
+                placeholder="1" value={form.quantity}
+                onChange={(e) => setForm({ ...form, quantity: e.target.value })} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-foreground">Cost (RMB)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">¥</span>
+                <input className="pl-7 w-full rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number"
+                  placeholder="0.00" value={form.cost_rmb}
+                  onChange={(e) => setForm({ ...form, cost_rmb: e.target.value })} />
+              </div>
+              {parseFloat(form.cost_rmb) > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  ≈ ৳{(parseFloat(form.cost_rmb) * exchangeRate).toFixed(0)} BDT @ {exchangeRate}
+                </span>
+              )}
+            </div>
+            {orderType === "buy" ? (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-foreground">Supplier Name</label>
+                <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground"
+                  placeholder="e.g. Guangzhou supplier" value={form.supplier_name}
+                  onChange={(e) => setForm({ ...form, supplier_name: e.target.value })} />
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-foreground">Customer Name</label>
+                <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground"
+                  placeholder="e.g. Customer for trial" value={form.customer_name}
+                  onChange={(e) => setForm({ ...form, customer_name: e.target.value })} />
+              </div>
+            )}
+            <div className="flex flex-col gap-1.5 md:col-span-2">
+              <label className="text-sm font-semibold text-foreground">Notes</label>
+              <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground"
+                placeholder="Any additional details..." value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={handleSave}
+              className="flex-1 bg-primary text-primary-foreground font-bold py-2.5 rounded-lg text-sm hover:bg-primary/90">
+              {editingOrder ? "Update" : "Add Sample Order"}
+            </button>
+            <button onClick={resetForm}
+              className="flex-1 bg-muted border border-border text-foreground font-bold py-2.5 rounded-lg text-sm">
+              Cancel
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* Orders List */}
+      {loading ? (
+        <div className="text-center py-12 text-muted-foreground">Loading...</div>
+      ) : filtered.length === 0 ? (
+        <div className="bg-card rounded-2xl border border-border min-h-[200px] flex flex-col items-center justify-center p-8 text-center">
+          <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-4">
+            <span className="material-symbols-outlined text-3xl text-muted-foreground/50">science</span>
+          </div>
+          <h3 className="text-lg font-bold mb-1 text-foreground">No sample orders</h3>
+          <p className="text-muted-foreground text-sm">Create your first sample order to get started.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((order) => (
+            <div key={order.id} className="bg-card rounded-xl border border-border p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                    order.type === "buy" ? "bg-primary/10 text-primary" : "bg-accent text-foreground"
+                  }`}>
+                    <span className="material-symbols-outlined text-[20px]">
+                      {order.type === "buy" ? "shopping_cart" : "local_shipping"}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="font-bold text-sm text-foreground">{order.item_name}</h4>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusColors[order.status] || "bg-muted text-muted-foreground"}`}>
+                        {order.status}
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground uppercase">
+                        {order.type}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
+                      <span>Qty: {order.quantity}</span>
+                      <span>¥{order.cost_rmb || 0} (≈ ৳{((order.cost_rmb || 0) * exchangeRate).toFixed(0)})</span>
+                      {order.supplier_name && <span>Supplier: {order.supplier_name}</span>}
+                      {order.customer_name && <span>Customer: {order.customer_name}</span>}
+                      <span>{format(new Date(order.created_at), "MMM d, yyyy")}</span>
+                    </div>
+                    {order.notes && (
+                      <p className="text-xs text-muted-foreground mt-1 italic">"{order.notes}"</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {/* Status dropdown */}
+                  <select
+                    value={order.status}
+                    onChange={(e) => handleStatusChange(order, e.target.value)}
+                    className="text-xs bg-muted border border-border rounded-lg px-2 py-1.5 text-foreground"
+                  >
+                    {order.type === "buy" ? (
+                      <>
+                        <option value="pending">Pending</option>
+                        <option value="ordered">Ordered</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="received">Received</option>
+                        <option value="cancelled">Cancelled</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="pending">Pending</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                      </>
+                    )}
+                  </select>
+                  <button onClick={() => handleEdit(order)}
+                    className="p-1.5 rounded-lg hover:bg-accent transition-colors">
+                    <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                  </button>
+                  <button onClick={() => handleDelete(order)}
+                    className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                    <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
