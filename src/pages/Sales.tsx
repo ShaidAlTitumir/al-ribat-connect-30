@@ -415,9 +415,23 @@ const Sales = () => {
                   </div>
                   <div>
                     <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Received (৳)</label>
-                    <input type="number" placeholder="Paid now" value={receivedAmount}
-                      onChange={(e) => setReceivedAmount(e.target.value)}
-                      className="w-full h-11 lg:h-12 bg-muted/50 border border-border rounded-xl px-3 text-sm font-semibold text-foreground focus:ring-2 focus:ring-primary/30 focus:border-primary/40 outline-none transition-all" />
+                    <div className="flex gap-2">
+                      <input type="number" placeholder="Paid now" value={receivedAmount}
+                        onChange={(e) => setReceivedAmount(e.target.value)}
+                        className="flex-1 h-11 lg:h-12 bg-muted/50 border border-border rounded-xl px-3 text-sm font-semibold text-foreground focus:ring-2 focus:ring-primary/30 focus:border-primary/40 outline-none transition-all" />
+                      <button
+                        type="button"
+                        onClick={() => setReceivedAmount(total > 0 ? String(total) : "")}
+                        disabled={total <= 0}
+                        className={`h-11 lg:h-12 px-3 rounded-xl text-[10px] lg:text-xs font-bold border transition-all active:scale-95 whitespace-nowrap ${
+                          parseFloat(receivedAmount) === total && total > 0
+                            ? "bg-emerald-500 text-white border-emerald-500"
+                            : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-950/50"
+                        } disabled:opacity-40`}
+                      >
+                        <span className="material-symbols-outlined text-[16px] lg:text-[18px]">paid</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
