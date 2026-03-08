@@ -4,6 +4,7 @@ import { useBusiness } from "@/contexts/BusinessContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
+import InvoiceModal from "@/components/InvoiceModal";
 import { format } from "date-fns";
 
 const Sales = () => {
