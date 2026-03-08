@@ -75,8 +75,17 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
         ))}
       </nav>
 
-      {/* Footer */}
-      <div className="p-3 sm:p-4 border-t border-sidebar-border">
+      {/* User info */}
+      <div className="p-3 sm:p-4 border-t border-sidebar-border space-y-2">
+        <div className="flex items-center gap-3 px-3 py-2">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
+            {initials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
+            <p className="text-[10px] text-muted-foreground capitalize">{userRole || "member"}</p>
+          </div>
+        </div>
         <NavLink to="/settings" className={linkClass("/settings")}>
           <span className="material-symbols-outlined text-[22px]" style={iconStyle("/settings")}>settings</span>
           <span>Settings</span>

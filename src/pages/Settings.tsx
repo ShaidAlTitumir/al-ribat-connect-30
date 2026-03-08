@@ -162,9 +162,14 @@ const Settings = () => {
                 <p className="font-bold text-foreground text-base sm:text-lg truncate">
                   {profile.full_name || "Your Name"}
                 </p>
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  {profile.username ? `@${profile.username}` : user?.email || ""}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                    {profile.username ? `@${profile.username}` : user?.email || ""}
+                  </p>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold capitalize bg-primary/10 text-primary">
+                    {userRole || "member"}
+                  </span>
+                </div>
               </div>
             </div>
 
