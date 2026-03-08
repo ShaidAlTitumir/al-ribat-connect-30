@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -6,27 +7,47 @@ interface AppSidebarProps {
   onClose: () => void;
 }
 
-const navItems = [
+const mainNav = [
   { icon: "home", label: "Home", path: "/" },
-  { icon: "inventory_2", label: "Inventory", path: "/inventory" },
   { icon: "receipt_long", label: "Sales", path: "/sales" },
-  { icon: "account_balance_wallet", label: "Expenses", path: "/expenses" },
-  { icon: "group", label: "Partners", path: "/partners" },
-  { icon: "description", label: "Reports", path: "/reports" },
-  { icon: "currency_exchange", label: "Wallet", path: "/wallet" },
   { icon: "person_search", label: "Customers", path: "/customers" },
+  { icon: "group", label: "Partners", path: "/partners" },
+];
+
+const moreNav = [
+  { icon: "inventory_2", label: "Inventory", path: "/inventory" },
+  { icon: "currency_exchange", label: "Wallet", path: "/wallet" },
+  { icon: "account_balance_wallet", label: "Expenses", path: "/expenses" },
+  { icon: "description", label: "Reports", path: "/reports" },
 ];
 
 const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
   const location = useLocation();
   const { signOut } = useAuth();
+  const [moreOpen, setMoreOpen] = useState(() =>
+    moreNav.some((item) => location.pathname === item.path)
+  );
+
+  const linkClass = (path: string) => {
+    const isActive = location.pathname === path;
+    return `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+      isActive
+        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+        : "text-sidebar-foreground hover:bg-muted"
+    }`;
+  };
+
+  const iconStyle = (path: string) =>
+    location.pathname === path
+      ? { fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }
+      : undefined;
 
   return (
     <aside
       className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col bg-sidebar border-r border-sidebar-border transition-transform duration-200 ease-in-out
         ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
     >
-      {/* Logo + close button */}
+      {/* Logo */}
       <div className="p-4 sm:p-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
@@ -41,41 +62,47 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 sm:px-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground hover:bg-muted"
-              }`}
-            >
-              <span
-                className="material-symbols-outlined text-[22px]"
-                style={isActive ? { fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" } : undefined}
-              >
-                {item.icon}
-              </span>
-              <span>{item.label}</span>
-            </NavLink>
-          );
-        })}
+        {mainNav.map((item) => (
+          <NavLink key={item.path} to={item.path} className={linkClass(item.path)}>
+            <span className="material-symbols-outlined text-[22px]" style={iconStyle(item.path)}>
+              {item.icon}
+            </span>
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+
+        {/* More section */}
+        <button
+          onClick={() => setMoreOpen(!moreOpen)}
+          className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-muted transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-[22px]">more_horiz</span>
+            <span>More</span>
+          </div>
+          <span className="material-symbols-outlined text-[18px] transition-transform" style={{ transform: moreOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+            expand_more
+          </span>
+        </button>
+
+        {moreOpen && (
+          <div className="pl-2 space-y-1">
+            {moreNav.map((item) => (
+              <NavLink key={item.path} to={item.path} className={linkClass(item.path)}>
+                <span className="material-symbols-outlined text-[22px]" style={iconStyle(item.path)}>
+                  {item.icon}
+                </span>
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+          </div>
+        )}
       </nav>
 
       {/* Footer */}
       <div className="p-3 sm:p-4 border-t border-sidebar-border">
-        <NavLink
-          to="/settings"
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-            location.pathname === "/settings"
-              ? "bg-sidebar-accent text-sidebar-accent-foreground"
-              : "text-sidebar-foreground hover:bg-muted"
-          }`}
-        >
-          <span className="material-symbols-outlined text-[22px]">settings</span>
+        <NavLink to="/settings" className={linkClass("/settings")}>
+          <span className="material-symbols-outlined text-[22px]" style={iconStyle("/settings")}>settings</span>
           <span>Settings</span>
         </NavLink>
         <button
