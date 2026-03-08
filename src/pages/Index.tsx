@@ -255,6 +255,38 @@ const Index = () => {
               </p>
             </div>
           </div>
+
+          {/* P&L Breakdown */}
+          <div className="bg-card rounded-xl border border-border p-3 lg:p-5">
+            <h3 className="text-xs lg:text-sm font-bold text-foreground mb-2 lg:mb-3 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-[16px] lg:text-[20px]">receipt_long</span>
+              Profit & Loss Breakdown
+            </h3>
+            <div className="space-y-1.5 text-[11px] lg:text-xs">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Total Revenue (Sales)</span>
+                <span className="font-bold text-foreground">৳{kpis.revenue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground pl-3">− Cost of Goods Sold</span>
+                <span className="font-medium text-destructive">৳{kpis.totalCOGS.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="border-t border-border my-1.5" />
+              <div className="flex justify-between">
+                <span className="font-semibold text-foreground">Gross Profit (Expected)</span>
+                <span className={`font-bold ${kpis.totalProfit >= 0 ? "text-emerald-600" : "text-destructive"}`}>৳{kpis.totalProfit.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground pl-3">− Operating Expenses</span>
+                <span className="font-medium text-destructive">৳{kpis.totalExpenses.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="border-t border-border my-1.5" />
+              <div className="flex justify-between">
+                <span className="font-bold text-foreground">Net Profit</span>
+                <span className={`font-bold ${kpis.netProfit >= 0 ? "text-emerald-600" : "text-destructive"}`}>৳{kpis.netProfit.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Analytics Row */}
