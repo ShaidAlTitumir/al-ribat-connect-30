@@ -325,9 +325,9 @@ const Partners = () => {
             ) : (
               <div className="space-y-2">
                 {acceptedPartners.map((p) => (
-                  <div key={p.id} className="p-3 bg-muted rounded-lg">
+                  <div key={p.id} className="bg-muted rounded-lg overflow-hidden">
                     {editingPartner?.id === p.id ? (
-                      <div className="space-y-2">
+                      <div className="p-3 space-y-2">
                         <div className="grid grid-cols-2 gap-2">
                           <input className="bg-card rounded-lg px-3 py-2 text-sm border border-border text-foreground"
                             placeholder="Name" value={editForm.name}
@@ -360,34 +360,68 @@ const Partners = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
-                            {p.name?.charAt(0).toUpperCase() || "?"}
+                      <>
+                        <button
+                          className="w-full p-3 flex items-center justify-between"
+                          onClick={() => setExpandedPartnerId(expandedPartnerId === p.id ? null : p.id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
+                              {p.name?.charAt(0).toUpperCase() || "?"}
+                            </div>
+                            <div className="text-left">
+                              <p className="font-bold text-sm">{p.name}</p>
+                              <p className="text-xs text-muted-foreground capitalize">{p.role}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-bold text-sm">{p.name}</p>
-                            <p className="text-xs text-muted-foreground capitalize">{p.role}
-                              {p.phone && <span> · {p.phone}</span>}
-                              {p.email && <span> · {p.email}</span>}
-                            </p>
+                          <div className="flex items-center gap-1">
+                            {expandedPartnerId === p.id ? (
+                              <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                            )}
                           </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => handleEditPartner(p)}
-                            className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-                            title="Edit partner">
-                            <span className="material-symbols-outlined text-base">edit</span>
-                          </button>
-                          {p.user_id !== user?.id && (
-                            <button onClick={() => handleRemovePartner(p)}
-                              className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                              title="Remove partner">
-                              <span className="material-symbols-outlined text-base">delete</span>
-                            </button>
-                          )}
-                        </div>
-                      </div>
+                        </button>
+                        {expandedPartnerId === p.id && (
+                          <div className="px-3 pb-3 space-y-2 border-t border-border pt-2">
+                            <div className="space-y-1.5">
+                              {p.phone && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <Phone className="w-3.5 h-3.5" />
+                                  <span>{p.phone}</span>
+                                </div>
+                              )}
+                              {p.email && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <Mail className="w-3.5 h-3.5" />
+                                  <span>{p.email}</span>
+                                </div>
+                              )}
+                              {p.address && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <MapPin className="w-3.5 h-3.5" />
+                                  <span>{p.address}</span>
+                                </div>
+                              )}
+                              {!p.phone && !p.email && !p.address && (
+                                <p className="text-xs text-muted-foreground italic">No contact details added yet.</p>
+                              )}
+                            </div>
+                            <div className="flex gap-1.5 pt-1">
+                              <button onClick={() => handleEditPartner(p)}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-accent text-foreground text-xs font-bold hover:bg-accent/80 transition-colors">
+                                <span className="material-symbols-outlined text-sm">edit</span> Edit
+                              </button>
+                              {p.user_id !== user?.id && (
+                                <button onClick={() => handleRemovePartner(p)}
+                                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-bold hover:bg-destructive/20 transition-colors">
+                                  <span className="material-symbols-outlined text-sm">delete</span> Remove
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 ))}
