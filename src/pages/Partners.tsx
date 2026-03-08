@@ -28,7 +28,33 @@ const Partners = () => {
 
   const fetchData = async () => {
     const { data: p } = await supabase.from("partners").select("*").eq("business_id", businessId!);
-    setPartners(p || []);
+    let partnersList = p || [];
+
+    // Auto-add the current user as primary partner if not already listed
+    if (user && !partnersList.find(pt => pt.user_id === user.id)) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+      const { data: newPartner, error } = await supabase.from("partners").insert({
+        name: profile?.full_name || "Owner",
+        role: "admin",
+        invitation_code: code,
+        status: "accepted",
+        business_id: businessId,
+        user_id: user.id,
+        invited_by: user.id,
+      }).select().maybeSingle();
+
+      if (!error && newPartner) {
+        partnersList = [...partnersList, newPartner];
+      }
+    }
+
+    setPartners(partnersList);
     const { data: c } = await supabase.from("capital_contributions").select("*, partners(name)").eq("business_id", businessId!);
     setContributions(c || []);
     const { data: inv } = await supabase.from("partners").select("*").eq("business_id", businessId!).eq("status", "pending");
