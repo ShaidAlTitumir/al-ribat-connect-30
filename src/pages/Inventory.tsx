@@ -37,15 +37,28 @@ const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamp
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [itemStats, setItemStats] = useState<Record<string, { totalCost: number; totalSale: number; profit: number }>>({});
 
   const fetchItems = async () => {
     if (!businessId) return;
-    const { data } = await supabase
-      .from("inventory_items")
-      .select("*")
-      .eq("business_id", businessId)
-      .order("created_at", { ascending: false });
-    setItems(data || []);
+    const [{ data: itemsData }, { data: purchases }, { data: sales }] = await Promise.all([
+      supabase.from("inventory_items").select("*").eq("business_id", businessId).order("created_at", { ascending: false }),
+      supabase.from("purchase_transactions").select("item_id, total_landed_cost_bdt").eq("business_id", businessId),
+      supabase.from("sales").select("item_id, unit_price_bdt, quantity, expected_profit").eq("business_id", businessId),
+    ]);
+    setItems(itemsData || []);
+
+    const stats: Record<string, { totalCost: number; totalSale: number; profit: number }> = {};
+    (purchases || []).forEach((p) => {
+      if (!stats[p.item_id]) stats[p.item_id] = { totalCost: 0, totalSale: 0, profit: 0 };
+      stats[p.item_id].totalCost += p.total_landed_cost_bdt || 0;
+    });
+    (sales || []).forEach((s) => {
+      if (!stats[s.item_id]) stats[s.item_id] = { totalCost: 0, totalSale: 0, profit: 0 };
+      stats[s.item_id].totalSale += (s.unit_price_bdt || 0) * (s.quantity || 0);
+      stats[s.item_id].profit += s.expected_profit || 0;
+    });
+    setItemStats(stats);
     setLoading(false);
   };
 
@@ -189,7 +202,7 @@ const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamp
                   </span>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-xs mb-3">
+              <div className="grid grid-cols-3 gap-2 text-xs mb-2">
                 <div>
                   <span className="text-muted-foreground text-[10px]">Weight</span>
                   <p className="font-semibold text-foreground">{item.weight_per_unit} kg</p>
@@ -203,6 +216,31 @@ const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamp
                   <p className="font-semibold text-foreground">≤ {threshold}</p>
                 </div>
               </div>
+              {/* Cost / Sale / Profit stats */}
+              {(() => {
+                const st = itemStats[item.id];
+                if (!st) return null;
+                const hasData = st.totalCost > 0 || st.totalSale > 0;
+                if (!hasData) return null;
+                return (
+                  <div className="grid grid-cols-3 gap-2 text-xs mb-2 bg-muted/50 rounded-lg p-2">
+                    <div>
+                      <span className="text-muted-foreground text-[10px]">Total Cost</span>
+                      <p className="font-semibold text-foreground">৳{Math.round(st.totalCost).toLocaleString("en-IN")}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground text-[10px]">Total Sale</span>
+                      <p className="font-semibold text-foreground">৳{Math.round(st.totalSale).toLocaleString("en-IN")}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground text-[10px]">Profit</span>
+                      <p className={`font-semibold ${st.profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                        ৳{Math.round(st.profit).toLocaleString("en-IN")}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
               <div className="flex items-center gap-2 border-t border-border pt-2.5">
                 <button onClick={() => onEdit(item)} className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-primary hover:bg-primary/10 rounded-lg py-1.5 transition-all active:scale-95">
                   <span className="material-symbols-outlined text-[16px]">edit</span> Edit
