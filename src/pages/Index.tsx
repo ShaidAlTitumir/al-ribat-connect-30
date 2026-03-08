@@ -230,7 +230,96 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Partner Equity */}
+        {/* Analytics Row: Daily Sales + Top Items + Low Stock */}
+        <section>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Daily Sales Chart */}
+            <div className="lg:col-span-2 bg-card rounded-xl border border-border p-4 lg:p-5">
+              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[20px]">bar_chart</span>
+                Last 7 Days Sales
+              </h3>
+              {dailySales.some(d => d.revenue > 0) ? (
+                <div className="h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={dailySales} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={45}
+                        tickFormatter={(v: number) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)} />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
+                        formatter={(value: number) => [`৳${value.toLocaleString("en-IN")}`, undefined]}
+                      />
+                      <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--primary))" radius={[4,4,0,0]} barSize={20} />
+                      <Bar dataKey="profit" name="Profit" fill="hsl(142, 71%, 45%)" radius={[4,4,0,0]} barSize={20} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-48 flex items-center justify-center text-center">
+                  <div>
+                    <span className="material-symbols-outlined text-3xl text-muted-foreground/30 block mb-1">show_chart</span>
+                    <p className="text-xs text-muted-foreground">No sales in the last 7 days</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Top Items + Low Stock */}
+            <div className="space-y-4">
+              {/* Top Selling Items */}
+              <div className="bg-card rounded-xl border border-border p-4">
+                <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-amber-600 text-[20px]">emoji_events</span>
+                  Top Items (7d)
+                </h3>
+                {topItems.length > 0 ? (
+                  <div className="space-y-2">
+                    {topItems.map((item, i) => (
+                      <div key={item.name} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-muted-foreground font-bold w-4">#{i + 1}</span>
+                          <span className="font-medium truncate">{item.name}</span>
+                        </div>
+                        <div className="text-right shrink-0 ml-2">
+                          <span className="font-bold">৳{item.revenue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                          <span className="text-muted-foreground ml-1">({item.quantity})</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground text-center py-3">No sales data</p>
+                )}
+              </div>
+
+              {/* Low Stock Alerts */}
+              <div className="bg-card rounded-xl border border-border p-4">
+                <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-destructive text-[20px]">warning</span>
+                  Low Stock Alerts
+                </h3>
+                {lowStockItems.length > 0 ? (
+                  <div className="space-y-2">
+                    {lowStockItems.map(item => (
+                      <div key={item.name} className="flex items-center justify-between text-xs">
+                        <span className="font-medium truncate">{item.name}</span>
+                        <span className={`font-bold px-1.5 py-0.5 rounded ${item.stock === 0 ? "bg-destructive/10 text-destructive" : "bg-amber-50 text-amber-700"}`}>
+                          {item.stock === 0 ? "Out of stock" : `${item.stock} left`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground text-center py-3">All items well stocked ✓</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+
         <section>
           <h3 className="text-base lg:text-lg font-bold mb-3">Partner Equity</h3>
           {partners.length === 0 ? (
