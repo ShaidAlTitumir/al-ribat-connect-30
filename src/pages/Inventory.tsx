@@ -190,7 +190,7 @@ const InventoryList = ({ onAdd }: { onAdd: () => void }) => {
 const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void }) => {
   const { businessId, exchangeRate } = useBusiness();
   const { user } = useAuth();
-  const [itemMode, setItemMode] = useState<"new" | "restock">("new");
+  const [itemMode, setItemMode] = useState<"new" | "existing">("new");
   const [shippingMethod, setShippingMethod] = useState("sea");
   const [saving, setSaving] = useState(false);
   const [existingItems, setExistingItems] = useState<any[]>([]);
@@ -272,11 +272,12 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const handleSave = async () => {
     if (!businessId || !user) return;
     if (itemMode === "new" && !form.name.trim()) { toast.error("Item name is required"); return; }
-    if (itemMode === "restock" && !selectedItemId) { toast.error("Select an item to restock"); return; }
+    if (itemMode === "existing" && !form.name.trim()) { toast.error("Item name is required"); return; }
+    if (qty <= 0) { toast.error("Quantity must be greater than 0"); return; }
     if (qty <= 0) { toast.error("Quantity must be greater than 0"); return; }
 
-    // Wallet balance check — only when there's a purchase cost
-    if (totalLanded > 0) {
+    // Wallet balance check — only for new purchases (not existing items)
+    if (itemMode === "new" && totalLanded > 0) {
       if (walletBdt < totalLanded) {
         toast.error(`Insufficient wallet balance. Need ৳${totalLanded.toFixed(0)} but only ৳${Math.max(0, walletBdt).toFixed(0)} available.`);
         return;
@@ -297,40 +298,46 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
         if (error) throw error;
         itemId = newItem.id;
       } else {
-        // Restock: add to existing stock
-        const existing = existingItems.find((i) => i.id === selectedItemId);
-        if (!existing) throw new Error("Item not found");
-        const { error } = await supabase.from("inventory_items")
-          .update({ current_stock: existing.current_stock + qty })
-          .eq("id", selectedItemId);
+        // Existing item — add without purchase cost (pre-existing stock)
+        const { data: newItem, error } = await supabase.from("inventory_items").insert({
+          name: form.name.trim(), category: form.category, weight_per_unit: weight,
+          current_stock: qty, default_selling_price: sellPrice,
+          low_stock_threshold: parseInt(form.lowStockThreshold) || 5,
+          business_id: businessId, user_id: user.id,
+        } as any).select().single();
         if (error) throw error;
+        itemId = newItem.id;
       }
 
-      // Record purchase transaction
-      await supabase.from("purchase_transactions").insert({
-        item_id: itemId, quantity: qty, buying_cost_per_unit_rmb: buyRmb,
-        shipping_method: shippingMethod, shipping_rate_bdt_per_kg: shipRate,
-        additional_cost_bdt: addCost, total_landed_cost_bdt: totalLanded,
-        landed_cost_per_unit_bdt: landedPerUnit, exchange_rate_used: activeRate,
-        business_id: businessId, user_id: user.id,
-      });
+      // Record purchase transaction (only for new purchases, not existing items)
+      if (itemMode === "new" && totalLanded > 0) {
+        await supabase.from("purchase_transactions").insert({
+          item_id: itemId, quantity: qty, buying_cost_per_unit_rmb: buyRmb,
+          shipping_method: shippingMethod, shipping_rate_bdt_per_kg: shipRate,
+          additional_cost_bdt: addCost, total_landed_cost_bdt: totalLanded,
+          landed_cost_per_unit_bdt: landedPerUnit, exchange_rate_used: activeRate,
+          business_id: businessId, user_id: user.id,
+        });
+      }
 
       // Log activity
       await supabase.from("activity_log").insert({
-        action: itemMode === "new" ? "Added new inventory item" : "Restocked inventory item",
+        action: itemMode === "new" ? "Added new inventory item" : "Added existing item",
         details: { 
-          item_name: itemMode === "new" ? form.name : existingItems.find(i => i.id === selectedItemId)?.name, 
+          item_name: form.name, 
           quantity: qty,
-          buying_cost_rmb: buyRmb,
-          shipping_method: shippingMethod,
-          total_landed_cost: totalLanded,
-          landed_per_unit: landedPerUnit,
-          rate: activeRate,
+          ...(itemMode === "new" ? {
+            buying_cost_rmb: buyRmb,
+            shipping_method: shippingMethod,
+            total_landed_cost: totalLanded,
+            landed_per_unit: landedPerUnit,
+            rate: activeRate,
+          } : {}),
         },
         business_id: businessId, user_id: user.id,
       });
 
-      toast.success(itemMode === "new" ? "Item added to inventory!" : "Item restocked!");
+      toast.success(itemMode === "new" ? "Item added to inventory!" : "Existing item added!");
       onSaved();
     } catch (err: any) {
       toast.error(err.message || "Failed to save");
@@ -348,15 +355,15 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
           <button onClick={onBack} className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground">
             <span className="material-symbols-outlined text-[20px]">arrow_back</span> Back
           </button>
-          <h2 className="text-xl lg:text-2xl font-black text-foreground">Add / Restock Item</h2>
+          <h2 className="text-xl lg:text-2xl font-black text-foreground">Add Item</h2>
         </div>
         <div className="bg-card border border-border p-1 rounded-xl flex">
-          {(["new", "restock"] as const).map((m) => (
+          {(["new", "existing"] as const).map((m) => (
             <button key={m} onClick={() => setItemMode(m)}
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 itemMode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
               }`}
-            >{m === "new" ? "New Item" : "Restock"}</button>
+            >{m === "new" ? "New Purchase" : "Existing Item"}</button>
           ))}
         </div>
       </header>
@@ -405,16 +412,46 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col gap-1.5 md:col-span-2">
-                  <label className="text-sm font-semibold text-foreground">Select Item</label>
-                  <select className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground"
-                    value={selectedItemId} onChange={(e) => setSelectedItemId(e.target.value)}>
-                    <option value="">Choose an item...</option>
-                    {existingItems.map((item) => (
-                      <option key={item.id} value={item.id}>{item.name} ({item.current_stock} in stock)</option>
-                    ))}
-                  </select>
-                </div>
+                <>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-foreground">Item Name</label>
+                    <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      placeholder="e.g. Existing product name" value={form.name} onChange={(e) => updateForm("name", e.target.value)} />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-foreground">Category</label>
+                    {showCustomCategory ? (
+                      <div className="flex gap-2">
+                        <input className="flex-1 rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          placeholder="Enter new category" value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} />
+                        <button onClick={() => {
+                          if (customCategory.trim()) {
+                            setSavedCategories((prev) => [...prev, customCategory.trim()]);
+                            updateForm("category", customCategory.trim());
+                            setCustomCategory("");
+                            setShowCustomCategory(false);
+                          }
+                        }} className="px-3 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold">Add</button>
+                        <button onClick={() => setShowCustomCategory(false)} className="px-3 py-2 bg-muted border border-border rounded-lg text-sm text-muted-foreground">✕</button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <select className="flex-1 rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" value={form.category} onChange={(e) => updateForm("category", e.target.value)}>
+                          {savedCategories.map((c) => <option key={c}>{c}</option>)}
+                        </select>
+                        <button onClick={() => setShowCustomCategory(true)} className="px-3 py-2 bg-muted border border-border rounded-lg text-muted-foreground hover:text-foreground" title="Add custom category">
+                          <span className="material-symbols-outlined text-[18px]">add</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="md:col-span-2 bg-muted/50 border border-border rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px]">info</span>
+                      Existing items are products you already have — no wallet balance needed. Costing section is optional.
+                    </p>
+                  </div>
+                </>
               )}
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-foreground">Quantity</label>
@@ -426,7 +463,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                 <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" step="0.01" placeholder="0.00"
                   value={form.weightPerUnit} onChange={(e) => updateForm("weightPerUnit", e.target.value)} />
               </div>
-              {itemMode === "new" && (
+              {(
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-foreground">Low Stock Alert Threshold</label>
                   <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" placeholder="5"
