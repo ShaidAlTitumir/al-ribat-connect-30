@@ -291,8 +291,9 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
         const { data: newItem, error } = await supabase.from("inventory_items").insert({
           name: form.name.trim(), category: form.category, weight_per_unit: weight,
           current_stock: qty, default_selling_price: sellPrice,
+          low_stock_threshold: parseInt(form.lowStockThreshold) || 5,
           business_id: businessId, user_id: user.id,
-        }).select().single();
+        } as any).select().single();
         if (error) throw error;
         itemId = newItem.id;
       } else {
