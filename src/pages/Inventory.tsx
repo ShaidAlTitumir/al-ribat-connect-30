@@ -33,7 +33,6 @@ const Inventory = () => {
 const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamples: () => void; onEdit: (item: any) => void }) => {
   const { businessId } = useBusiness();
   const { user } = useAuth();
-  const { businessId } = useBusiness();
   const [items, setItems] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
