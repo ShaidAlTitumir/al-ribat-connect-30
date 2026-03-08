@@ -962,13 +962,13 @@ const Business = () => {
                       {!hasPartners && (
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                            Type "{b.name}" to confirm
+                            Type "<span className="text-destructive">{b.name.toUpperCase()}</span>" to confirm
                           </label>
                           <input
-                            className="w-full bg-background rounded-lg px-3 py-2 text-sm border border-destructive/30 text-foreground"
-                            placeholder={b.name}
+                            className="w-full bg-background rounded-lg px-3 py-2 text-sm border border-destructive/30 text-foreground uppercase"
+                            placeholder={b.name.toUpperCase()}
                             value={deleteConfirmText}
-                            onChange={(e) => setDeleteConfirmText(e.target.value)}
+                            onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
                           />
                         </div>
                       )}
