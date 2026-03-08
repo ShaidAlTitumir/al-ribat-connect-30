@@ -287,9 +287,28 @@ const Business = () => {
 
     if (vote === "rejected") {
       // Cancel the whole request
+      const { data: reqData } = await (supabase
+        .from("business_deletion_requests")
+        .select("business_id, requested_by") as any)
+        .eq("id", requestId)
+        .single();
+
       await (supabase.from("business_deletion_requests") as any)
         .update({ status: "rejected" })
         .eq("id", requestId);
+
+      // Notify requester
+      if (reqData && reqData.requested_by !== user.id) {
+        const biz = businesses.find(b => b.id === reqData.business_id);
+        await (supabase.from("notifications") as any).insert({
+          user_id: reqData.requested_by,
+          business_id: reqData.business_id,
+          title: "Deletion Request Rejected",
+          message: `A partner rejected the deletion request for "${biz?.name || "your business"}".`,
+          type: "deletion_request",
+        });
+      }
+
       toast.info("You rejected the deletion request");
     } else {
       // Check if all partners approved
@@ -308,6 +327,26 @@ const Business = () => {
           .single();
 
         if (req) {
+          // Notify all members that business is deleted
+          const { data: members } = await (supabase
+            .from("business_members")
+            .select("user_id") as any)
+            .eq("business_id", req.business_id);
+          
+          const biz = businesses.find(b => b.id === req.business_id);
+          const memberNotifs = (members || [])
+            .filter((m: any) => m.user_id !== user.id)
+            .map((m: any) => ({
+              user_id: m.user_id,
+              business_id: req.business_id,
+              title: "Business Deleted",
+              message: `"${biz?.name || "A business"}" has been permanently deleted after all partners approved.`,
+              type: "deletion_request",
+            }));
+          if (memberNotifs.length > 0) {
+            await (supabase.from("notifications") as any).insert(memberNotifs);
+          }
+
           // Delete the business
           await supabase.from("businesses").delete().eq("id", req.business_id);
           await (supabase.from("business_deletion_requests") as any)
@@ -321,6 +360,23 @@ const Business = () => {
           toast.success("All partners approved — business deleted");
         }
       } else {
+        // Notify requester about the approval
+        const { data: reqData } = await (supabase
+          .from("business_deletion_requests")
+          .select("business_id, requested_by") as any)
+          .eq("id", requestId)
+          .single();
+        
+        if (reqData && reqData.requested_by !== user.id) {
+          const biz = businesses.find(b => b.id === reqData.business_id);
+          await (supabase.from("notifications") as any).insert({
+            user_id: reqData.requested_by,
+            business_id: reqData.business_id,
+            title: "Partner Approved Deletion",
+            message: `A partner approved the deletion of "${biz?.name || "your business"}". Waiting for remaining approvals.`,
+            type: "deletion_request",
+          });
+        }
         toast.success("Your approval recorded. Waiting for other partners.");
       }
     }
