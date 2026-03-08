@@ -503,8 +503,8 @@ const Sales = () => {
 
           </div>
 
-          {/* Recent Sales — desktop: inside grid; mobile: history tab */}
-          <div className={`lg:col-span-2 ${mobileTab !== "history" ? "hidden lg:block" : ""}`}>
+          {/* Recent Sales — desktop: inside left column; mobile: history tab */}
+          <div className={`${mobileTab !== "history" ? "hidden lg:block" : ""}`}>
 
             {/* Sales Stats Bar */}
             {recentSales.length > 0 && (
