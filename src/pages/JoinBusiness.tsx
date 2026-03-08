@@ -36,6 +36,7 @@ const JoinBusiness = () => {
 
     setLoading(true);
     try {
+      // Find pending partner with this code
       const { data: partner, error: lookupError } = await supabase
         .from("partners")
         .select("*")
@@ -51,12 +52,28 @@ const JoinBusiness = () => {
         return;
       }
 
+      // Check expiration
+      if (partner.expires_at && new Date(partner.expires_at) < new Date()) {
+        setError("This invitation code has expired");
+        setLoading(false);
+        return;
+      }
+
+      // Update partner record to link user
       const { error: updateError } = await supabase
         .from("partners")
         .update({ user_id: user.id, status: "accepted" })
         .eq("id", partner.id);
 
       if (updateError) throw updateError;
+
+      // Update user's profile to link to this business
+      if (partner.business_id) {
+        await supabase
+          .from("profiles")
+          .update({ business_id: partner.business_id, role: partner.role || "working" })
+          .eq("user_id", user.id);
+      }
 
       toast.success(`Welcome to the business, ${partner.name}!`);
       navigate("/");
