@@ -128,6 +128,40 @@ const Index = () => {
     setPartners(partnerEquities);
 
     setActivities(actsRes.data || []);
+
+    // Daily sales chart (last 7 days)
+    const recentSales = recentSalesRes.data || [];
+    const dayMap: Record<string, { revenue: number; profit: number }> = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = subDays(new Date(), i);
+      const key = format(d, "dd MMM");
+      dayMap[key] = { revenue: 0, profit: 0 };
+    }
+    recentSales.forEach((s: any) => {
+      const key = format(new Date(s.created_at), "dd MMM");
+      if (dayMap[key]) {
+        dayMap[key].revenue += s.unit_price_bdt * s.quantity;
+        dayMap[key].profit += s.expected_profit;
+      }
+    });
+    setDailySales(Object.entries(dayMap).map(([day, v]) => ({ day, ...v })));
+
+    // Top selling items (from recent sales)
+    const itemMap: Record<string, { name: string; quantity: number; revenue: number }> = {};
+    recentSales.forEach((s: any) => {
+      const name = s.inventory_items?.name || "Unknown";
+      if (!itemMap[name]) itemMap[name] = { name, quantity: 0, revenue: 0 };
+      itemMap[name].quantity += s.quantity;
+      itemMap[name].revenue += s.unit_price_bdt * s.quantity;
+    });
+    setTopItems(Object.values(itemMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5));
+
+    // Low stock alerts
+    const lowStock = invItems
+      .filter(i => (i as any).current_stock <= (i as any).low_stock_threshold)
+      .map(i => ({ name: (i as any).name, stock: (i as any).current_stock, threshold: (i as any).low_stock_threshold }))
+      .sort((a, b) => a.stock - b.stock);
+    setLowStockItems(lowStock);
   };
 
   const colors = ["bg-primary", "bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-purple-500"];
