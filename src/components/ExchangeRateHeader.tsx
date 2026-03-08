@@ -26,7 +26,7 @@ const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
   };
 
   return (
-    <header className="h-14 border-b border-border bg-card/90 backdrop-blur-md sticky top-[3.5rem] lg:top-0 z-10 px-4 lg:px-8 flex items-center justify-between">
+    <header className="h-14 border-b border-border bg-card/90 backdrop-blur-md sticky top-16 lg:top-0 z-10 px-4 lg:px-8 flex items-center justify-between">
       <h2 className="text-base lg:text-lg font-bold text-foreground truncate">{title}</h2>
       <div className="flex items-center gap-1.5">
         <NotificationBell />
