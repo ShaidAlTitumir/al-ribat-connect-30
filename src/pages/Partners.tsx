@@ -350,9 +350,18 @@ const Partners = () => {
                         <p className="font-bold text-sm">{p.name}</p>
                         <p className="text-xs text-muted-foreground capitalize">{p.role}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-sm">৳{p.totalCapital.toFixed(0)}</p>
-                        <p className="text-xs text-primary font-bold">{pct.toFixed(1)}%</p>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="font-bold text-sm">৳{p.totalCapital.toFixed(0)}</p>
+                          <p className="text-xs text-primary font-bold">{pct.toFixed(1)}%</p>
+                        </div>
+                        <button
+                          onClick={() => handleRemovePartner(p)}
+                          className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                          title="Remove partner"
+                        >
+                          <span className="material-symbols-outlined text-base">person_remove</span>
+                        </button>
                       </div>
                     </div>
                   );
