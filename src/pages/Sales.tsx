@@ -67,7 +67,7 @@ const Sales = () => {
 
   const total = quantity * (parseFloat(unitPrice) || 0);
   const due = total - (parseFloat(receivedAmount) || 0);
-  const profit = (parseFloat(unitPrice) || 0 - landedCost) * quantity;
+  const profit = ((parseFloat(unitPrice) || 0) - landedCost) * quantity;
 
   const handleSave = async () => {
     if (!businessId || !user) return;
