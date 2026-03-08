@@ -62,107 +62,107 @@ const InventoryList = ({ onAdd, onSamples }: { onAdd: () => void; onSamples: () 
   const lowStockItems = items.filter((i) => i.current_stock > 0 && i.current_stock <= (i.low_stock_threshold ?? 5));
 
   return (
-    <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
+    <div className="p-4 lg:p-8 space-y-4 lg:space-y-6 max-w-7xl mx-auto w-full">
       {/* Stock Summary */}
-      <section className="grid grid-cols-3 gap-3 lg:gap-6">
+      <section className="grid grid-cols-3 gap-2 lg:gap-6">
         {[
-          { label: "Total Items", value: String(totalItems), icon: "inventory", iconColor: "text-primary" },
+          { label: "Total", value: String(totalItems), icon: "inventory", iconColor: "text-primary" },
           { label: "Low Stock", value: String(lowStock), icon: "warning", iconColor: "text-amber-500" },
-          { label: "Out of Stock", value: String(outOfStock), icon: "error", iconColor: "text-destructive" },
+          { label: "Out", value: String(outOfStock), icon: "error", iconColor: "text-destructive" },
         ].map((card) => (
-          <div key={card.label} className="bg-card p-4 lg:p-6 rounded-xl border border-border">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-muted-foreground text-xs lg:text-sm font-medium">{card.label}</span>
-              <span className={`material-symbols-outlined ${card.iconColor} text-[20px]`}>{card.icon}</span>
+          <div key={card.label} className="bg-card p-3 lg:p-6 rounded-xl border border-border">
+            <div className="flex items-center justify-between mb-1 lg:mb-2">
+              <span className="text-muted-foreground text-[10px] lg:text-sm font-medium">{card.label}</span>
+              <span className={`material-symbols-outlined ${card.iconColor} text-[16px] lg:text-[20px]`}>{card.icon}</span>
             </div>
-            <div className="text-2xl lg:text-3xl font-bold text-foreground">{card.value}</div>
+            <div className="text-xl lg:text-3xl font-bold text-foreground">{card.value}</div>
           </div>
         ))}
       </section>
 
       {/* Low Stock Alert Banner */}
       {lowStockItems.length > 0 && (
-        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
-          <span className="material-symbols-outlined text-amber-600 text-[24px] mt-0.5">warning</span>
+        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-3 flex items-start gap-2">
+          <span className="material-symbols-outlined text-amber-600 text-[20px] mt-0.5 shrink-0">warning</span>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-amber-800 dark:text-amber-300 text-sm">Low Stock Alert</p>
-            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-              {lowStockItems.map(i => `${i.name} (${i.current_stock} left)`).join(", ")}
+            <p className="font-bold text-amber-800 dark:text-amber-300 text-xs">Low Stock Alert</p>
+            <p className="text-[10px] text-amber-700 dark:text-amber-400 mt-0.5 line-clamp-2">
+              {lowStockItems.map(i => `${i.name} (${i.current_stock})`).join(", ")}
             </p>
           </div>
         </div>
       )}
 
       {outOfStock > 0 && (
-        <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-4 flex items-start gap-3">
-          <span className="material-symbols-outlined text-destructive text-[24px] mt-0.5">error</span>
+        <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-3 flex items-start gap-2">
+          <span className="material-symbols-outlined text-destructive text-[20px] mt-0.5 shrink-0">error</span>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-destructive text-sm">Out of Stock</p>
-            <p className="text-xs text-destructive/80 mt-0.5">
-              {items.filter(i => i.current_stock === 0).map(i => i.name).join(", ")} — need restocking
+            <p className="font-bold text-destructive text-xs">Out of Stock</p>
+            <p className="text-[10px] text-destructive/80 mt-0.5 line-clamp-2">
+              {items.filter(i => i.current_stock === 0).map(i => i.name).join(", ")}
             </p>
           </div>
         </div>
       )}
 
-      {/* Search & Filter */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">search</span>
-          <input
-            className="w-full bg-card border border-border rounded-lg pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-foreground"
-            placeholder="Search inventory items..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          {[{ key: "all", label: "All Items" }, { key: "low", label: "Low Stock" }, { key: "out", label: "Out of Stock" }].map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium ${
-                filter === f.key ? "bg-primary text-primary-foreground" : "bg-card border border-border text-muted-foreground"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-          <button onClick={onSamples} className="flex items-center gap-1 bg-accent text-foreground px-4 py-1.5 rounded-full text-sm font-bold border border-border">
-            <span className="material-symbols-outlined text-[18px]">science</span> Samples
+      {/* Search */}
+      <div className="relative">
+        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-[20px]">search</span>
+        <input
+          className="w-full bg-card border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-foreground"
+          placeholder="Search inventory items..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      {/* Filter & Actions — horizontal scroll on mobile */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-4 px-4 lg:mx-0 lg:px-0 scrollbar-hide">
+        {[{ key: "all", label: "All Items" }, { key: "low", label: "Low Stock" }, { key: "out", label: "Out of Stock" }].map((f) => (
+          <button
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            className={`px-3 py-1.5 rounded-full text-xs lg:text-sm font-medium whitespace-nowrap shrink-0 transition-all ${
+              filter === f.key ? "bg-primary text-primary-foreground" : "bg-card border border-border text-muted-foreground"
+            }`}
+          >
+            {f.label}
           </button>
-          <button onClick={onAdd} className="flex items-center gap-1 bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-bold">
-            <span className="material-symbols-outlined text-[18px]">add</span> Add
-          </button>
-        </div>
+        ))}
+        <button onClick={onSamples} className="flex items-center gap-1 bg-accent text-foreground px-3 py-1.5 rounded-full text-xs lg:text-sm font-bold border border-border whitespace-nowrap shrink-0">
+          <span className="material-symbols-outlined text-[16px]">science</span> Samples
+        </button>
+        <button onClick={onAdd} className="flex items-center gap-1 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs lg:text-sm font-bold whitespace-nowrap shrink-0">
+          <span className="material-symbols-outlined text-[16px]">add</span> Add
+        </button>
       </div>
 
       {/* Items list */}
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Loading...</div>
       ) : filtered.length === 0 ? (
-        <div className="bg-card rounded-2xl border border-border min-h-[300px] flex flex-col items-center justify-center p-8 text-center">
-          <div className="h-20 w-20 bg-muted rounded-full flex items-center justify-center mb-4">
-            <span className="material-symbols-outlined text-4xl text-muted-foreground/50">inventory_2</span>
+        <div className="bg-card rounded-2xl border border-border min-h-[250px] flex flex-col items-center justify-center p-6 text-center">
+          <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-3">
+            <span className="material-symbols-outlined text-3xl text-muted-foreground/50">inventory_2</span>
           </div>
-          <h3 className="text-lg font-bold mb-2 text-foreground">No inventory yet</h3>
-          <p className="text-muted-foreground max-w-sm mb-6 text-sm">Add your first product to get started.</p>
-          <button onClick={onAdd} className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-lg font-semibold text-sm">
-            <span className="material-symbols-outlined text-[20px]">add</span> Add New Item
+          <h3 className="text-base font-bold mb-1 text-foreground">No inventory yet</h3>
+          <p className="text-muted-foreground max-w-sm mb-4 text-xs">Add your first product to get started.</p>
+          <button onClick={onAdd} className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-lg font-semibold text-sm">
+            <span className="material-symbols-outlined text-[18px]">add</span> Add New Item
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-3 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-4 lg:space-y-0">
           {filtered.map((item) => {
             const threshold = item.low_stock_threshold ?? 5;
             return (
-            <div key={item.id} className="bg-card p-4 rounded-xl border border-border">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h4 className="font-bold text-foreground">{item.name}</h4>
-                  {item.category && <span className="text-xs text-muted-foreground">{item.category}</span>}
+            <div key={item.id} className="bg-card p-3.5 lg:p-4 rounded-xl border border-border">
+              <div className="flex justify-between items-start mb-2.5">
+                <div className="min-w-0">
+                  <h4 className="font-bold text-foreground text-sm">{item.name}</h4>
+                  {item.category && <span className="text-[10px] text-muted-foreground">{item.category}</span>}
                 </div>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ml-2 ${
                   item.current_stock === 0 ? "bg-destructive/10 text-destructive" :
                   item.current_stock <= threshold ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
                   "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
@@ -170,17 +170,17 @@ const InventoryList = ({ onAdd, onSamples }: { onAdd: () => void; onSamples: () 
                   {item.current_stock} in stock
                 </span>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-sm">
+              <div className="grid grid-cols-3 gap-2 text-xs">
                 <div>
-                  <span className="text-muted-foreground text-xs">Weight</span>
+                  <span className="text-muted-foreground text-[10px]">Weight</span>
                   <p className="font-semibold text-foreground">{item.weight_per_unit} kg</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-xs">Sell Price</span>
+                  <span className="text-muted-foreground text-[10px]">Sell Price</span>
                   <p className="font-semibold text-foreground">৳{item.default_selling_price || 0}</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-xs">Alert at</span>
+                  <span className="text-muted-foreground text-[10px]">Alert at</span>
                   <p className="font-semibold text-foreground">≤ {threshold}</p>
                 </div>
               </div>
