@@ -75,6 +75,7 @@ const NotificationBell = () => {
     partner_added: "handshake",
     info: "info",
     deletion_request: "delete_forever",
+    low_stock: "inventory",
   };
 
   return (
