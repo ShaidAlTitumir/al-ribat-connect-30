@@ -187,7 +187,19 @@ const Expenses = () => {
               <div className="bg-card rounded-xl border border-border h-full flex flex-col">
                 <div className="p-4 border-b border-border flex items-center justify-between">
                   <h3 className="text-lg font-bold">Expense History</h3>
-                  <span className="text-xs font-medium text-muted-foreground">{expenses.length} records</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-medium text-muted-foreground">{expenses.length} records</span>
+                    {expenses.length > 0 && (
+                      <button onClick={() => exportToCSV(expenses.map(e => ({
+                        Title: e.title, Amount: e.amount, Currency: e.currency,
+                        Category: e.category || "Other",
+                        Date: format(new Date(e.created_at), "yyyy-MM-dd"),
+                      })), "expenses-export")}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground bg-muted rounded-lg border border-border">
+                        <span className="material-symbols-outlined text-[16px]">download</span> Export
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {expenses.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">

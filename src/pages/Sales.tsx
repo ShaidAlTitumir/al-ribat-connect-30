@@ -260,7 +260,21 @@ const Sales = () => {
 
             {/* Recent Sales */}
             <div>
-              <h3 className="text-lg font-bold mb-4">Recent Sales</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold">Recent Sales</h3>
+                {recentSales.length > 0 && (
+                  <button onClick={() => exportToCSV(recentSales.map(s => ({
+                    Item: (s as any).inventory_items?.name || "Item",
+                    Quantity: s.quantity, "Unit Price": s.unit_price_bdt,
+                    Total: s.quantity * s.unit_price_bdt, Received: s.received_now_bdt,
+                    Due: s.due, Customer: (s as any).customers?.name || "Walk-in",
+                    Date: format(new Date(s.created_at), "yyyy-MM-dd"),
+                  })), "sales-export")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground bg-muted rounded-lg border border-border">
+                    <span className="material-symbols-outlined text-[16px]">download</span> Export
+                  </button>
+                )}
+              </div>
               {recentSales.length === 0 ? (
                 <div className="bg-card border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center text-center">
                   <span className="material-symbols-outlined text-3xl text-muted-foreground mb-2">history</span>
