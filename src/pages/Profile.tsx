@@ -60,7 +60,9 @@ const Profile = () => {
   const savePassword = async () => {
     if (!user || !user.email) { toast.error("User not found"); return; }
     if (!passwords.currentPassword) { toast.error("Enter your current password"); return; }
-    if (passwords.newPassword.length < 6) { toast.error("Min 6 characters"); return; }
+    if (passwords.newPassword.length < 6) { toast.error("Password must be at least 6 characters"); return; }
+    if (!/[a-zA-Z]/.test(passwords.newPassword)) { toast.error("Password must contain at least one letter"); return; }
+    if (!/[0-9]/.test(passwords.newPassword)) { toast.error("Password must contain at least one number"); return; }
     if (passwords.newPassword !== passwords.confirmPassword) { toast.error("Passwords don't match"); return; }
     setSaving("password");
     try {

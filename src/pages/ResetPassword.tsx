@@ -8,7 +8,9 @@ import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
 const passwordSchema = z.object({
-  password: z.string().min(6, "Password must be at least 6 characters").max(128),
+  password: z.string().min(6, "Password must be at least 6 characters").max(128)
+    .regex(/[a-zA-Z]/, "Must contain at least one letter")
+    .regex(/[0-9]/, "Must contain at least one number"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
