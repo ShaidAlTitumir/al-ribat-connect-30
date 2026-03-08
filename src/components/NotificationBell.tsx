@@ -192,6 +192,11 @@ const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
           )}
         </>
       )}
+      <LeaveRequestDialog
+        open={leaveDialogOpen}
+        onClose={() => setLeaveDialogOpen(false)}
+        notificationBusinessId={leaveDialogBusinessId}
+      />
     </div>
   );
 };
