@@ -73,6 +73,19 @@ const Partners = () => {
     await supabase.from("profiles")
       .update({ business_id: businessId, role: partnerRole })
       .eq("user_id", foundUser.user_id);
+    // Send notification to the added user
+    const { data: myProfile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    await supabase.from("notifications").insert({
+      user_id: foundUser.user_id,
+      title: "You've been added as a partner",
+      message: `${myProfile?.full_name || "Someone"} added you as a ${partnerRole} partner.`,
+      type: "partner_added",
+      business_id: businessId,
+    } as any);
     toast.success(`${foundUser.full_name || foundUser.username} added as partner!`);
     setSearchUsername(""); setFoundUser(null);
     fetchData();
