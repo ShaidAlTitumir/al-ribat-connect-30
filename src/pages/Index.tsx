@@ -203,7 +203,7 @@ const Index = () => {
   const getSubtitle = (act: any) => {
     const d = act.details || {};
     switch (act.action) {
-      case "Recorded sale": return `${d.item_name || ""} × ${d.quantity || ""}${d.customer_name ? ` → ${d.customer_name}` : ""} • ৳${d.total || 0}`;
+      case "Recorded sale": return `${d.item_name || ""} × ${d.quantity || ""}${d.unit_price ? ` @৳${d.unit_price}/pc` : ""}${d.customer_name ? ` → ${d.customer_name}` : ""} • ৳${d.total || 0}`;
       case "Added capital contribution": return `${d.partner_name || ""} • ${d.currency === "RMB" ? "¥" : "৳"}${d.amount}`;
       case "Currency exchange": return `${d.from === "BDT" ? "৳" : "¥"}${d.amount_from || d.amount || 0} → ${d.to === "BDT" ? "৳" : "¥"}${d.amount_to || ""}`;
       case "Added new inventory item": case "Restocked inventory item": return `${d.item_name || ""} × ${d.quantity || ""}`;
@@ -471,6 +471,7 @@ const Index = () => {
                   const detailRows: { label: string; value: string }[] = [];
                   if (details.item_name) detailRows.push({ label: "Item", value: details.item_name });
                   if (details.quantity) detailRows.push({ label: "Qty", value: String(details.quantity) });
+                  if (details.unit_price) detailRows.push({ label: "Unit Price", value: `৳${details.unit_price}/pc` });
                   if (details.total) detailRows.push({ label: "Total", value: `৳${details.total}` });
                   if (details.received !== undefined && details.received !== null) detailRows.push({ label: "Received", value: `৳${details.received}` });
                   if (details.due > 0) detailRows.push({ label: "Due", value: `৳${details.due}` });
