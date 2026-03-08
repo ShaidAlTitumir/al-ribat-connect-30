@@ -41,11 +41,15 @@ const Customers = () => {
   };
 
   useEffect(() => {
-    if (!selectedCustomerId) { setLedger([]); return; }
+    if (!selectedCustomerId) { setLedger([]); setPurchaseHistory([]); return; }
     supabase.from("customer_ledger").select("*")
       .eq("customer_id", selectedCustomerId)
       .order("created_at", { ascending: false })
       .then(({ data }) => setLedger(data || []));
+    supabase.from("sales").select("*, inventory_items(name)")
+      .eq("customer_id", selectedCustomerId)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setPurchaseHistory(data || []));
   }, [selectedCustomerId]);
 
   const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
