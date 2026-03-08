@@ -8,8 +8,9 @@ interface ExchangeRateHeaderProps {
 }
 
 const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
-  const { exchangeRate, setExchangeRate, saveExchangeRate } = useBusiness();
+  const { exchangeRate, setExchangeRate, saveExchangeRate, businessName } = useBusiness();
   const [saving, setSaving] = useState(false);
+  const displayTitle = businessName || title;
 
   const handleSave = async () => {
     setSaving(true);
@@ -25,7 +26,7 @@ const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
 
   return (
     <header className="h-14 lg:h-16 border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-10 px-4 lg:px-8 flex items-center justify-between transition-all duration-200">
-      <h2 className="text-lg lg:text-xl font-bold text-foreground">{title}</h2>
+      <h2 className="text-lg lg:text-xl font-bold text-foreground">{displayTitle}</h2>
       <div className="flex items-center gap-2">
         <NotificationBell />
         <div className="flex items-center gap-1.5 bg-muted rounded-lg px-2 py-1.5">
