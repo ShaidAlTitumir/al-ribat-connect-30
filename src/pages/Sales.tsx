@@ -496,9 +496,8 @@ const Sales = () => {
                 </div>
               </div>
             ) : (
-              <button onClick={() => setShowNewCustomer(false)}
+              <button onClick={() => setShowCustomerSection(true)}
                 className="w-full bg-card rounded-xl border border-dashed border-border p-3 text-xs font-medium text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors flex items-center justify-center gap-2"
-                onClickCapture={() => {/* show customer section */ setSelectedCustomerId("__show__"); setTimeout(() => setSelectedCustomerId(""), 0); }}
               >
                 <span className="material-symbols-outlined text-[16px]">person_add</span> Add Customer (optional)
               </button>
