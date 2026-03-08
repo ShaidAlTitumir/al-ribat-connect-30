@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusiness } from "@/contexts/BusinessContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
+import { Switch } from "@/components/ui/switch";
 
 const Settings = () => {
   const { user } = useAuth();
