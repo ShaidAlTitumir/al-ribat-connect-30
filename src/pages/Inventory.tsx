@@ -177,7 +177,33 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
     if (!businessId) return;
     supabase.from("inventory_items").select("id, name, current_stock, weight_per_unit")
       .eq("business_id", businessId).then(({ data }) => setExistingItems(data || []));
+    // Fetch wallet balances
+    fetchWalletBalances();
   }, [businessId]);
+
+  const fetchWalletBalances = async () => {
+    if (!businessId) return;
+    let bdt = 0, rmb = 0;
+    const [caps, sales, payments, exps, purchases, exch] = await Promise.all([
+      supabase.from("capital_contributions").select("amount, currency").eq("business_id", businessId),
+      supabase.from("sales").select("received_now_bdt").eq("business_id", businessId),
+      supabase.from("customer_ledger").select("amount").eq("business_id", businessId).eq("transaction_type", "payment"),
+      supabase.from("expenses").select("amount, currency").eq("business_id", businessId),
+      supabase.from("purchase_transactions").select("total_landed_cost_bdt").eq("business_id", businessId),
+      supabase.from("exchanges").select("from_currency, amount_from, amount_to").eq("business_id", businessId),
+    ]);
+    (caps.data || []).forEach((c) => { if (c.currency === "BDT") bdt += c.amount; else rmb += c.amount; });
+    (sales.data || []).forEach((s) => { bdt += s.received_now_bdt; });
+    (payments.data || []).forEach((p) => { bdt += p.amount; });
+    (exps.data || []).forEach((e) => { if (e.currency === "BDT") bdt -= e.amount; else rmb -= e.amount; });
+    (purchases.data || []).forEach((p) => { bdt -= p.total_landed_cost_bdt; });
+    (exch.data || []).forEach((e) => {
+      if (e.from_currency === "BDT") { bdt -= e.amount_from; rmb += e.amount_to; }
+      else { rmb -= e.amount_from; bdt += e.amount_to; }
+    });
+    setWalletBdt(bdt);
+    setWalletRmb(rmb);
+  };
 
   // Load existing categories from inventory
   useEffect(() => {
