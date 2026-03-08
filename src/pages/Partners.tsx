@@ -339,57 +339,96 @@ const Partners = () => {
     const myPartner = acceptedPartners.find(p => p.user_id === user.id);
     if (!myPartner) { toast.error("You are not a partner"); return; }
     if (acceptedPartners.length <= 1) { toast.error("You are the only partner — delete the business instead"); return; }
-
-    // Check if there's already a pending request for this partner
     const existing = leaveRequests.find(r => r.partner_id === myPartner.id);
     if (existing) { toast.error("You already have a pending leave request"); return; }
 
-    const confirmed = window.confirm("Request to leave this business? Other partners will need to approve.");
-    if (!confirmed) return;
+    const amt = parseFloat(settlementAmount) || 0;
 
     const { data: req, error } = await (supabase
       .from("partner_leave_requests")
-      .insert({ business_id: businessId, partner_id: myPartner.id, requested_by: user.id }) as any)
-      .select()
-      .single();
+      .insert({
+        business_id: businessId, partner_id: myPartner.id, requested_by: user.id,
+        settlement_amount: amt, settlement_currency: settlementCurrency,
+        settlement_notes: settlementNotes || null,
+      }) as any)
+      .select().single();
     if (error) { toast.error(error.message); return; }
 
-    // Create vote entries for all OTHER partners
     const otherPartners = acceptedPartners.filter(p => p.user_id && p.user_id !== user.id);
     if (otherPartners.length > 0) {
-      const voteInserts = otherPartners.map(p => ({
-        request_id: req.id,
-        user_id: p.user_id,
-        vote: "pending",
-      }));
-      await (supabase.from("partner_leave_votes") as any).insert(voteInserts);
-
-      // Notify other partners
-      const notifInserts = otherPartners.map(p => ({
-        user_id: p.user_id,
-        business_id: businessId,
-        title: "Partner Leave Request",
-        message: `${myPartner.name} has requested to leave the business. Your approval is required.`,
-        type: "leave_request",
-      }));
-      await (supabase.from("notifications") as any).insert(notifInserts);
+      await (supabase.from("partner_leave_votes") as any).insert(
+        otherPartners.map(p => ({ request_id: req.id, user_id: p.user_id, vote: "pending" }))
+      );
+      await (supabase.from("notifications") as any).insert(
+        otherPartners.map(p => ({
+          user_id: p.user_id, business_id: businessId,
+          title: "Partner Leave Request",
+          message: `${myPartner.name} has requested to leave with a settlement of ${settlementCurrency === "RMB" ? "¥" : "৳"}${amt}. Your approval is required.`,
+          type: "leave_request",
+        }))
+      );
     }
 
-    // Auto-approve for the requester
     await (supabase.from("partner_leave_votes") as any).insert({
-      request_id: req.id,
-      user_id: user.id,
-      vote: "approved",
-      voted_at: new Date().toISOString(),
+      request_id: req.id, user_id: user.id, vote: "approved", voted_at: new Date().toISOString(),
     });
 
     await supabase.from("activity_log").insert({
       action: "Requested to leave business",
-      details: { partner_name: myPartner.name },
+      details: { partner_name: myPartner.name, settlement_amount: amt, settlement_currency: settlementCurrency },
       business_id: businessId, user_id: user.id,
     });
 
     toast.success("Leave request sent to partners for approval");
+    setShowLeaveForm(false); setSettlementAmount(""); setSettlementNotes(""); setSettlementCurrency("BDT");
+    fetchData();
+  };
+
+  const handleSubmitRemoval = async () => {
+    if (!businessId || !user || !removalTarget) return;
+    const partner = removalTarget;
+    const existingRemoval = leaveRequests.find(r => r.partner_id === partner.id && r.type === "removal");
+    if (existingRemoval) { toast.error("A removal request is already pending"); return; }
+
+    const amt = parseFloat(settlementAmount) || 0;
+
+    const { data: req, error } = await (supabase
+      .from("partner_leave_requests")
+      .insert({
+        business_id: businessId, partner_id: partner.id, requested_by: user.id, type: "removal",
+        settlement_amount: amt, settlement_currency: settlementCurrency,
+        settlement_notes: settlementNotes || null,
+      }) as any)
+      .select().single();
+    if (error) { toast.error(error.message); return; }
+
+    const voterPartners = acceptedPartners.filter(p => p.user_id && p.user_id !== user.id && p.id !== partner.id);
+    if (voterPartners.length > 0) {
+      await (supabase.from("partner_leave_votes") as any).insert(
+        voterPartners.map(p => ({ request_id: req.id, user_id: p.user_id, vote: "pending" }))
+      );
+      await (supabase.from("notifications") as any).insert(
+        voterPartners.map(p => ({
+          user_id: p.user_id, business_id: businessId,
+          title: "Partner Removal Request",
+          message: `A request to remove ${partner.name} with settlement ${settlementCurrency === "RMB" ? "¥" : "৳"}${amt} has been submitted.`,
+          type: "removal_request",
+        }))
+      );
+    }
+
+    await (supabase.from("partner_leave_votes") as any).insert({
+      request_id: req.id, user_id: user.id, vote: "approved", voted_at: new Date().toISOString(),
+    });
+
+    await supabase.from("activity_log").insert({
+      action: "Requested partner removal",
+      details: { partner_name: partner.name, settlement_amount: amt, settlement_currency: settlementCurrency },
+      business_id: businessId, user_id: user.id,
+    });
+    toast.success("Removal request sent to partners for approval");
+    setShowRemovalForm(false); setRemovalTarget(null);
+    setSettlementAmount(""); setSettlementNotes(""); setSettlementCurrency("BDT");
     fetchData();
   };
 
