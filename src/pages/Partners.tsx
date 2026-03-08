@@ -462,12 +462,13 @@ const Partners = () => {
 
         if (leavingPartner.user_id) {
           try {
-            await supabase.rpc("add_partner_to_business" as any, {
+            const { error: rpcError } = await supabase.rpc("add_partner_to_business" as any, {
               _target_user_id: leavingPartner.user_id,
               _business_id: null as any,
               _role: "admin",
             });
-          } catch {}
+            if (rpcError) console.error("Failed to revoke access:", rpcError.message);
+          } catch (e) { console.error("RPC error:", e); }
 
           await (supabase.from("notifications") as any).insert({
             user_id: leavingPartner.user_id,
