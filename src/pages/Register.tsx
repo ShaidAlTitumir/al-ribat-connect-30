@@ -15,7 +15,9 @@ const registerSchema = z.object({
     .regex(/^[a-z0-9_]+$/, "Only lowercase letters, numbers, and underscores"),
   email: z.string().trim().email("Invalid email address").max(255),
   phone: z.string().trim().min(6, "Phone must be at least 6 characters").max(20),
-  password: z.string().min(6, "Password must be at least 6 characters").max(128),
+  password: z.string().min(6, "Password must be at least 6 characters").max(128)
+    .regex(/[a-zA-Z]/, "Must contain at least one letter")
+    .regex(/[0-9]/, "Must contain at least one number"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
