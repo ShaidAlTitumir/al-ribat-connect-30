@@ -38,6 +38,7 @@ const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamp
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [itemStats, setItemStats] = useState<Record<string, { totalCost: number; totalSale: number; profit: number }>>({});
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   const fetchItems = async () => {
     if (!businessId) return;
