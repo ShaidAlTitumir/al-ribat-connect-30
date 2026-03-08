@@ -982,7 +982,7 @@ const Business = () => {
                           </button>
                         ) : (
                           <button onClick={() => handleDeleteDirect(b)}
-                            disabled={deleteConfirmText !== b.name}
+                            disabled={deleteConfirmText !== b.name.toUpperCase()}
                             className="flex-1 bg-destructive text-destructive-foreground py-2 rounded-lg text-xs font-bold hover:bg-destructive/90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5">
                             <span className="material-symbols-outlined text-sm">delete_forever</span>
                             Delete Permanently
