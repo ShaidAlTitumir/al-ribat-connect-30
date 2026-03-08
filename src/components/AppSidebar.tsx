@@ -25,7 +25,7 @@ const navItems = [
 const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
   const location = useLocation();
   const { signOut, user } = useAuth();
-  const { userRole } = useBusiness();
+  const { userRole, businessName } = useBusiness();
   const { theme, toggleTheme } = useTheme();
 
   const displayName = user?.user_metadata?.full_name || user?.email || "User";
@@ -51,16 +51,21 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
         ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
     >
       {/* Logo */}
-      <div className="p-4 sm:p-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
-            <span className="material-symbols-outlined text-lg">dashboard</span>
+      <div className="p-4 sm:p-6 flex flex-col gap-1">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
+              <span className="material-symbols-outlined text-lg">dashboard</span>
+            </div>
+            <h1 className="text-base font-bold tracking-tight text-foreground">Al-Ribat Manager</h1>
           </div>
-          <h1 className="text-base font-bold tracking-tight text-foreground">Al-Ribat Manager</h1>
+          <button onClick={onClose} className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted">
+            <span className="material-symbols-outlined text-[20px]">close</span>
+          </button>
         </div>
-        <button onClick={onClose} className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted">
-          <span className="material-symbols-outlined text-[20px]">close</span>
-        </button>
+        {businessName && (
+          <p className="text-xs text-muted-foreground font-medium pl-11 truncate">{businessName}</p>
+        )}
       </div>
 
       {/* Navigation */}
