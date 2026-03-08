@@ -17,6 +17,10 @@ const navItems = [
   { icon: "description", label: "Reports", path: "/reports" },
 ];
 
+const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
+  const location = useLocation();
+  const { signOut } = useAuth();
+
   const linkClass = (path: string) => {
     const isActive = location.pathname === path;
     return `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
