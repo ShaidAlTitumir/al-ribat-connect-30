@@ -21,6 +21,8 @@ const Partners = () => {
   const [searchingUser, setSearchingUser] = useState(false);
   const [editingPartner, setEditingPartner] = useState<any>(null);
   const [editForm, setEditForm] = useState({ name: "", phone: "", email: "", address: "", role: "" });
+  const [useManualRate, setUseManualRate] = useState(false);
+  const [manualRate, setManualRate] = useState("");
 
   useEffect(() => {
     if (!businessId) return;
@@ -305,7 +307,7 @@ const Partners = () => {
                   <label className="text-xs font-bold uppercase text-muted-foreground">Currency</label>
                   <div className="flex bg-muted rounded-lg p-1">
                     {(["BDT", "RMB"] as const).map((c) => (
-                      <button key={c} onClick={() => setCurrency(c)}
+                      <button key={c} onClick={() => { setCurrency(c); if (c === "BDT") setUseManualRate(false); }}
                         className={`flex-1 py-2 text-xs font-bold rounded-md ${currency === c ? "bg-card shadow-sm text-primary" : "text-muted-foreground"}`}>
                         {c}
                       </button>
@@ -313,6 +315,44 @@ const Partners = () => {
                   </div>
                 </div>
               </div>
+              {currency === "RMB" && (
+                <>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted border border-border">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-muted-foreground text-[18px]">tune</span>
+                      <span className="text-xs font-semibold text-muted-foreground">Custom RMB rate</span>
+                    </div>
+                    <button
+                      onClick={() => { setUseManualRate(!useManualRate); if (!useManualRate) setManualRate(String(exchangeRate)); }}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${useManualRate ? "bg-primary" : "bg-muted-foreground/30"}`}
+                    >
+                      <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-md transition-transform duration-200 ${useManualRate ? "translate-x-6" : "translate-x-1"}`} />
+                    </button>
+                  </div>
+                  {useManualRate && (
+                    <div className="p-3 rounded-lg bg-muted border border-border">
+                      <label className="text-xs font-bold text-muted-foreground uppercase mb-1.5 block">1 RMB = ? BDT</label>
+                      <input
+                        className="w-full bg-card border border-border rounded-lg px-4 py-2.5 text-sm font-bold text-foreground focus:ring-2 focus:ring-primary/20"
+                        type="number" step="0.01" placeholder={String(exchangeRate)}
+                        value={manualRate} onChange={(e) => setManualRate(e.target.value)}
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">Default rate: 1 RMB = {exchangeRate} BDT</p>
+                    </div>
+                  )}
+                  {capitalAmount && (
+                    <div className="p-3 rounded-lg bg-accent/50 border border-border">
+                      <p className="text-xs text-muted-foreground">BDT Equivalent:</p>
+                      <p className="text-sm font-black text-foreground">
+                        ৳{((parseFloat(capitalAmount) || 0) * (useManualRate && parseFloat(manualRate) > 0 ? parseFloat(manualRate) : exchangeRate)).toFixed(2)}
+                        <span className="text-xs font-normal text-muted-foreground ml-1">
+                          @ {useManualRate && parseFloat(manualRate) > 0 ? parseFloat(manualRate) : exchangeRate} BDT/RMB
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
               <button onClick={handleAddCapital}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2.5 rounded-lg flex items-center justify-center gap-2">
                 <span className="material-symbols-outlined text-base">add_card</span> Inject Capital
