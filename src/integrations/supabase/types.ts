@@ -438,13 +438,16 @@ export type Database = {
       }
       partners: {
         Row: {
+          address: string | null
           business_id: string | null
           created_at: string
+          email: string | null
           expires_at: string | null
           id: string
           invitation_code: string
           invited_by: string | null
           name: string
+          phone: string | null
           profit_share: number
           role: string
           status: string
@@ -452,13 +455,16 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          address?: string | null
           business_id?: string | null
           created_at?: string
+          email?: string | null
           expires_at?: string | null
           id?: string
           invitation_code: string
           invited_by?: string | null
           name: string
+          phone?: string | null
           profit_share?: number
           role?: string
           status?: string
@@ -466,13 +472,16 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          address?: string | null
           business_id?: string | null
           created_at?: string
+          email?: string | null
           expires_at?: string | null
           id?: string
           invitation_code?: string
           invited_by?: string | null
           name?: string
+          phone?: string | null
           profit_share?: number
           role?: string
           status?: string

@@ -4,7 +4,6 @@ import { useBusiness } from "@/contexts/BusinessContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
-import { format } from "date-fns";
 
 const Partners = () => {
   const { businessId, exchangeRate } = useBusiness();
@@ -15,11 +14,11 @@ const Partners = () => {
   const [partnerRole, setPartnerRole] = useState("working");
   const [selectedPartnerId, setSelectedPartnerId] = useState("");
   const [capitalAmount, setCapitalAmount] = useState("");
-  const [generatedCode, setGeneratedCode] = useState("");
-  const [pendingInvites, setPendingInvites] = useState<any[]>([]);
   const [searchUsername, setSearchUsername] = useState("");
   const [foundUser, setFoundUser] = useState<any>(null);
   const [searchingUser, setSearchingUser] = useState(false);
+  const [editingPartner, setEditingPartner] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ name: "", phone: "", email: "", address: "", role: "" });
 
   useEffect(() => {
     if (!businessId) return;
@@ -30,7 +29,6 @@ const Partners = () => {
     const { data: p } = await supabase.from("partners").select("*").eq("business_id", businessId!);
     let partnersList = p || [];
 
-    // Auto-add the current user as primary partner if not already listed
     if (user && !partnersList.find(pt => pt.user_id === user.id)) {
       const { data: profile } = await supabase
         .from("profiles")
@@ -57,10 +55,7 @@ const Partners = () => {
     setPartners(partnersList);
     const { data: c } = await supabase.from("capital_contributions").select("*, partners(name)").eq("business_id", businessId!);
     setContributions(c || []);
-    const { data: inv } = await supabase.from("partners").select("*").eq("business_id", businessId!).eq("status", "pending");
-    setPendingInvites(inv || []);
   };
-
 
   const handleSearchUser = async () => {
     if (!searchUsername.trim()) { toast.error("Enter a username"); return; }
@@ -76,7 +71,6 @@ const Partners = () => {
       toast.error("No user found with that username");
       return;
     }
-    // Check if already a partner
     const existing = partners.find(p => p.user_id === (data as any).user_id);
     if (existing) {
       toast.error("This user is already a partner");
@@ -98,7 +92,6 @@ const Partners = () => {
       });
       if (error) { toast.error(error.message); return; }
 
-      // Update the found user's profile via secure function
       const { error: rpcError } = await supabase.rpc("add_partner_to_business" as any, {
         _target_user_id: foundUser.user_id,
         _business_id: businessId,
@@ -106,7 +99,6 @@ const Partners = () => {
       });
       if (rpcError) console.error("Profile update error:", rpcError.message);
 
-      // Send notification to the added user
       const { data: myProfile } = await supabase
         .from("profiles")
         .select("full_name")
@@ -133,11 +125,9 @@ const Partners = () => {
     const confirmed = window.confirm(`Remove ${partner.name} from the business?`);
     if (!confirmed) return;
     try {
-      // Delete partner record
       const { error } = await supabase.from("partners").delete().eq("id", partner.id);
       if (error) { toast.error(error.message); return; }
 
-      // If partner has a linked user, reset their profile's business_id
       if (partner.user_id) {
         try {
           await supabase.rpc("add_partner_to_business" as any, {
@@ -146,8 +136,6 @@ const Partners = () => {
             _role: "admin",
           });
         } catch {}
-
-        // Notify removed partner
         try {
           await (supabase.from("notifications") as any).insert({
             user_id: partner.user_id,
@@ -164,6 +152,34 @@ const Partners = () => {
     } catch (err: any) {
       toast.error(err.message || "Failed to remove partner");
     }
+  };
+
+  const handleEditPartner = (partner: any) => {
+    setEditingPartner(partner);
+    setEditForm({
+      name: partner.name || "",
+      phone: partner.phone || "",
+      email: partner.email || "",
+      address: partner.address || "",
+      role: partner.role || "working",
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingPartner) return;
+    const { error } = await (supabase.from("partners") as any)
+      .update({
+        name: editForm.name,
+        phone: editForm.phone || null,
+        email: editForm.email || null,
+        address: editForm.address || null,
+        role: editForm.role,
+      })
+      .eq("id", editingPartner.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Partner updated!");
+    setEditingPartner(null);
+    fetchData();
   };
 
   const handleAddCapital = async () => {
@@ -184,29 +200,10 @@ const Partners = () => {
     fetchData();
   };
 
-  const handleGenerateCode = async () => {
-    if (!businessId || !user) return;
-    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-    const { error } = await supabase.from("partners").insert({
-      name: "Pending Partner", role: "working", invitation_code: code,
-      status: "pending", business_id: businessId, invited_by: user.id,
-      expires_at: expiresAt.toISOString(),
-    });
-    if (error) { toast.error(error.message); return; }
-    setGeneratedCode(code);
-    toast.success("Invitation code generated!");
-    fetchData();
-  };
-
-  const copyCode = () => {
-    navigator.clipboard.writeText(generatedCode);
-    toast.success("Code copied!");
-  };
+  const acceptedPartners = partners.filter(p => p.status === "accepted");
 
   // Calculate equity
-  const partnerEquity = partners.filter(p => p.status === "accepted").map((p) => {
+  const partnerEquity = acceptedPartners.map((p) => {
     const caps = contributions.filter((c) => c.partner_id === p.id);
     const totalBdt = caps.reduce((sum, c) => sum + (c.currency === "RMB" ? c.amount * exchangeRate : c.amount), 0);
     return { ...p, totalCapital: totalBdt };
@@ -221,7 +218,7 @@ const Partners = () => {
           {/* Add Partner */}
           <section className="bg-card p-4 lg:p-6 rounded-xl border border-border">
             <div className="flex items-center gap-2 mb-4">
-              <span className="material-symbols-outlined text-emerald-500">person_add</span>
+              <span className="material-symbols-outlined text-primary">person_add</span>
               <h3 className="font-bold text-lg">Add Partner</h3>
             </div>
             <div className="space-y-3">
@@ -241,9 +238,9 @@ const Partners = () => {
                 </div>
               </div>
               {foundUser && (
-                <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3">
+                <div className="bg-accent/50 border border-border rounded-lg p-3">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold">
+                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
                       {foundUser.full_name?.charAt(0).toUpperCase() || "?"}
                     </div>
                     <div>
@@ -259,7 +256,7 @@ const Partners = () => {
                       <option value="investor">Investor</option>
                     </select>
                     <button onClick={handleAddByUsername}
-                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-lg flex items-center justify-center gap-2">
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2.5 rounded-lg flex items-center justify-center gap-2">
                       <span className="material-symbols-outlined text-base">person_add</span> Add as Partner
                     </button>
                   </div>
@@ -281,7 +278,7 @@ const Partners = () => {
                 <select className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border-none text-foreground"
                   value={selectedPartnerId} onChange={(e) => setSelectedPartnerId(e.target.value)}>
                   <option value="">Choose partner...</option>
-                  {partners.filter(p => p.status === "accepted").map((p) => (
+                  {acceptedPartners.map((p) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
@@ -311,53 +308,95 @@ const Partners = () => {
             </div>
           </section>
 
-          {/* Invite Partner */}
+          {/* Partner List */}
           <section className="bg-card p-4 lg:p-6 rounded-xl border border-border">
             <div className="flex items-center gap-2 mb-4">
-              <span className="material-symbols-outlined text-blue-400">mail</span>
-              <h3 className="font-bold text-lg">Invite Partner</h3>
+              <span className="material-symbols-outlined text-primary">group</span>
+              <h3 className="font-bold text-lg">Partner List ({acceptedPartners.length})</h3>
             </div>
-            <div className="bg-primary/5 border border-dashed border-primary/30 rounded-xl p-4 mb-4 text-center">
-              <p className="text-sm text-muted-foreground mb-3">Generate a code for a new partner to join.</p>
-              <div className="flex gap-2">
-                <div className="flex-1 bg-card px-3 py-2 rounded-lg border border-border text-sm font-mono flex items-center justify-between">
-                  <span className={generatedCode ? "text-foreground font-bold" : "text-muted-foreground italic"}>
-                    {generatedCode || "No code generated"}
-                  </span>
-                  {generatedCode && (
-                    <button onClick={copyCode}>
-                      <span className="material-symbols-outlined text-sm text-muted-foreground hover:text-foreground">content_copy</span>
-                    </button>
-                  )}
-                </div>
-                <button onClick={handleGenerateCode} className="bg-primary px-4 py-2 rounded-lg text-primary-foreground font-bold text-sm">
-                  Generate
-                </button>
+            {acceptedPartners.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-border rounded-xl">
+                <span className="material-symbols-outlined text-4xl text-muted-foreground/50 mb-2">people</span>
+                <h4 className="font-bold mb-1">No partners yet</h4>
+                <p className="text-sm text-muted-foreground">Add partners using username search.</p>
               </div>
-            </div>
-            <div>
-              <p className="text-xs font-bold uppercase text-muted-foreground mb-2">Pending Invitations ({pendingInvites.length})</p>
-              {pendingInvites.length === 0 ? (
-                <p className="text-sm text-muted-foreground italic p-2">No pending invitations</p>
-              ) : (
-                <div className="space-y-2">
-                  {pendingInvites.map((inv) => (
-                    <div key={inv.id} className="flex items-center justify-between p-2 bg-muted rounded-lg text-sm">
-                      <span className="font-mono font-bold">{inv.invitation_code}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {inv.expires_at ? `Expires ${format(new Date(inv.expires_at), "MMM d")}` : "No expiry"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            ) : (
+              <div className="space-y-2">
+                {acceptedPartners.map((p) => (
+                  <div key={p.id} className="p-3 bg-muted rounded-lg">
+                    {editingPartner?.id === p.id ? (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <input className="bg-card rounded-lg px-3 py-2 text-sm border border-border text-foreground"
+                            placeholder="Name" value={editForm.name}
+                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+                          <select className="bg-card rounded-lg px-3 py-2 text-sm border border-border text-foreground"
+                            value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}>
+                            <option value="admin">Admin</option>
+                            <option value="working">Working</option>
+                            <option value="investor">Investor</option>
+                          </select>
+                        </div>
+                        <input className="w-full bg-card rounded-lg px-3 py-2 text-sm border border-border text-foreground"
+                          placeholder="Phone" value={editForm.phone}
+                          onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
+                        <input className="w-full bg-card rounded-lg px-3 py-2 text-sm border border-border text-foreground"
+                          placeholder="Email" value={editForm.email}
+                          onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+                        <input className="w-full bg-card rounded-lg px-3 py-2 text-sm border border-border text-foreground"
+                          placeholder="Address" value={editForm.address}
+                          onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} />
+                        <div className="flex gap-2">
+                          <button onClick={handleSaveEdit}
+                            className="flex-1 bg-primary text-primary-foreground font-bold py-2 rounded-lg text-sm">
+                            Save
+                          </button>
+                          <button onClick={() => setEditingPartner(null)}
+                            className="flex-1 bg-muted border border-border text-foreground font-bold py-2 rounded-lg text-sm">
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
+                            {p.name?.charAt(0).toUpperCase() || "?"}
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm">{p.name}</p>
+                            <p className="text-xs text-muted-foreground capitalize">{p.role}
+                              {p.phone && <span> · {p.phone}</span>}
+                              {p.email && <span> · {p.email}</span>}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => handleEditPartner(p)}
+                            className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                            title="Edit partner">
+                            <span className="material-symbols-outlined text-base">edit</span>
+                          </button>
+                          {p.user_id !== user?.id && (
+                            <button onClick={() => handleRemovePartner(p)}
+                              className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                              title="Remove partner">
+                              <span className="material-symbols-outlined text-base">delete</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
 
           {/* Partner Equity */}
           <section className="bg-card p-4 lg:p-6 rounded-xl border border-border">
             <div className="flex items-center gap-2 mb-4">
-              <span className="material-symbols-outlined text-purple-500">pie_chart</span>
+              <span className="material-symbols-outlined text-primary">pie_chart</span>
               <h3 className="font-bold text-lg">Partner Equity</h3>
             </div>
             {partnerEquity.length === 0 ? (
@@ -376,18 +415,9 @@ const Partners = () => {
                         <p className="font-bold text-sm">{p.name}</p>
                         <p className="text-xs text-muted-foreground capitalize">{p.role}</p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="font-bold text-sm">৳{p.totalCapital.toFixed(0)}</p>
-                          <p className="text-xs text-primary font-bold">{pct.toFixed(1)}%</p>
-                        </div>
-                        <button
-                          onClick={() => handleRemovePartner(p)}
-                          className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                          title="Remove partner"
-                        >
-                          <span className="material-symbols-outlined text-base">person_remove</span>
-                        </button>
+                      <div className="text-right">
+                        <p className="font-bold text-sm">৳{p.totalCapital.toFixed(0)}</p>
+                        <p className="text-xs text-primary font-bold">{pct.toFixed(1)}%</p>
                       </div>
                     </div>
                   );
@@ -402,11 +432,10 @@ const Partners = () => {
         </div>
 
         {/* Footer Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {[
-            { label: "Total Partners", value: String(partners.filter(p => p.status === "accepted").length), icon: "group", color: "text-blue-600" },
-            { label: "Total Capital", value: `৳${totalCapital.toFixed(0)}`, icon: "payments", color: "text-emerald-600" },
-            { label: "Pending Invites", value: String(pendingInvites.length), icon: "pending", color: "text-amber-600" },
+            { label: "Total Partners", value: String(acceptedPartners.length), icon: "group", color: "text-primary" },
+            { label: "Total Capital", value: `৳${totalCapital.toFixed(0)}`, icon: "payments", color: "text-primary" },
           ].map((stat) => (
             <div key={stat.label} className="bg-card p-3 lg:p-4 rounded-xl border border-border flex items-center gap-3">
               <span className={`material-symbols-outlined ${stat.color}`}>{stat.icon}</span>
