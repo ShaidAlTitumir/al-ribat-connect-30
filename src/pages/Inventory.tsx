@@ -187,71 +187,91 @@ const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamp
           {filtered.map((item) => {
             const threshold = item.low_stock_threshold ?? 5;
             return (
-            <div key={item.id} className="bg-card p-3.5 lg:p-4 rounded-xl border border-border">
-              <div className="flex justify-between items-start mb-2.5">
-                <div className="min-w-0">
-                  <h4 className="font-bold text-foreground text-sm">{item.name}</h4>
-                  {item.category && <span className="text-[10px] text-muted-foreground">{item.category}</span>}
-                </div>
-                <div className="flex items-center gap-1 shrink-0 ml-2">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            (() => {
+              const isExpanded = expandedItems.has(item.id);
+              const toggle = () => setExpandedItems(prev => {
+                const next = new Set(prev);
+                next.has(item.id) ? next.delete(item.id) : next.add(item.id);
+                return next;
+              });
+              const st = itemStats[item.id];
+              return (
+              <div key={item.id} className="bg-card rounded-xl border border-border overflow-hidden">
+                {/* Compact header — always visible */}
+                <button onClick={toggle} className="w-full flex items-center gap-3 p-3 lg:p-4 text-left active:bg-muted/40 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-foreground text-sm truncate">{item.name}</h4>
+                      {item.category && <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{item.category}</span>}
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
+                      <span>৳{item.default_selling_price || 0}/pc</span>
+                      {st && st.totalSale > 0 && (
+                        <span className={st.profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}>
+                          Profit ৳{Math.round(st.profit).toLocaleString("en-IN")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 ${
                     item.current_stock === 0 ? "bg-destructive/10 text-destructive" :
                     item.current_stock <= threshold ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
                     "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                   }`}>
-                    {item.current_stock}
+                    {item.current_stock} pcs
                   </span>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-xs mb-2">
-                <div>
-                  <span className="text-muted-foreground text-[10px]">Weight</span>
-                  <p className="font-semibold text-foreground">{item.weight_per_unit} kg</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground text-[10px]">Sell Price</span>
-                  <p className="font-semibold text-foreground">৳{item.default_selling_price || 0}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground text-[10px]">Alert at</span>
-                  <p className="font-semibold text-foreground">≤ {threshold}</p>
-                </div>
-              </div>
-              {/* Cost / Sale / Profit stats */}
-              {(() => {
-                const st = itemStats[item.id];
-                if (!st) return null;
-                const hasData = st.totalCost > 0 || st.totalSale > 0;
-                if (!hasData) return null;
-                return (
-                  <div className="grid grid-cols-3 gap-2 text-xs mb-2 bg-muted/50 rounded-lg p-2">
-                    <div>
-                      <span className="text-muted-foreground text-[10px]">Total Cost</span>
-                      <p className="font-semibold text-foreground">৳{Math.round(st.totalCost).toLocaleString("en-IN")}</p>
+                  <span className={`material-symbols-outlined text-muted-foreground text-[18px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
+                </button>
+
+                {/* Expandable details */}
+                {isExpanded && (
+                  <div className="px-3 pb-3 lg:px-4 lg:pb-4 space-y-2 border-t border-border pt-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <span className="text-muted-foreground text-[10px]">Weight</span>
+                        <p className="font-semibold text-foreground">{item.weight_per_unit} kg</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground text-[10px]">Sell Price</span>
+                        <p className="font-semibold text-foreground">৳{item.default_selling_price || 0}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground text-[10px]">Alert at</span>
+                        <p className="font-semibold text-foreground">≤ {threshold}</p>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-muted-foreground text-[10px]">Total Sale</span>
-                      <p className="font-semibold text-foreground">৳{Math.round(st.totalSale).toLocaleString("en-IN")}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground text-[10px]">Profit</span>
-                      <p className={`font-semibold ${st.profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
-                        ৳{Math.round(st.profit).toLocaleString("en-IN")}
-                      </p>
+                    {st && (st.totalCost > 0 || st.totalSale > 0) && (
+                      <div className="grid grid-cols-3 gap-2 text-xs bg-muted/50 rounded-lg p-2">
+                        <div>
+                          <span className="text-muted-foreground text-[10px]">Total Cost</span>
+                          <p className="font-semibold text-foreground">৳{Math.round(st.totalCost).toLocaleString("en-IN")}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground text-[10px]">Total Sale</span>
+                          <p className="font-semibold text-foreground">৳{Math.round(st.totalSale).toLocaleString("en-IN")}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground text-[10px]">Profit</span>
+                          <p className={`font-semibold ${st.profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                            ৳{Math.round(st.profit).toLocaleString("en-IN")}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 border-t border-border pt-2.5">
+                      <button onClick={() => onEdit(item)} className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-primary hover:bg-primary/10 rounded-lg py-1.5 transition-all active:scale-95">
+                        <span className="material-symbols-outlined text-[16px]">edit</span> Edit
+                      </button>
+                      <div className="w-px h-5 bg-border" />
+                      <button onClick={() => handleDelete(item.id)} className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 rounded-lg py-1.5 transition-all active:scale-95">
+                        <span className="material-symbols-outlined text-[16px]">delete</span> Delete
+                      </button>
                     </div>
                   </div>
-                );
-              })()}
-              <div className="flex items-center gap-2 border-t border-border pt-2.5">
-                <button onClick={() => onEdit(item)} className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-primary hover:bg-primary/10 rounded-lg py-1.5 transition-all active:scale-95">
-                  <span className="material-symbols-outlined text-[16px]">edit</span> Edit
-                </button>
-                <div className="w-px h-5 bg-border" />
-                <button onClick={() => handleDelete(item.id)} className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 rounded-lg py-1.5 transition-all active:scale-95">
-                  <span className="material-symbols-outlined text-[16px]">delete</span> Delete
-                </button>
+                )}
               </div>
-            </div>
+              );
+            })()
             );
           })}
         </div>
