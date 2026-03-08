@@ -584,10 +584,21 @@ const Business = () => {
                   onChange={(e) => setFormName(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Business Type</label>
-                <input className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border-none text-foreground"
-                  placeholder="e.g. Import/Export, Retail" value={formType}
-                  onChange={(e) => setFormType(e.target.value)} />
+                <label className="text-xs font-bold uppercase text-muted-foreground">Business Mode</label>
+                <div className="flex p-1 bg-muted rounded-lg border border-border">
+                  {[{ value: "solo", label: "Solo" }, { value: "", label: "Partnership" }].map((m) => (
+                    <button key={m.value} type="button" onClick={() => setFormType(m.value)}
+                      className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors ${
+                        (formType.toLowerCase() === "solo" ? "solo" : "") === m.value
+                          ? "bg-card shadow-sm text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >{m.label}</button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  {formType.toLowerCase() === "solo" ? "Simplified mode — no partners, exchange, or import features" : "Full features including partners, exchange, and China imports"}
+                </p>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold uppercase text-muted-foreground">Phone</label>
