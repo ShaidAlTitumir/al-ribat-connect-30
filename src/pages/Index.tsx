@@ -245,21 +245,34 @@ const Index = () => {
                 Last 7 Days Sales
               </h3>
               {dailySales.some(d => d.revenue > 0) ? (
-                <div className="h-48">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={dailySales} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={45}
-                        tickFormatter={(v: number) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)} />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
-                        formatter={(value: number) => [`৳${value.toLocaleString("en-IN")}`, undefined]}
-                      />
-                      <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--primary))" radius={[4,4,0,0]} barSize={20} />
-                      <Bar dataKey="profit" name="Profit" fill="hsl(142, 71%, 45%)" radius={[4,4,0,0]} barSize={20} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                <div>
+                  <div className="flex items-center gap-4 mb-2">
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "hsl(var(--primary))" }} />
+                      <span className="text-muted-foreground">Revenue</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "hsl(142, 71%, 45%)" }} />
+                      <span className="text-muted-foreground">Profit</span>
+                    </div>
+                  </div>
+                  <div className="h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={dailySales} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="day" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={45}
+                          tickFormatter={(v: number) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)} />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
+                          formatter={(value: number, name: string) => [`৳${value.toLocaleString("en-IN")}`, name === "revenue" ? "💰 Revenue" : "📈 Profit"]}
+                          cursor={{ fill: "hsl(var(--muted) / 0.3)" }}
+                        />
+                        <Bar dataKey="revenue" name="revenue" fill="hsl(var(--primary))" radius={[4,4,0,0]} barSize={16} opacity={0.85} />
+                        <Bar dataKey="profit" name="profit" fill="hsl(142, 71%, 45%)" radius={[4,4,0,0]} barSize={16} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
               ) : (
                 <div className="h-48 flex items-center justify-center text-center">
