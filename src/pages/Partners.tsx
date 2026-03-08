@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, Phone, Mail, MapPin } from "lucide-react";
+import { ChevronDown, ChevronUp, Phone, Mail, MapPin, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
+import { format } from "date-fns";
 
 const Partners = () => {
   const { businessId, exchangeRate } = useBusiness();
@@ -23,6 +24,8 @@ const Partners = () => {
   const [editForm, setEditForm] = useState({ name: "", phone: "", email: "", address: "", role: "" });
   const [useManualRate, setUseManualRate] = useState(false);
   const [manualRate, setManualRate] = useState("");
+  const [editingContribution, setEditingContribution] = useState<any>(null);
+  const [editContribForm, setEditContribForm] = useState({ amount: "", currency: "BDT" as "BDT" | "RMB" });
 
   useEffect(() => {
     if (!businessId) return;
@@ -217,6 +220,48 @@ const Partners = () => {
     });
     toast.success("Capital added!");
     setCapitalAmount(""); setSelectedPartnerId("");
+    fetchData();
+  };
+
+  const handleEditContribution = (contrib: any) => {
+    setEditingContribution(contrib);
+    setEditContribForm({ amount: String(contrib.amount), currency: contrib.currency });
+  };
+
+  const handleSaveContribution = async () => {
+    if (!editingContribution || !businessId || !user) return;
+    const amt = parseFloat(editContribForm.amount);
+    if (!amt || amt <= 0) { toast.error("Enter a valid amount"); return; }
+    const { error } = await supabase.from("capital_contributions")
+      .update({ amount: amt, currency: editContribForm.currency })
+      .eq("id", editingContribution.id);
+    if (error) { toast.error(error.message); return; }
+    await supabase.from("activity_log").insert({
+      action: "Updated capital contribution",
+      details: { 
+        partner_name: editingContribution.partners?.name,
+        old_amount: editingContribution.amount, old_currency: editingContribution.currency,
+        new_amount: amt, new_currency: editContribForm.currency,
+      },
+      business_id: businessId, user_id: user.id,
+    });
+    toast.success("Contribution updated!");
+    setEditingContribution(null);
+    fetchData();
+  };
+
+  const handleDeleteContribution = async (contrib: any) => {
+    if (!businessId || !user) return;
+    const confirmed = window.confirm(`Delete ${contrib.currency === "RMB" ? "¥" : "৳"}${contrib.amount} contribution?`);
+    if (!confirmed) return;
+    const { error } = await supabase.from("capital_contributions").delete().eq("id", contrib.id);
+    if (error) { toast.error(error.message); return; }
+    await supabase.from("activity_log").insert({
+      action: "Deleted capital contribution",
+      details: { partner_name: contrib.partners?.name, amount: contrib.amount, currency: contrib.currency },
+      business_id: businessId, user_id: user.id,
+    });
+    toast.success("Contribution deleted!");
     fetchData();
   };
 
@@ -522,6 +567,92 @@ const Partners = () => {
             )}
           </section>
         </div>
+
+        {/* Capital Contributions History */}
+        <section className="bg-card p-4 lg:p-6 rounded-xl border border-border">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="material-symbols-outlined text-primary">history</span>
+            <h3 className="font-bold text-lg">Capital Contributions ({contributions.length})</h3>
+          </div>
+          {contributions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-border rounded-xl">
+              <span className="material-symbols-outlined text-4xl text-muted-foreground/50 mb-2">account_balance</span>
+              <h4 className="font-bold mb-1">No contributions yet</h4>
+              <p className="text-sm text-muted-foreground">Add capital to see the history here.</p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {contributions
+                .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .map((c: any) => (
+                <div key={c.id} className="bg-muted rounded-lg p-3">
+                  {editingContribution?.id === c.id ? (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          className="bg-card rounded-lg px-3 py-2 text-sm border border-border text-foreground"
+                          type="number" placeholder="Amount" value={editContribForm.amount}
+                          onChange={(e) => setEditContribForm({ ...editContribForm, amount: e.target.value })}
+                        />
+                        <div className="flex bg-card rounded-lg p-1 border border-border">
+                          {(["BDT", "RMB"] as const).map((cur) => (
+                            <button key={cur} onClick={() => setEditContribForm({ ...editContribForm, currency: cur })}
+                              className={`flex-1 py-1.5 text-xs font-bold rounded-md ${editContribForm.currency === cur ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+                              {cur}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={handleSaveContribution}
+                          className="flex-1 bg-primary text-primary-foreground font-bold py-1.5 rounded-lg text-xs">
+                          Save
+                        </button>
+                        <button onClick={() => setEditingContribution(null)}
+                          className="flex-1 bg-card border border-border text-foreground font-bold py-1.5 rounded-lg text-xs">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-primary text-[16px]">
+                            {c.currency === "RMB" ? "currency_yuan" : "payments"}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold">
+                            {c.currency === "RMB" ? "¥" : "৳"}{c.amount}
+                            {c.currency === "RMB" && (
+                              <span className="text-xs font-normal text-muted-foreground ml-1">
+                                (≈ ৳{(c.amount * exchangeRate).toFixed(0)})
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {c.partners?.name} • {format(new Date(c.created_at), "MMM d, yyyy")}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => handleEditContribution(c)}
+                          className="p-1.5 rounded-lg hover:bg-accent transition-colors">
+                          <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                        </button>
+                        <button onClick={() => handleDeleteContribution(c)}
+                          className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         {/* Footer Stats */}
         <div className="grid grid-cols-2 gap-4">
