@@ -142,9 +142,9 @@ const Wallet = () => {
                 </div>
                 <button
                   onClick={() => { setUseManualRate(!useManualRate); if (!useManualRate) setManualRate(String(exchangeRate)); }}
-                  className={`relative w-10 h-5 rounded-full transition-colors ${useManualRate ? "bg-primary" : "bg-border"}`}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${useManualRate ? "bg-primary" : "bg-muted-foreground/30"}`}
                 >
-                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${useManualRate ? "translate-x-5" : "translate-x-0.5"}`} />
+                  <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-md transition-transform duration-200 ${useManualRate ? "translate-x-6" : "translate-x-1"}`} />
                 </button>
               </div>
 
