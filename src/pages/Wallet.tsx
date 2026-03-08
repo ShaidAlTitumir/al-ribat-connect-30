@@ -82,7 +82,11 @@ const Wallet = () => {
         business_id: businessId, user_id: user.id,
       });
       await supabase.from("activity_log").insert({
-        action: "Currency exchange", details: { from: fromCurrency, to: toCurrency, amount: amt },
+        action: "Currency exchange", details: { 
+          from: fromCurrency, to: toCurrency, 
+          amount_from: amt, amount_to: parseFloat(toAmount.toFixed(2)), 
+          rate: activeRate 
+        },
         business_id: businessId, user_id: user.id,
       });
       toast.success("Exchange completed!");

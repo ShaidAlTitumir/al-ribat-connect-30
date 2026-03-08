@@ -227,7 +227,15 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
       // Log activity
       await supabase.from("activity_log").insert({
         action: itemMode === "new" ? "Added new inventory item" : "Restocked inventory item",
-        details: { item_name: itemMode === "new" ? form.name : existingItems.find(i => i.id === selectedItemId)?.name, quantity: qty },
+        details: { 
+          item_name: itemMode === "new" ? form.name : existingItems.find(i => i.id === selectedItemId)?.name, 
+          quantity: qty,
+          buying_cost_rmb: buyRmb,
+          shipping_method: shippingMethod,
+          total_landed_cost: totalLanded,
+          landed_per_unit: landedPerUnit,
+          rate: exchangeRate,
+        },
         business_id: businessId, user_id: user.id,
       });
 
