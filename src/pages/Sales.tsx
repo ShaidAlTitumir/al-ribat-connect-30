@@ -406,31 +406,84 @@ const Sales = () => {
               ) : (
                 <div className="space-y-2">
                   {recentSales.map((sale) => (
-                    <div key={sale.id} className="bg-card p-3 rounded-lg border border-border flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-sm">{(sale as any).inventory_items?.name || "Item"}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {sale.quantity} × ৳{sale.unit_price_bdt} • {(sale as any).customers?.name || "Walk-in"}
-                          {" • "}{format(new Date(sale.created_at), "MMM d, h:mm a")}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="font-bold text-sm">৳{(sale.quantity * sale.unit_price_bdt).toFixed(0)}</p>
-                          {sale.due > 0 && <p className="text-xs text-destructive">Due: ৳{sale.due}</p>}
+                    <div key={sale.id} className="bg-card rounded-lg border border-border overflow-hidden">
+                      {editingSale?.id === sale.id ? (
+                        /* Inline Edit Form */
+                        <div className="p-3 space-y-3">
+                          <p className="font-semibold text-sm">{(sale as any).inventory_items?.name || "Item"}</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="text-[10px] font-semibold text-muted-foreground">Qty</label>
+                              <input type="number" min={1} value={editForm.quantity}
+                                onChange={(e) => setEditForm({ ...editForm, quantity: parseInt(e.target.value) || 0 })}
+                                className="w-full h-9 bg-muted border border-border rounded-lg px-3 text-sm text-foreground" />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-semibold text-muted-foreground">Unit Price</label>
+                              <input type="number" value={editForm.unit_price_bdt}
+                                onChange={(e) => setEditForm({ ...editForm, unit_price_bdt: parseFloat(e.target.value) || 0 })}
+                                className="w-full h-9 bg-muted border border-border rounded-lg px-3 text-sm text-foreground" />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-semibold text-muted-foreground">Received</label>
+                              <input type="number" value={editForm.received_now_bdt}
+                                onChange={(e) => setEditForm({ ...editForm, received_now_bdt: parseFloat(e.target.value) || 0 })}
+                                className="w-full h-9 bg-muted border border-border rounded-lg px-3 text-sm text-foreground" />
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <button onClick={() => setEditingSale(null)}
+                              className="px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted">
+                              Cancel
+                            </button>
+                            <button onClick={handleEditSave} disabled={saving}
+                              className="px-3 py-1.5 text-xs font-bold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50">
+                              {saving ? "Saving..." : "Save"}
+                            </button>
+                          </div>
                         </div>
-                        <button
-                          onClick={() => setInvoiceData({
-                            sale,
-                            itemName: (sale as any).inventory_items?.name || "Item",
-                            customerName: (sale as any).customers?.name || "Walk-in",
-                            business: businessInfo,
-                          })}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
-                          title="View Invoice">
-                          <span className="material-symbols-outlined text-[18px]">receipt_long</span>
-                        </button>
-                      </div>
+                      ) : (
+                        /* Normal Row */
+                        <div className="p-3 flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold text-sm">{(sale as any).inventory_items?.name || "Item"}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {sale.quantity} × ৳{sale.unit_price_bdt} • {(sale as any).customers?.name || "Walk-in"}
+                              {" • "}{format(new Date(sale.created_at), "MMM d, h:mm a")}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-right mr-1">
+                              <p className="font-bold text-sm">৳{(sale.quantity * sale.unit_price_bdt).toFixed(0)}</p>
+                              {sale.due > 0 && <p className="text-xs text-destructive">Due: ৳{sale.due}</p>}
+                            </div>
+                            <button onClick={() => startEdit(sale)}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                              title="Edit Sale">
+                              <span className="material-symbols-outlined text-[18px]">edit</span>
+                            </button>
+                            <button
+                              onClick={() => setInvoiceData({
+                                sale,
+                                itemName: (sale as any).inventory_items?.name || "Item",
+                                customerName: (sale as any).customers?.name || "Walk-in",
+                                business: businessInfo,
+                              })}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                              title="View Invoice">
+                              <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+                            </button>
+                            <button onClick={() => handleDelete(sale)}
+                              disabled={deletingSaleId === sale.id}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+                              title="Delete Sale">
+                              <span className="material-symbols-outlined text-[18px]">
+                                {deletingSaleId === sale.id ? "hourglass_empty" : "delete"}
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
