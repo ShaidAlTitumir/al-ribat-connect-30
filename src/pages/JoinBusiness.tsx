@@ -4,9 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, KeyRound } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
 const codeSchema = z.object({
@@ -37,7 +36,6 @@ const JoinBusiness = () => {
 
     setLoading(true);
     try {
-      // Look up the invitation code
       const { data: partner, error: lookupError } = await supabase
         .from("partners")
         .select("*")
@@ -53,7 +51,6 @@ const JoinBusiness = () => {
         return;
       }
 
-      // Claim the partner record
       const { error: updateError } = await supabase
         .from("partners")
         .update({ user_id: user.id, status: "accepted" })
@@ -72,36 +69,72 @@ const JoinBusiness = () => {
 
   return (
     <div>
-      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-        <KeyRound className="h-6 w-6 text-primary" />
+      {/* Brand Header */}
+      <div className="flex flex-col items-center pt-8 pb-4 px-8">
+        <div className="bg-primary/10 p-3 rounded-xl mb-3">
+          <span className="material-symbols-outlined text-primary text-3xl">deployed_code</span>
+        </div>
+        <h1 className="text-foreground text-xl font-bold tracking-tight">Al-Ribat Manager</h1>
       </div>
-      <h2 className="text-xl font-bold text-foreground mb-1 text-center">Join Your Business</h2>
-      <p className="text-sm text-muted-foreground mb-6 text-center">
-        Enter the invitation code shared by your business partner
-      </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <Label htmlFor="code">Invitation Code</Label>
-          <Input
-            id="code"
-            placeholder="Enter your invitation code"
-            value={code}
-            onChange={(e) => { setCode(e.target.value); setError(""); }}
-            className="mt-1.5 text-center tracking-widest font-mono text-lg"
-          />
-          {error && <p className="text-xs text-destructive mt-1 text-center">{error}</p>}
+      {/* Hero illustration */}
+      <div className="relative h-48 w-full bg-muted">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5" />
+        <div className="flex items-center justify-center h-full">
+          <span className="material-symbols-outlined text-primary text-6xl opacity-50">handshake</span>
+        </div>
+      </div>
+
+      {/* Form */}
+      <div className="p-8">
+        <div className="text-center mb-8">
+          <h2 className="text-foreground text-2xl font-bold leading-tight mb-2">Welcome</h2>
+          <p className="text-muted-foreground text-base">You've been invited to join a partnership.</p>
         </div>
 
-        <Button type="submit" className="w-full gradient-gold text-accent-foreground font-semibold" disabled={loading}>
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Join Business
-        </Button>
-      </form>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="block text-foreground text-sm font-semibold">Invitation Code</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span className="material-symbols-outlined text-muted-foreground text-sm">vpn_key</span>
+              </div>
+              <Input
+                placeholder="e.g., INVITE-7X9K2P"
+                value={code}
+                onChange={(e) => { setCode(e.target.value); setError(""); }}
+                className="pl-10 py-4 h-14 bg-muted border-border focus-visible:ring-primary text-base"
+              />
+            </div>
+            {error && <p className="text-xs text-destructive text-center">{error}</p>}
+          </div>
 
-      <p className="text-xs text-muted-foreground text-center mt-6">
-        Don't have an invitation code? Ask your business partner to share one.
-      </p>
+          <Button
+            type="submit"
+            className="w-full py-4 h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/20"
+            disabled={loading}
+          >
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Join Business
+            <span className="material-symbols-outlined text-lg ml-1">arrow_forward</span>
+          </Button>
+        </form>
+
+        <div className="mt-8 flex flex-col gap-4 text-center">
+          <p className="text-muted-foreground text-sm">
+            Don't have a code?{" "}
+            <a className="text-primary hover:underline font-medium cursor-pointer">
+              Request from your partner.
+            </a>
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
+          >
+            Skip for now
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
