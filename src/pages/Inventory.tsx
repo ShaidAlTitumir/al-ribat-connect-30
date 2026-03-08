@@ -165,6 +165,8 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const [customCategory, setCustomCategory] = useState("");
   const [showCustomCategory, setShowCustomCategory] = useState(false);
   const [savedCategories, setSavedCategories] = useState<string[]>([]);
+  const [walletBdt, setWalletBdt] = useState(0);
+  const [walletRmb, setWalletRmb] = useState(0);
 
   const [form, setForm] = useState({
     name: "", category: "", quantity: "", weightPerUnit: "",
