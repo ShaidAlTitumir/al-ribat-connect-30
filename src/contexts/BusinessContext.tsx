@@ -9,6 +9,7 @@ interface BusinessContextType {
   saveExchangeRate: () => Promise<void>;
   loading: boolean;
   userRole: string;
+  switchBusiness: (id: string) => void;
 }
 
 const BusinessContext = createContext<BusinessContextType>({
@@ -18,6 +19,7 @@ const BusinessContext = createContext<BusinessContextType>({
   saveExchangeRate: async () => {},
   loading: true,
   userRole: "admin",
+  switchBusiness: () => {},
 });
 
 export const useBusiness = () => useContext(BusinessContext);
@@ -47,7 +49,6 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
         setBusinessId(data.business_id);
         setUserRole(data.role || "admin");
 
-        // Fetch exchange rate from business
         const { data: biz } = await supabase
           .from("businesses")
           .select("exchange_rate")
@@ -64,6 +65,18 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
     fetchProfile();
   }, [user]);
 
+  const switchBusiness = async (id: string) => {
+    setBusinessId(id);
+    const { data: biz } = await supabase
+      .from("businesses")
+      .select("exchange_rate")
+      .eq("id", id)
+      .maybeSingle();
+    if (biz?.exchange_rate) {
+      setExchangeRate(Number(biz.exchange_rate));
+    }
+  };
+
   const saveExchangeRate = async () => {
     if (!businessId) return;
     await supabase
@@ -73,7 +86,7 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <BusinessContext.Provider value={{ businessId, exchangeRate, setExchangeRate, saveExchangeRate, loading, userRole }}>
+    <BusinessContext.Provider value={{ businessId, exchangeRate, setExchangeRate, saveExchangeRate, loading, userRole, switchBusiness }}>
       {children}
     </BusinessContext.Provider>
   );
