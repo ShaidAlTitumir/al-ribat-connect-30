@@ -4,6 +4,7 @@ import { useBusiness } from "@/contexts/BusinessContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
+import InvoiceModal from "@/components/InvoiceModal";
 import { format } from "date-fns";
 
 const Sales = () => {
@@ -26,19 +27,20 @@ const Sales = () => {
   const [customers, setCustomers] = useState<any[]>([]);
   const [recentSales, setRecentSales] = useState<any[]>([]);
   const [landedCost, setLandedCost] = useState(0);
+  const [invoiceData, setInvoiceData] = useState<any>(null);
+  const [businessInfo, setBusinessInfo] = useState<any>({});
 
   useEffect(() => {
     if (!businessId) return;
-    // Fetch inventory items
     supabase.from("inventory_items").select("*").eq("business_id", businessId).gt("current_stock", 0)
       .then(({ data }) => setItems(data || []));
-    // Fetch customers
     supabase.from("customers").select("*").eq("business_id", businessId)
       .then(({ data }) => setCustomers(data || []));
-    // Fetch recent sales
     supabase.from("sales").select("*, inventory_items(name), customers(name)")
       .eq("business_id", businessId).order("created_at", { ascending: false }).limit(10)
       .then(({ data }) => setRecentSales(data || []));
+    supabase.from("businesses").select("name, phone, address").eq("id", businessId).single()
+      .then(({ data }) => setBusinessInfo(data || {}));
   }, [businessId]);
 
   // Get landed cost for selected item
@@ -254,9 +256,22 @@ const Sales = () => {
                           {" • "}{format(new Date(sale.created_at), "MMM d, h:mm a")}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-sm">৳{(sale.quantity * sale.unit_price_bdt).toFixed(0)}</p>
-                        {sale.due > 0 && <p className="text-xs text-destructive">Due: ৳{sale.due}</p>}
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="font-bold text-sm">৳{(sale.quantity * sale.unit_price_bdt).toFixed(0)}</p>
+                          {sale.due > 0 && <p className="text-xs text-destructive">Due: ৳{sale.due}</p>}
+                        </div>
+                        <button
+                          onClick={() => setInvoiceData({
+                            sale,
+                            itemName: (sale as any).inventory_items?.name || "Item",
+                            customerName: (sale as any).customers?.name || "Walk-in",
+                            business: businessInfo,
+                          })}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                          title="View Invoice">
+                          <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -297,6 +312,7 @@ const Sales = () => {
           </div>
         </div>
       </div>
+      <InvoiceModal data={invoiceData} onClose={() => setInvoiceData(null)} />
     </div>
   );
 };
