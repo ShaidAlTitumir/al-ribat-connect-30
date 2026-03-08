@@ -9,22 +9,35 @@ import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 const Settings = () => {
   const { user } = useAuth();
   const { businessId } = useBusiness();
-  const [business, setBusiness] = useState({ name: "", default_currency: "BDT" });
+  const [business, setBusiness] = useState({
+    name: "", default_currency: "BDT", phone: "", address: "",
+    business_type: "", description: "",
+  });
   const [saving, setSaving] = useState("");
   const [showCleanConfirm, setShowCleanConfirm] = useState(false);
   const [cleanConfirmText, setCleanConfirmText] = useState("");
 
   useEffect(() => {
     if (!businessId) return;
-    supabase.from("businesses").select("name, default_currency").eq("id", businessId).maybeSingle()
-      .then(({ data }) => { if (data) setBusiness({ name: data.name || "", default_currency: data.default_currency || "BDT" }); });
+    supabase.from("businesses").select("name, default_currency, phone, address, business_type, description").eq("id", businessId).maybeSingle()
+      .then(({ data }) => {
+        if (data) setBusiness({
+          name: data.name || "", default_currency: data.default_currency || "BDT",
+          phone: data.phone || "", address: data.address || "",
+          business_type: data.business_type || "", description: data.description || "",
+        });
+      });
   }, [businessId]);
 
   const saveBusiness = async () => {
     if (!businessId) return;
     setSaving("business");
     try {
-      await supabase.from("businesses").update({ name: business.name, default_currency: business.default_currency }).eq("id", businessId);
+      await supabase.from("businesses").update({
+        name: business.name, default_currency: business.default_currency,
+        phone: business.phone || null, address: business.address || null,
+        business_type: business.business_type || null, description: business.description || null,
+      }).eq("id", businessId);
       toast.success("Business settings saved!");
     } catch (err: any) { toast.error(err.message); }
     finally { setSaving(""); }
@@ -77,6 +90,28 @@ const Settings = () => {
               <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Business Name</label>
               <input className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 sm:px-4 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
                 value={business.name} onChange={(e) => setBusiness({ ...business, name: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Phone Number</label>
+                <input className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 sm:px-4 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                  value={business.phone} onChange={(e) => setBusiness({ ...business, phone: e.target.value })} placeholder="+880..." />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Business Type</label>
+                <input className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 sm:px-4 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                  value={business.business_type} onChange={(e) => setBusiness({ ...business, business_type: e.target.value })} placeholder="e.g. Export & Shipping" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Address / Location</label>
+              <input className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 sm:px-4 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                value={business.address} onChange={(e) => setBusiness({ ...business, address: e.target.value })} placeholder="City, Country" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Description</label>
+              <textarea className="w-full min-h-[70px] rounded-lg border border-border bg-background px-3 sm:px-4 py-2 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all resize-none"
+                value={business.description} onChange={(e) => setBusiness({ ...business, description: e.target.value })} placeholder="Brief description of your business..." rows={2} />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Primary Currency</label>
