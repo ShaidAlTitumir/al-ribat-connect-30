@@ -347,8 +347,10 @@ const Sales = () => {
 
       <div className="p-3 lg:p-8 flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+          {/* Left column: Form + History */}
+          <div className="lg:col-span-2 space-y-4 lg:space-y-5">
           {/* Sale Form */}
-          <div className={`lg:col-span-2 space-y-3 lg:space-y-5 ${mobileTab !== "form" ? "hidden lg:block" : ""}`}>
+          <div className={`space-y-3 lg:space-y-5 ${mobileTab !== "form" ? "hidden lg:block" : ""}`}>
 
             {/* Item Selection & Pricing */}
             <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
@@ -501,8 +503,8 @@ const Sales = () => {
 
           </div>
 
-          {/* Recent Sales — desktop: inside grid; mobile: history tab */}
-          <div className={`lg:col-span-2 ${mobileTab !== "history" ? "hidden lg:block" : ""}`}>
+          {/* Recent Sales — desktop: inside left column; mobile: history tab */}
+          <div className={`${mobileTab !== "history" ? "hidden lg:block" : ""}`}>
 
             {/* Sales Stats Bar */}
             {recentSales.length > 0 && (
@@ -715,6 +717,7 @@ const Sales = () => {
               </p>
             )}
           </div>
+          </div>{/* End left column wrapper */}
 
           {/* Desktop Summary Sidebar */}
           <div className="hidden lg:block">
