@@ -1,0 +1,1 @@
+ALTER TABLE public.businesses ALTER COLUMN exchange_rate SET DEFAULT 18;
