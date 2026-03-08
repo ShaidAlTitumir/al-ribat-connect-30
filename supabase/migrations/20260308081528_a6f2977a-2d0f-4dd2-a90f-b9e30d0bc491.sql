@@ -1,0 +1,1 @@
+CREATE POLICY "Users can search profiles by username" ON public.profiles FOR SELECT TO authenticated USING (username IS NOT NULL);
