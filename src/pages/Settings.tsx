@@ -2,19 +2,19 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusiness } from "@/contexts/BusinessContext";
-import { useTheme } from "@/contexts/ThemeContext";
+
 import { toast } from "sonner";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
-import { Switch } from "@/components/ui/switch";
 
 const Settings = () => {
   const { user } = useAuth();
   const { businessId } = useBusiness();
-  const { theme, toggleTheme } = useTheme();
   const [profile, setProfile] = useState({ full_name: "", phone: "", username: "" });
   const [business, setBusiness] = useState({ name: "", default_currency: "BDT" });
   const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [saving, setSaving] = useState("");
+  const [showCleanConfirm, setShowCleanConfirm] = useState(false);
+  const [cleanConfirmText, setCleanConfirmText] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -104,6 +104,28 @@ const Settings = () => {
     try {
       await supabase.from("businesses").update({ name: business.name, default_currency: business.default_currency }).eq("id", businessId);
       toast.success("Business settings saved!");
+    } catch (err: any) { toast.error(err.message); }
+    finally { setSaving(""); }
+  };
+
+  const cleanAllData = async () => {
+    if (!businessId || cleanConfirmText !== "DELETE") return;
+    setSaving("clean");
+    try {
+      await supabase.from("customer_ledger").delete().eq("business_id", businessId);
+      await supabase.from("returns").delete().eq("business_id", businessId);
+      await supabase.from("sales").delete().eq("business_id", businessId);
+      await supabase.from("purchase_transactions").delete().eq("business_id", businessId);
+      await supabase.from("exchanges").delete().eq("business_id", businessId);
+      await supabase.from("partner_transfers").delete().eq("business_id", businessId);
+      await supabase.from("capital_contributions").delete().eq("business_id", businessId);
+      await supabase.from("expenses").delete().eq("business_id", businessId);
+      await supabase.from("activity_log").delete().eq("business_id", businessId);
+      await supabase.from("customers").delete().eq("business_id", businessId);
+      await supabase.from("inventory_items").delete().eq("business_id", businessId);
+      toast.success("All business data has been cleaned!");
+      setShowCleanConfirm(false);
+      setCleanConfirmText("");
     } catch (err: any) { toast.error(err.message); }
     finally { setSaving(""); }
   };
@@ -233,22 +255,62 @@ const Settings = () => {
           </div>
         </section>
 
-        {/* Appearance */}
-        <section className="bg-card rounded-xl border border-border">
-          <div className="p-4 lg:p-6 flex items-center gap-3 border-b border-border">
-            <span className="material-symbols-outlined text-primary">dark_mode</span>
-            <h3 className="font-bold text-lg">Appearance</h3>
+        {/* Danger Zone */}
+        <section className="bg-card rounded-xl border border-destructive/50 overflow-hidden">
+          <div className="p-4 lg:p-6 flex items-center gap-3 border-b border-destructive/30 bg-destructive/5">
+            <span className="material-symbols-outlined text-destructive">warning</span>
+            <h3 className="font-bold text-lg text-destructive">Danger Zone</h3>
           </div>
           <div className="p-4 lg:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-semibold text-foreground">Dark Mode</p>
-                <p className="text-sm text-muted-foreground">Switch between light and dark theme</p>
+                <p className="font-semibold text-foreground">Clean App Data</p>
+                <p className="text-sm text-muted-foreground">Permanently delete all sales, expenses, purchases, returns, exchanges, transfers, customers, inventory, and activity logs for this business.</p>
               </div>
-              <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
+              <button
+                onClick={() => setShowCleanConfirm(true)}
+                disabled={saving === "clean"}
+                className="shrink-0 ml-4 bg-destructive text-destructive-foreground font-bold px-5 py-2.5 rounded-lg hover:bg-destructive/90 disabled:opacity-50"
+              >
+                {saving === "clean" ? "Cleaning..." : "Clean All Data"}
+              </button>
             </div>
           </div>
         </section>
+
+        {showCleanConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <div className="bg-card border border-destructive/50 rounded-xl p-6 max-w-md w-full mx-4 space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-destructive text-3xl">delete_forever</span>
+                <h3 className="font-bold text-lg text-destructive">Are you absolutely sure?</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                This will permanently delete <strong>all business data</strong> including sales, expenses, purchases, returns, exchanges, partner transfers, customers, inventory items, and activity logs. This action cannot be undone.
+              </p>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-muted-foreground">Type <span className="text-destructive font-mono">DELETE</span> to confirm</label>
+                <input
+                  className="w-full h-11 rounded-lg border border-destructive/50 bg-card px-4 text-foreground focus:ring-2 focus:ring-destructive/20"
+                  value={cleanConfirmText}
+                  onChange={(e) => setCleanConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                />
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button onClick={() => { setShowCleanConfirm(false); setCleanConfirmText(""); }}
+                  className="px-5 py-2.5 rounded-lg border border-border font-semibold hover:bg-muted">Cancel</button>
+                <button
+                  onClick={cleanAllData}
+                  disabled={cleanConfirmText !== "DELETE" || saving === "clean"}
+                  className="bg-destructive text-destructive-foreground font-bold px-5 py-2.5 rounded-lg hover:bg-destructive/90 disabled:opacity-50"
+                >
+                  {saving === "clean" ? "Cleaning..." : "Delete Everything"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Builder Credit */}
         <div className="text-center py-6 border-t border-border mt-4">
