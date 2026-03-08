@@ -1,140 +1,279 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useBusiness } from "@/contexts/BusinessContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import ExchangeRateHeader from "@/components/ExchangeRateHeader";
+import { format } from "date-fns";
 
 const Partners = () => {
+  const { businessId, exchangeRate } = useBusiness();
+  const { user } = useAuth();
+  const [partners, setPartners] = useState<any[]>([]);
+  const [contributions, setContributions] = useState<any[]>([]);
   const [currency, setCurrency] = useState<"BDT" | "RMB">("BDT");
+  const [partnerName, setPartnerName] = useState("");
+  const [partnerRole, setPartnerRole] = useState("working");
+  const [selectedPartnerId, setSelectedPartnerId] = useState("");
+  const [capitalAmount, setCapitalAmount] = useState("");
+  const [generatedCode, setGeneratedCode] = useState("");
+  const [pendingInvites, setPendingInvites] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!businessId) return;
+    fetchData();
+  }, [businessId]);
+
+  const fetchData = async () => {
+    const { data: p } = await supabase.from("partners").select("*").eq("business_id", businessId!);
+    setPartners(p || []);
+    const { data: c } = await supabase.from("capital_contributions").select("*, partners(name)").eq("business_id", businessId!);
+    setContributions(c || []);
+    const { data: inv } = await supabase.from("partners").select("*").eq("business_id", businessId!).eq("status", "pending");
+    setPendingInvites(inv || []);
+  };
+
+  const handleAddPartner = async () => {
+    if (!businessId || !user || !partnerName.trim()) { toast.error("Enter partner name"); return; }
+    try {
+      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+      await supabase.from("partners").insert({
+        name: partnerName.trim(), role: partnerRole, invitation_code: code,
+        status: "accepted", business_id: businessId, user_id: null, invited_by: user.id,
+      });
+      toast.success("Partner added!");
+      setPartnerName(""); setPartnerRole("working");
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleAddCapital = async () => {
+    if (!businessId || !user || !selectedPartnerId || !capitalAmount) { toast.error("Fill all fields"); return; }
+    const amt = parseFloat(capitalAmount);
+    if (amt <= 0) { toast.error("Enter a valid amount"); return; }
+    try {
+      await supabase.from("capital_contributions").insert({
+        partner_id: selectedPartnerId, amount: amt, currency,
+        business_id: businessId, user_id: user.id,
+      });
+      await supabase.from("activity_log").insert({
+        action: "Added capital contribution", details: { amount: amt, currency },
+        business_id: businessId, user_id: user.id,
+      });
+      toast.success("Capital added!");
+      setCapitalAmount(""); setSelectedPartnerId("");
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleGenerateCode = async () => {
+    if (!businessId || !user) return;
+    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+    try {
+      await supabase.from("partners").insert({
+        name: "Pending Partner", role: "working", invitation_code: code,
+        status: "pending", business_id: businessId, invited_by: user.id,
+        expires_at: expiresAt.toISOString(),
+      });
+      setGeneratedCode(code);
+      toast.success("Invitation code generated!");
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(generatedCode);
+    toast.success("Code copied!");
+  };
+
+  // Calculate equity
+  const partnerEquity = partners.filter(p => p.status === "accepted").map((p) => {
+    const caps = contributions.filter((c) => c.partner_id === p.id);
+    const totalBdt = caps.reduce((sum, c) => {
+      return sum + (c.currency === "RMB" ? c.amount * exchangeRate : c.amount);
+    }, 0);
+    return { ...p, totalCapital: totalBdt };
+  });
+  const totalCapital = partnerEquity.reduce((sum, p) => sum + p.totalCapital, 0);
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
-      {/* Header */}
-      <header className="h-16 border-b border-border bg-card/80 backdrop-blur-md flex items-center justify-between px-6 lg:px-8 sticky top-0 z-10">
-        <h2 className="text-2xl font-black tracking-tight text-foreground">Partners</h2>
-        <span className="text-sm font-medium text-muted-foreground">Manage partner profiles &amp; profit shares</span>
-      </header>
-
-      <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6 w-full">
+      <ExchangeRateHeader title="Partners" />
+      <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Add Partner */}
-          <section className="bg-card p-6 rounded-xl shadow-card border border-border">
-            <div className="flex items-center gap-2 mb-6">
+          <section className="bg-card p-4 lg:p-6 rounded-xl border border-border">
+            <div className="flex items-center gap-2 mb-4">
               <span className="material-symbols-outlined text-emerald-500">person_add</span>
-              <h3 className="font-bold text-lg text-foreground">Add Partner</h3>
+              <h3 className="font-bold text-lg">Add Partner</h3>
             </div>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Partner Name</label>
-                  <input className="w-full bg-muted border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm text-foreground" placeholder="e.g. John Doe" type="text" />
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Name</label>
+                  <input className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border-none text-foreground"
+                    placeholder="Partner name" value={partnerName} onChange={(e) => setPartnerName(e.target.value)} />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Role</label>
-                  <input className="w-full bg-muted border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm text-foreground" placeholder="e.g. Director" type="text" />
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Role</label>
+                  <select className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border-none text-foreground"
+                    value={partnerRole} onChange={(e) => setPartnerRole(e.target.value)}>
+                    <option value="admin">Admin</option>
+                    <option value="working">Working</option>
+                    <option value="investor">Investor</option>
+                  </select>
                 </div>
               </div>
-              <button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-lg shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 mt-2">
-                <span className="material-symbols-outlined text-base">check_circle</span>
-                Register Partner
+              <button onClick={handleAddPartner}
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-lg flex items-center justify-center gap-2">
+                <span className="material-symbols-outlined text-base">check_circle</span> Register Partner
               </button>
             </div>
           </section>
 
           {/* Add Capital */}
-          <section className="bg-card p-6 rounded-xl shadow-card border border-border">
-            <div className="flex items-center gap-2 mb-6">
+          <section className="bg-card p-4 lg:p-6 rounded-xl border border-border">
+            <div className="flex items-center gap-2 mb-4">
               <span className="material-symbols-outlined text-primary">account_balance</span>
-              <h3 className="font-bold text-lg text-foreground">Add Capital</h3>
+              <h3 className="font-bold text-lg">Add Capital</h3>
             </div>
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Partner</label>
-                <select className="w-full bg-muted border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary/50 transition-all text-sm appearance-none text-foreground">
-                  <option>Select a registered partner</option>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase text-muted-foreground">Select Partner</label>
+                <select className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border-none text-foreground"
+                  value={selectedPartnerId} onChange={(e) => setSelectedPartnerId(e.target.value)}>
+                  <option value="">Choose partner...</option>
+                  {partners.filter(p => p.status === "accepted").map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Amount</label>
-                  <input className="w-full bg-muted border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary/50 transition-all text-sm text-foreground" placeholder="0.00" type="number" />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Amount</label>
+                  <input className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border-none text-foreground"
+                    type="number" placeholder="0.00" value={capitalAmount} onChange={(e) => setCapitalAmount(e.target.value)} />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Currency</label>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Currency</label>
                   <div className="flex bg-muted rounded-lg p-1">
-                    <button onClick={() => setCurrency("BDT")} className={`flex-1 py-2 text-xs font-bold rounded-md transition-colors ${currency === "BDT" ? "bg-card shadow-sm text-primary" : "text-muted-foreground"}`}>BDT</button>
-                    <button onClick={() => setCurrency("RMB")} className={`flex-1 py-2 text-xs font-bold rounded-md transition-colors ${currency === "RMB" ? "bg-card shadow-sm text-primary" : "text-muted-foreground"}`}>RMB</button>
+                    {(["BDT", "RMB"] as const).map((c) => (
+                      <button key={c} onClick={() => setCurrency(c)}
+                        className={`flex-1 py-2 text-xs font-bold rounded-md ${currency === c ? "bg-card shadow-sm text-primary" : "text-muted-foreground"}`}>
+                        {c}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
-              <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 rounded-lg shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-base">add_card</span>
-                Inject Capital
+              <button onClick={handleAddCapital}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2.5 rounded-lg flex items-center justify-center gap-2">
+                <span className="material-symbols-outlined text-base">add_card</span> Inject Capital
               </button>
             </div>
           </section>
 
           {/* Invite Partner */}
-          <section className="bg-card p-6 rounded-xl shadow-card border border-border flex flex-col">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-blue-400">mail</span>
-                <h3 className="font-bold text-lg text-foreground">Invite Partner</h3>
-              </div>
-              <button className="text-xs font-bold text-primary hover:underline">View All Invites</button>
+          <section className="bg-card p-4 lg:p-6 rounded-xl border border-border">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="material-symbols-outlined text-blue-400">mail</span>
+              <h3 className="font-bold text-lg">Invite Partner</h3>
             </div>
-            <div className="bg-primary/5 border border-dashed border-primary/30 rounded-xl p-6 mb-6 flex flex-col items-center justify-center text-center">
-              <p className="text-sm text-muted-foreground mb-4">Generate a secure invitation link for a new partner to join the workspace.</p>
-              <div className="flex w-full gap-2">
-                <div className="flex-1 bg-card px-4 py-2 rounded-lg border border-border text-sm font-mono flex items-center justify-between">
-                  <span className="text-muted-foreground italic">No code generated</span>
-                  <span className="material-symbols-outlined text-sm text-muted-foreground/50">content_copy</span>
+            <div className="bg-primary/5 border border-dashed border-primary/30 rounded-xl p-4 mb-4 text-center">
+              <p className="text-sm text-muted-foreground mb-3">Generate a code for a new partner to join.</p>
+              <div className="flex gap-2">
+                <div className="flex-1 bg-card px-3 py-2 rounded-lg border border-border text-sm font-mono flex items-center justify-between">
+                  <span className={generatedCode ? "text-foreground font-bold" : "text-muted-foreground italic"}>
+                    {generatedCode || "No code generated"}
+                  </span>
+                  {generatedCode && (
+                    <button onClick={copyCode}>
+                      <span className="material-symbols-outlined text-sm text-muted-foreground hover:text-foreground">content_copy</span>
+                    </button>
+                  )}
                 </div>
-                <button className="bg-primary px-6 py-2 rounded-lg text-primary-foreground font-bold text-sm">Generate</button>
+                <button onClick={handleGenerateCode} className="bg-primary px-4 py-2 rounded-lg text-primary-foreground font-bold text-sm">
+                  Generate
+                </button>
               </div>
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Pending Invitations</p>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-3 bg-muted rounded-lg text-sm text-muted-foreground italic">
-                  No pending invitations
+              <p className="text-xs font-bold uppercase text-muted-foreground mb-2">Pending Invitations ({pendingInvites.length})</p>
+              {pendingInvites.length === 0 ? (
+                <p className="text-sm text-muted-foreground italic p-2">No pending invitations</p>
+              ) : (
+                <div className="space-y-2">
+                  {pendingInvites.map((inv) => (
+                    <div key={inv.id} className="flex items-center justify-between p-2 bg-muted rounded-lg text-sm">
+                      <span className="font-mono font-bold">{inv.invitation_code}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {inv.expires_at ? `Expires ${format(new Date(inv.expires_at), "MMM d")}` : "No expiry"}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
             </div>
           </section>
 
           {/* Partner Equity */}
-          <section className="bg-card p-6 rounded-xl shadow-card border border-border flex flex-col min-h-[400px]">
-            <div className="flex items-center gap-2 mb-6">
+          <section className="bg-card p-4 lg:p-6 rounded-xl border border-border">
+            <div className="flex items-center gap-2 mb-4">
               <span className="material-symbols-outlined text-purple-500">pie_chart</span>
-              <h3 className="font-bold text-lg text-foreground">Partner Equity</h3>
+              <h3 className="font-bold text-lg">Partner Equity</h3>
             </div>
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-border rounded-xl">
-              <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4">
-                <span className="material-symbols-outlined text-4xl text-muted-foreground/50">monitoring</span>
+            {partnerEquity.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-border rounded-xl">
+                <span className="material-symbols-outlined text-4xl text-muted-foreground/50 mb-2">monitoring</span>
+                <h4 className="font-bold mb-1">No equity data</h4>
+                <p className="text-sm text-muted-foreground">Register partners and add capital to track equity.</p>
               </div>
-              <h4 className="font-bold text-foreground mb-2">No Equity Data Available</h4>
-              <p className="text-sm text-muted-foreground max-w-[280px]">
-                Register partners and add capital to start tracking equity distribution across your project.
-              </p>
-              <div className="mt-6 flex gap-3">
-                <button className="px-4 py-2 bg-muted text-muted-foreground rounded-lg text-xs font-bold">Import CSV</button>
-                <button className="px-4 py-2 bg-primary/10 text-primary rounded-lg text-xs font-bold">Learn More</button>
+            ) : (
+              <div className="space-y-3">
+                {partnerEquity.map((p) => {
+                  const pct = totalCapital > 0 ? (p.totalCapital / totalCapital * 100) : 0;
+                  return (
+                    <div key={p.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <div>
+                        <p className="font-bold text-sm">{p.name}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{p.role}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-sm">৳{p.totalCapital.toFixed(0)}</p>
+                        <p className="text-xs text-primary font-bold">{pct.toFixed(1)}%</p>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="pt-2 border-t border-border flex justify-between text-sm font-bold">
+                  <span>Total Capital</span>
+                  <span>৳{totalCapital.toFixed(0)}</span>
+                </div>
               </div>
-            </div>
+            )}
           </section>
         </div>
 
-        {/* Footer Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+        {/* Footer Stats */}
+        <div className="grid grid-cols-3 gap-4">
           {[
-            { label: "Total Partners", value: "0", icon: "group", bg: "bg-blue-50 dark:bg-blue-900/20", iconColor: "text-blue-600" },
-            { label: "Total Capital", value: "৳ 0", icon: "payments", bg: "bg-emerald-50 dark:bg-emerald-900/20", iconColor: "text-emerald-600" },
-            { label: "Equity Tracked", value: "0%", icon: "verified", bg: "bg-purple-50 dark:bg-purple-900/20", iconColor: "text-purple-600" },
+            { label: "Total Partners", value: String(partners.filter(p => p.status === "accepted").length), icon: "group", color: "text-blue-600" },
+            { label: "Total Capital", value: `৳${totalCapital.toFixed(0)}`, icon: "payments", color: "text-emerald-600" },
+            { label: "Pending Invites", value: String(pendingInvites.length), icon: "pending", color: "text-amber-600" },
           ].map((stat) => (
-            <div key={stat.label} className="bg-card p-4 rounded-xl border border-border flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-lg ${stat.bg} flex items-center justify-center ${stat.iconColor}`}>
-                <span className="material-symbols-outlined">{stat.icon}</span>
-              </div>
+            <div key={stat.label} className="bg-card p-3 lg:p-4 rounded-xl border border-border flex items-center gap-3">
+              <span className={`material-symbols-outlined ${stat.color}`}>{stat.icon}</span>
               <div>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">{stat.label}</p>
-                <p className="text-xl font-black text-foreground">{stat.value}</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase">{stat.label}</p>
+                <p className="text-lg font-black">{stat.value}</p>
               </div>
             </div>
           ))}
