@@ -27,6 +27,8 @@ const Sales = () => {
   const [customers, setCustomers] = useState<any[]>([]);
   const [recentSales, setRecentSales] = useState<any[]>([]);
   const [landedCost, setLandedCost] = useState(0);
+  const [invoiceData, setInvoiceData] = useState<any>(null);
+  const [businessInfo, setBusinessInfo] = useState<any>({});
 
   useEffect(() => {
     if (!businessId) return;
