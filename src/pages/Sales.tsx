@@ -26,6 +26,7 @@ const Sales = () => {
   const [newCustomerName, setNewCustomerName] = useState("");
   const [newCustomerPhone, setNewCustomerPhone] = useState("");
   const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [showCustomerSection, setShowCustomerSection] = useState(false);
 
   const [editingSale, setEditingSale] = useState<any>(null);
   const [editForm, setEditForm] = useState({ quantity: 0, unit_price_bdt: 0, received_now_bdt: 0 });
