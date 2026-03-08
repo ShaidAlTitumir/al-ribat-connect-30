@@ -146,7 +146,9 @@ const InventoryList = ({ onAdd }: { onAdd: () => void }) => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((item) => (
+          {filtered.map((item) => {
+            const threshold = item.low_stock_threshold ?? 5;
+            return (
             <div key={item.id} className="bg-card p-4 rounded-xl border border-border">
               <div className="flex justify-between items-start mb-3">
                 <div>
@@ -155,24 +157,29 @@ const InventoryList = ({ onAdd }: { onAdd: () => void }) => {
                 </div>
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                   item.current_stock === 0 ? "bg-destructive/10 text-destructive" :
-                  item.current_stock <= 5 ? "bg-amber-100 text-amber-700" :
-                  "bg-emerald-100 text-emerald-700"
+                  item.current_stock <= threshold ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                  "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                 }`}>
                   {item.current_stock} in stock
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-3 gap-2 text-sm">
                 <div>
                   <span className="text-muted-foreground text-xs">Weight</span>
-                  <p className="font-semibold">{item.weight_per_unit} kg</p>
+                  <p className="font-semibold text-foreground">{item.weight_per_unit} kg</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-xs">Sell Price</span>
-                  <p className="font-semibold">৳{item.default_selling_price || 0}</p>
+                  <p className="font-semibold text-foreground">৳{item.default_selling_price || 0}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-xs">Alert at</span>
+                  <p className="font-semibold text-foreground">≤ {threshold}</p>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
