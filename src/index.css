@@ -168,3 +168,11 @@
     animation: slide-up 0.45s cubic-bezier(0.25, 0.1, 0.25, 1) both;
   }
 }
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
