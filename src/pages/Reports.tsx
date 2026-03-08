@@ -16,6 +16,16 @@ interface MonthlyTrend {
   profit: number;
 }
 
+interface PLStatement {
+  totalRevenue: number;
+  costOfGoods: number;
+  grossProfit: number;
+  totalExpenses: number;
+  netProfit: number;
+  margin: number;
+  expenseBreakdown: { category: string; amount: number }[];
+}
+
 const Reports = () => {
   const { businessId, exchangeRate } = useBusiness();
   const [period, setPeriod] = useState("month");
@@ -23,6 +33,10 @@ const Reports = () => {
   const [partnerShares, setPartnerShares] = useState<any[]>([]);
   const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
   const [trendMonths, setTrendMonths] = useState(6);
+  const [plStatement, setPlStatement] = useState<PLStatement>({
+    totalRevenue: 0, costOfGoods: 0, grossProfit: 0,
+    totalExpenses: 0, netProfit: 0, margin: 0, expenseBreakdown: [],
+  });
 
   useEffect(() => {
     if (!businessId) return;
