@@ -12,7 +12,7 @@ interface Notification {
   created_at: string;
 }
 
-const NotificationBell = () => {
+const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
