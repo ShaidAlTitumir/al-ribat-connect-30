@@ -180,10 +180,16 @@ const Partners = () => {
         if (error) { toast.error(error.message); return; }
         if (partner.user_id) {
           try {
-            await supabase.rpc("add_partner_to_business" as any, {
+            const { error: rpcError } = await supabase.rpc("add_partner_to_business" as any, {
               _target_user_id: partner.user_id, _business_id: null as any, _role: "admin",
             });
-          } catch {}
+            if (rpcError) {
+              console.error("Failed to revoke access:", rpcError.message);
+              toast.error("Partner removed but failed to revoke access. Contact support.");
+            }
+          } catch (rpcErr) {
+            console.error("RPC error:", rpcErr);
+          }
           try {
             await (supabase.from("notifications") as any).insert({
               user_id: partner.user_id, title: "You've been removed from a business",
