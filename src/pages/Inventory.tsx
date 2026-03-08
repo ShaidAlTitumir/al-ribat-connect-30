@@ -166,15 +166,17 @@ const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamp
                   <h4 className="font-bold text-foreground text-sm">{item.name}</h4>
                   {item.category && <span className="text-[10px] text-muted-foreground">{item.category}</span>}
                 </div>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ml-2 ${
-                  item.current_stock === 0 ? "bg-destructive/10 text-destructive" :
-                  item.current_stock <= threshold ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
-                  "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                }`}>
-                  {item.current_stock} in stock
-                </span>
+                <div className="flex items-center gap-1 shrink-0 ml-2">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    item.current_stock === 0 ? "bg-destructive/10 text-destructive" :
+                    item.current_stock <= threshold ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                  }`}>
+                    {item.current_stock}
+                  </span>
+                </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="grid grid-cols-3 gap-2 text-xs mb-3">
                 <div>
                   <span className="text-muted-foreground text-[10px]">Weight</span>
                   <p className="font-semibold text-foreground">{item.weight_per_unit} kg</p>
@@ -187,6 +189,15 @@ const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamp
                   <span className="text-muted-foreground text-[10px]">Alert at</span>
                   <p className="font-semibold text-foreground">≤ {threshold}</p>
                 </div>
+              </div>
+              <div className="flex items-center gap-2 border-t border-border pt-2.5">
+                <button onClick={() => onEdit(item)} className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-primary hover:bg-primary/10 rounded-lg py-1.5 transition-all active:scale-95">
+                  <span className="material-symbols-outlined text-[16px]">edit</span> Edit
+                </button>
+                <div className="w-px h-5 bg-border" />
+                <button onClick={() => handleDelete(item.id)} className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 rounded-lg py-1.5 transition-all active:scale-95">
+                  <span className="material-symbols-outlined text-[16px]">delete</span> Delete
+                </button>
               </div>
             </div>
             );
