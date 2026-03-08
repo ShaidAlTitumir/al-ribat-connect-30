@@ -33,6 +33,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <BusinessProvider>
           <Routes>
             {/* Auth routes (public) */}
             <Route element={<AuthLayout />}>
