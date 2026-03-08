@@ -660,7 +660,129 @@ const Business = () => {
                     </div>
                   </div>
 
-                  {/* Pending deletion request banner (for all members) */}
+                  {/* Expand/Collapse toggle */}
+                  <button
+                    onClick={() => toggleExpand(b.id)}
+                    className="w-full mt-2 flex items-center justify-center gap-1 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm">
+                      {expandedId === b.id ? "expand_less" : "expand_more"}
+                    </span>
+                    {expandedId === b.id ? "Show less" : "View details"}
+                  </button>
+
+                  {/* Expanded details panel */}
+                  {expandedId === b.id && (() => {
+                    const stats = businessStats[b.id];
+                    const netProfit = stats ? stats.totalProfit - stats.totalExpenses : 0;
+                    const bizValue = b.manual_value != null
+                      ? Number(b.manual_value)
+                      : (stats ? stats.totalCapital + netProfit : 0);
+
+                    return (
+                      <div className="mt-2 border border-border rounded-lg bg-muted/30 p-4 space-y-4">
+                        {!stats ? (
+                          <div className="flex items-center justify-center py-4">
+                            <span className="text-xs text-muted-foreground">Loading stats...</span>
+                          </div>
+                        ) : (
+                          <>
+                            {/* Key metrics grid */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                              <div className="bg-card rounded-lg p-3 border border-border">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <span className="material-symbols-outlined text-primary text-[16px]">account_balance</span>
+                                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Business Value</span>
+                                </div>
+                                <p className="text-sm font-bold text-foreground">৳{bizValue.toLocaleString("en-IN")}</p>
+                                {b.manual_value != null && (
+                                  <p className="text-[9px] text-muted-foreground">Manual estimate</p>
+                                )}
+                              </div>
+                              <div className="bg-card rounded-lg p-3 border border-border">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <span className="material-symbols-outlined text-emerald-500 text-[16px]">trending_up</span>
+                                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Net Profit</span>
+                                </div>
+                                <p className={`text-sm font-bold ${netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                                  {netProfit >= 0 ? "+" : ""}৳{netProfit.toLocaleString("en-IN")}
+                                </p>
+                              </div>
+                              <div className="bg-card rounded-lg p-3 border border-border">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <span className="material-symbols-outlined text-primary text-[16px]">shopping_cart</span>
+                                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Total Sales</span>
+                                </div>
+                                <p className="text-sm font-bold text-foreground">৳{stats.totalSalesRevenue.toLocaleString("en-IN")}</p>
+                              </div>
+                              <div className="bg-card rounded-lg p-3 border border-border">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <span className="material-symbols-outlined text-destructive text-[16px]">receipt_long</span>
+                                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Expenses</span>
+                                </div>
+                                <p className="text-sm font-bold text-foreground">৳{stats.totalExpenses.toLocaleString("en-IN")}</p>
+                              </div>
+                            </div>
+
+                            {/* Secondary info */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                              <div className="flex items-center gap-2 px-3 py-2 bg-card rounded-lg border border-border">
+                                <span className="material-symbols-outlined text-muted-foreground text-[16px]">inventory_2</span>
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground">Inventory</p>
+                                  <p className="text-xs font-bold text-foreground">{stats.inventoryItems} items · {stats.totalStock} units</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 px-3 py-2 bg-card rounded-lg border border-border">
+                                <span className="material-symbols-outlined text-muted-foreground text-[16px]">people</span>
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground">Customers</p>
+                                  <p className="text-xs font-bold text-foreground">{stats.customerCount}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 px-3 py-2 bg-card rounded-lg border border-border">
+                                <span className="material-symbols-outlined text-muted-foreground text-[16px]">pending</span>
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground">Total Due</p>
+                                  <p className="text-xs font-bold text-foreground">৳{stats.totalDue.toLocaleString("en-IN")}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 px-3 py-2 bg-card rounded-lg border border-border">
+                                <span className="material-symbols-outlined text-muted-foreground text-[16px]">savings</span>
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground">Capital</p>
+                                  <p className="text-xs font-bold text-foreground">৳{stats.totalCapital.toLocaleString("en-IN")}</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Meta info */}
+                            <div className="flex items-center gap-4 flex-wrap pt-1 border-t border-border">
+                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[12px]">calendar_today</span>
+                                Created {format(new Date(b.created_at), "MMM d, yyyy")}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[12px]">group</span>
+                                {partnerCount} partner{partnerCount !== 1 ? "s" : ""}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[12px]">currency_exchange</span>
+                                Rate: ¥1 = ৳{b.exchange_rate}
+                              </span>
+                              {isOwner && (
+                                <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                  <span className="material-symbols-outlined text-[12px]">shield</span>
+                                  You are the owner
+                                </span>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   {pendingRequest && (
                     <div className="mt-3 border border-destructive/30 bg-destructive/5 rounded-lg p-3 space-y-2">
                       <div className="flex items-center gap-2">
