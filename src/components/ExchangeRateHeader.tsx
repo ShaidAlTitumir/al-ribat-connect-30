@@ -27,6 +27,7 @@ const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
     <header className="h-14 lg:h-16 border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-10 px-4 lg:px-8 flex items-center justify-between">
       <h2 className="text-lg lg:text-xl font-bold text-foreground">{title}</h2>
       <div className="flex items-center gap-2">
+        <NotificationBell />
         <div className="flex items-center gap-1.5 bg-muted rounded-lg px-2 py-1.5">
           <span className="material-symbols-outlined text-[16px] text-muted-foreground">currency_exchange</span>
           <span className="text-xs text-muted-foreground hidden sm:inline">1 RMB =</span>
