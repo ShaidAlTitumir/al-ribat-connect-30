@@ -160,6 +160,11 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const [saving, setSaving] = useState(false);
   const [existingItems, setExistingItems] = useState<any[]>([]);
   const [selectedItemId, setSelectedItemId] = useState("");
+  const [useManualRate, setUseManualRate] = useState(false);
+  const [manualRate, setManualRate] = useState("");
+  const [customCategory, setCustomCategory] = useState("");
+  const [showCustomCategory, setShowCustomCategory] = useState(false);
+  const [savedCategories, setSavedCategories] = useState<string[]>(["Electronics", "Fashion", "Home Decor", "Accessories", "Other"]);
 
   const [form, setForm] = useState({
     name: "", category: "Electronics", quantity: "", weightPerUnit: "",
@@ -172,6 +177,18 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
       .eq("business_id", businessId).then(({ data }) => setExistingItems(data || []));
   }, [businessId]);
 
+  // Load existing categories from inventory
+  useEffect(() => {
+    if (!businessId) return;
+    supabase.from("inventory_items").select("category").eq("business_id", businessId).then(({ data }) => {
+      const cats = new Set(savedCategories);
+      (data || []).forEach((d) => { if (d.category) cats.add(d.category); });
+      setSavedCategories(Array.from(cats));
+    });
+  }, [businessId]);
+
+  const activeRate = useManualRate && manualRate ? parseFloat(manualRate) : exchangeRate;
+
   const qty = parseInt(form.quantity) || 0;
   const weight = parseFloat(form.weightPerUnit) || 0;
   const buyRmb = parseFloat(form.buyingCostRmb) || 0;
@@ -179,8 +196,9 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const addCost = parseFloat(form.additionalCost) || 0;
   const sellPrice = parseFloat(form.sellingPrice) || 0;
 
+  const buyingPerUnitBdt = buyRmb * activeRate;
   const totalWeight = qty * weight;
-  const totalBuyingBdt = buyRmb * qty * exchangeRate;
+  const totalBuyingBdt = buyRmb * qty * activeRate;
   const totalShipping = totalWeight * shipRate;
   const totalLanded = totalBuyingBdt + totalShipping + addCost;
   const landedPerUnit = qty > 0 ? totalLanded / qty : 0;
@@ -220,7 +238,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
         item_id: itemId, quantity: qty, buying_cost_per_unit_rmb: buyRmb,
         shipping_method: shippingMethod, shipping_rate_bdt_per_kg: shipRate,
         additional_cost_bdt: addCost, total_landed_cost_bdt: totalLanded,
-        landed_cost_per_unit_bdt: landedPerUnit, exchange_rate_used: exchangeRate,
+        landed_cost_per_unit_bdt: landedPerUnit, exchange_rate_used: activeRate,
         business_id: businessId, user_id: user.id,
       });
 
@@ -234,7 +252,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
           shipping_method: shippingMethod,
           total_landed_cost: totalLanded,
           landed_per_unit: landedPerUnit,
-          rate: exchangeRate,
+          rate: activeRate,
         },
         business_id: businessId, user_id: user.id,
       });
@@ -287,9 +305,30 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-semibold text-foreground">Category</label>
-                    <select className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" value={form.category} onChange={(e) => updateForm("category", e.target.value)}>
-                      <option>Electronics</option><option>Fashion</option><option>Home Decor</option><option>Accessories</option><option>Other</option>
-                    </select>
+                    {showCustomCategory ? (
+                      <div className="flex gap-2">
+                        <input className="flex-1 rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          placeholder="Enter new category" value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} />
+                        <button onClick={() => {
+                          if (customCategory.trim()) {
+                            setSavedCategories((prev) => [...prev, customCategory.trim()]);
+                            updateForm("category", customCategory.trim());
+                            setCustomCategory("");
+                            setShowCustomCategory(false);
+                          }
+                        }} className="px-3 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold">Add</button>
+                        <button onClick={() => setShowCustomCategory(false)} className="px-3 py-2 bg-muted border border-border rounded-lg text-sm text-muted-foreground">✕</button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <select className="flex-1 rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" value={form.category} onChange={(e) => updateForm("category", e.target.value)}>
+                          {savedCategories.map((c) => <option key={c}>{c}</option>)}
+                        </select>
+                        <button onClick={() => setShowCustomCategory(true)} className="px-3 py-2 bg-muted border border-border rounded-lg text-muted-foreground hover:text-foreground" title="Add custom category">
+                          <span className="material-symbols-outlined text-[18px]">add</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </>
               ) : (
@@ -330,6 +369,29 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                   <input className="pl-7 w-full rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" placeholder="0.00"
                     value={form.buyingCostRmb} onChange={(e) => updateForm("buyingCostRmb", e.target.value)} />
                 </div>
+                {buyRmb > 0 && (
+                  <span className="text-xs text-muted-foreground">= ৳{buyingPerUnitBdt.toFixed(2)} BDT/unit @ {activeRate} rate</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold text-foreground">RMB Rate</label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <span className="text-xs text-muted-foreground">Manual</span>
+                    <button onClick={() => setUseManualRate(!useManualRate)}
+                      className={`relative w-9 h-5 rounded-full transition-colors ${useManualRate ? "bg-primary" : "bg-muted border border-border"}`}>
+                      <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-background shadow transition-transform ${useManualRate ? "translate-x-4" : ""}`} />
+                    </button>
+                  </label>
+                </div>
+                {useManualRate ? (
+                  <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" step="0.01" placeholder="Enter rate"
+                    value={manualRate} onChange={(e) => setManualRate(e.target.value)} />
+                ) : (
+                  <div className="rounded-lg border border-border bg-muted px-4 py-2.5 text-muted-foreground">
+                    {exchangeRate} BDT/RMB (default)
+                  </div>
+                )}
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-foreground">Shipping Method</label>
