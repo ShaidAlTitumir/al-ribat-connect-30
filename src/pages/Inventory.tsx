@@ -190,7 +190,7 @@ const InventoryList = ({ onAdd }: { onAdd: () => void }) => {
 const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void }) => {
   const { businessId, exchangeRate } = useBusiness();
   const { user } = useAuth();
-  const [itemMode, setItemMode] = useState<"new" | "restock">("new");
+  const [itemMode, setItemMode] = useState<"new" | "existing">("new");
   const [shippingMethod, setShippingMethod] = useState("sea");
   const [saving, setSaving] = useState(false);
   const [existingItems, setExistingItems] = useState<any[]>([]);
