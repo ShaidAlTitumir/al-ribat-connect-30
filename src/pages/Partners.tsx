@@ -26,6 +26,8 @@ const Partners = () => {
   const [manualRate, setManualRate] = useState("");
   const [editingContribution, setEditingContribution] = useState<any>(null);
   const [editContribForm, setEditContribForm] = useState({ amount: "", currency: "BDT" as "BDT" | "RMB" });
+  const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
+  const [leaveVotes, setLeaveVotes] = useState<Record<string, any[]>>({});
 
   useEffect(() => {
     if (!businessId) return;
