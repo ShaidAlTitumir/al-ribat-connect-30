@@ -7,18 +7,21 @@ import { format } from "date-fns";
 import { Pencil, Trash2 } from "lucide-react";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 
-type InventoryTab = "list" | "add" | "samples";
+type InventoryTab = "list" | "add" | "samples" | "edit";
 
 const Inventory = () => {
   const [activeTab, setActiveTab] = useState<InventoryTab>("list");
+  const [editingItem, setEditingItem] = useState<any>(null);
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <ExchangeRateHeader title="Inventory" />
       {activeTab === "list" ? (
-        <InventoryList onAdd={() => setActiveTab("add")} onSamples={() => setActiveTab("samples")} />
+        <InventoryList onAdd={() => setActiveTab("add")} onSamples={() => setActiveTab("samples")} onEdit={(item: any) => { setEditingItem(item); setActiveTab("edit"); }} />
       ) : activeTab === "samples" ? (
         <SampleOrders onBack={() => setActiveTab("list")} />
+      ) : activeTab === "edit" ? (
+        <EditItem item={editingItem} onBack={() => setActiveTab("list")} onSaved={() => setActiveTab("list")} />
       ) : (
         <AddItem onBack={() => setActiveTab("list")} onSaved={() => setActiveTab("list")} />
       )}
