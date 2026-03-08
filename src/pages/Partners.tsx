@@ -24,6 +24,8 @@ const Partners = () => {
   const [editForm, setEditForm] = useState({ name: "", phone: "", email: "", address: "", role: "" });
   const [useManualRate, setUseManualRate] = useState(false);
   const [manualRate, setManualRate] = useState("");
+  const [editingContribution, setEditingContribution] = useState<any>(null);
+  const [editContribForm, setEditContribForm] = useState({ amount: "", currency: "BDT" as "BDT" | "RMB" });
 
   useEffect(() => {
     if (!businessId) return;
