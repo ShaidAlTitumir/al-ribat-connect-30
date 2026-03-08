@@ -22,12 +22,14 @@ const BusinessContext = createContext<BusinessContextType>({
   businessName: "",
   businessPhone: "",
   businessAddress: "",
+  businessType: "",
   exchangeRate: 18,
   setExchangeRate: () => {},
   saveExchangeRate: async () => {},
   loading: true,
   userRole: "admin",
   switchBusiness: () => {},
+  isSolo: false,
 });
 
 export const useBusiness = () => useContext(BusinessContext);
