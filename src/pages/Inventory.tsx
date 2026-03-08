@@ -165,6 +165,8 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const [customCategory, setCustomCategory] = useState("");
   const [showCustomCategory, setShowCustomCategory] = useState(false);
   const [savedCategories, setSavedCategories] = useState<string[]>([]);
+  const [walletBdt, setWalletBdt] = useState(0);
+  const [walletRmb, setWalletRmb] = useState(0);
 
   const [form, setForm] = useState({
     name: "", category: "", quantity: "", weightPerUnit: "",
@@ -175,7 +177,33 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
     if (!businessId) return;
     supabase.from("inventory_items").select("id, name, current_stock, weight_per_unit")
       .eq("business_id", businessId).then(({ data }) => setExistingItems(data || []));
+    // Fetch wallet balances
+    fetchWalletBalances();
   }, [businessId]);
+
+  const fetchWalletBalances = async () => {
+    if (!businessId) return;
+    let bdt = 0, rmb = 0;
+    const [caps, sales, payments, exps, purchases, exch] = await Promise.all([
+      supabase.from("capital_contributions").select("amount, currency").eq("business_id", businessId),
+      supabase.from("sales").select("received_now_bdt").eq("business_id", businessId),
+      supabase.from("customer_ledger").select("amount").eq("business_id", businessId).eq("transaction_type", "payment"),
+      supabase.from("expenses").select("amount, currency").eq("business_id", businessId),
+      supabase.from("purchase_transactions").select("total_landed_cost_bdt").eq("business_id", businessId),
+      supabase.from("exchanges").select("from_currency, amount_from, amount_to").eq("business_id", businessId),
+    ]);
+    (caps.data || []).forEach((c) => { if (c.currency === "BDT") bdt += c.amount; else rmb += c.amount; });
+    (sales.data || []).forEach((s) => { bdt += s.received_now_bdt; });
+    (payments.data || []).forEach((p) => { bdt += p.amount; });
+    (exps.data || []).forEach((e) => { if (e.currency === "BDT") bdt -= e.amount; else rmb -= e.amount; });
+    (purchases.data || []).forEach((p) => { bdt -= p.total_landed_cost_bdt; });
+    (exch.data || []).forEach((e) => {
+      if (e.from_currency === "BDT") { bdt -= e.amount_from; rmb += e.amount_to; }
+      else { rmb -= e.amount_from; bdt += e.amount_to; }
+    });
+    setWalletBdt(bdt);
+    setWalletRmb(rmb);
+  };
 
   // Load existing categories from inventory
   useEffect(() => {
@@ -210,6 +238,14 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
     if (itemMode === "new" && !form.name.trim()) { toast.error("Item name is required"); return; }
     if (itemMode === "restock" && !selectedItemId) { toast.error("Select an item to restock"); return; }
     if (qty <= 0) { toast.error("Quantity must be greater than 0"); return; }
+
+    // Wallet balance check — only when there's a purchase cost
+    if (totalLanded > 0) {
+      if (walletBdt < totalLanded) {
+        toast.error(`Insufficient wallet balance. Need ৳${totalLanded.toFixed(0)} but only ৳${Math.max(0, walletBdt).toFixed(0)} available.`);
+        return;
+      }
+    }
 
     setSaving(true);
     try {
@@ -434,8 +470,37 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
           </section>
         </div>
 
-        {/* Profit Analysis Sidebar */}
+        {/* Wallet Balance & Profit Analysis Sidebar */}
         <div className="space-y-6">
+          {/* Wallet Balance Card */}
+          <div className={`rounded-xl p-4 border ${totalLanded > 0 && walletBdt < totalLanded ? "bg-destructive/10 border-destructive/30" : "bg-card border-border"}`}>
+            <h4 className="text-sm font-bold text-foreground flex items-center gap-2 mb-3">
+              <span className="material-symbols-outlined text-[18px]">account_balance_wallet</span> Wallet Balance
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <span className="text-xs text-muted-foreground">BDT</span>
+                <p className={`font-bold text-lg ${walletBdt >= 0 ? "text-foreground" : "text-destructive"}`}>৳{walletBdt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+              </div>
+              <div>
+                <span className="text-xs text-muted-foreground">RMB</span>
+                <p className={`font-bold text-lg ${walletRmb >= 0 ? "text-foreground" : "text-destructive"}`}>¥{walletRmb.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+              </div>
+            </div>
+            {totalLanded > 0 && walletBdt < totalLanded && (
+              <div className="mt-3 flex items-center gap-1.5 text-destructive text-xs font-medium">
+                <span className="material-symbols-outlined text-[16px]">warning</span>
+                Insufficient balance — need ৳{totalLanded.toFixed(0)}
+              </div>
+            )}
+            {totalLanded > 0 && walletBdt >= totalLanded && (
+              <div className="mt-3 flex items-center gap-1.5 text-emerald-600 text-xs font-medium">
+                <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                Sufficient balance for this purchase
+              </div>
+            )}
+          </div>
+
           <div className="bg-primary text-primary-foreground rounded-xl p-6 shadow-lg sticky top-24">
             <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
               <span className="material-symbols-outlined">calculate</span> Profit Analysis
