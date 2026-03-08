@@ -7,12 +7,14 @@ interface BusinessContextType {
   businessName: string;
   businessPhone: string;
   businessAddress: string;
+  businessType: string;
   exchangeRate: number;
   setExchangeRate: (rate: number) => void;
   saveExchangeRate: () => Promise<void>;
   loading: boolean;
   userRole: string;
   switchBusiness: (id: string) => void;
+  isSolo: boolean;
 }
 
 const BusinessContext = createContext<BusinessContextType>({
