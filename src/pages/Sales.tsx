@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 import InvoiceModal from "@/components/InvoiceModal";
 import { format } from "date-fns";
+import { exportToCSV } from "@/lib/exportUtils";
 
 const Sales = () => {
   const { businessId, exchangeRate } = useBusiness();
