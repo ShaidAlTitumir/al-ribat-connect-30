@@ -181,7 +181,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   useEffect(() => {
     if (!businessId) return;
     supabase.from("inventory_items").select("category").eq("business_id", businessId).then(({ data }) => {
-      const cats = new Set(savedCategories);
+      const cats = new Set<string>();
       (data || []).forEach((d) => { if (d.category) cats.add(d.category); });
       setSavedCategories(Array.from(cats));
     });
