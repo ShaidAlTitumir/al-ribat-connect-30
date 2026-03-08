@@ -16,6 +16,16 @@ interface MonthlyTrend {
   profit: number;
 }
 
+interface PLStatement {
+  totalRevenue: number;
+  costOfGoods: number;
+  grossProfit: number;
+  totalExpenses: number;
+  netProfit: number;
+  margin: number;
+  expenseBreakdown: { category: string; amount: number }[];
+}
+
 const Reports = () => {
   const { businessId, exchangeRate } = useBusiness();
   const [period, setPeriod] = useState("month");
@@ -23,6 +33,10 @@ const Reports = () => {
   const [partnerShares, setPartnerShares] = useState<any[]>([]);
   const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
   const [trendMonths, setTrendMonths] = useState(6);
+  const [plStatement, setPlStatement] = useState<PLStatement>({
+    totalRevenue: 0, costOfGoods: 0, grossProfit: 0,
+    totalExpenses: 0, netProfit: 0, margin: 0, expenseBreakdown: [],
+  });
 
   useEffect(() => {
     if (!businessId) return;
@@ -46,20 +60,39 @@ const Reports = () => {
     }
     const start = startDate.toISOString();
 
-    const { data: salesData } = await supabase.from("sales").select("unit_price_bdt, quantity, expected_profit, due")
+    const { data: salesData } = await supabase.from("sales").select("unit_price_bdt, quantity, expected_profit, due, cost_rate")
       .eq("business_id", businessId!).gte("created_at", start);
     const totalSales = (salesData || []).reduce((s, r) => s + r.unit_price_bdt * r.quantity, 0);
     const totalProfit = (salesData || []).reduce((s, r) => s + r.expected_profit, 0);
+    const costOfGoods = totalSales - totalProfit;
 
     const { data: custData } = await supabase.from("customers").select("total_due").eq("business_id", businessId!);
     const totalDues = (custData || []).reduce((s, c) => s + c.total_due, 0);
 
-    const { data: expData } = await supabase.from("expenses").select("amount, currency")
+    const { data: expData } = await supabase.from("expenses").select("amount, currency, category")
       .eq("business_id", businessId!).gte("created_at", start);
     const totalExpenses = (expData || []).reduce((s, e) => s + (e.currency === "BDT" ? e.amount : e.amount * exchangeRate), 0);
 
+    // Expense breakdown by category
+    const catMap: Record<string, number> = {};
+    (expData || []).forEach((e) => {
+      const cat = e.category || "Other";
+      const amt = e.currency === "BDT" ? e.amount : e.amount * exchangeRate;
+      catMap[cat] = (catMap[cat] || 0) + amt;
+    });
+    const expenseBreakdown = Object.entries(catMap)
+      .map(([category, amount]) => ({ category, amount }))
+      .sort((a, b) => b.amount - a.amount);
+
     const netProfit = totalProfit - totalExpenses;
+    const grossProfit = totalSales - costOfGoods;
+    const margin = totalSales > 0 ? (netProfit / totalSales) * 100 : 0;
+
     setMetrics({ sales: totalSales, profit: totalProfit, dues: totalDues, netProfit });
+    setPlStatement({
+      totalRevenue: totalSales, costOfGoods, grossProfit,
+      totalExpenses, netProfit, margin, expenseBreakdown,
+    });
 
     const { data: partners } = await supabase.from("partners").select("id, name, role, status").eq("business_id", businessId!).eq("status", "accepted");
     const { data: caps } = await supabase.from("capital_contributions").select("partner_id, amount, currency").eq("business_id", businessId!);
@@ -181,7 +214,63 @@ const Reports = () => {
             ))}
           </div>
 
-          {/* Monthly Trends */}
+          {/* Profit & Loss Statement */}
+          <div className="bg-card rounded-xl border border-border overflow-hidden">
+            <div className="p-4 lg:p-6 border-b border-border">
+              <h5 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">account_balance</span>
+                Profit & Loss Statement
+              </h5>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {period === "week" ? "This Week" : period === "month" ? "This Month" : "This Year"}
+              </p>
+            </div>
+            <div className="p-4 lg:p-6 space-y-1">
+              {/* Revenue */}
+              <div className="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-muted/50">
+                <span className="text-sm font-semibold text-foreground">Total Revenue (Sales)</span>
+                <span className="text-sm font-bold text-foreground">৳{plStatement.totalRevenue.toLocaleString("en-IN")}</span>
+              </div>
+              <div className="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-muted/50">
+                <span className="text-sm text-muted-foreground pl-4">− Cost of Goods Sold</span>
+                <span className="text-sm font-medium text-destructive">৳{plStatement.costOfGoods.toLocaleString("en-IN")}</span>
+              </div>
+              <div className="flex justify-between items-center py-2.5 px-3 bg-muted/50 rounded-lg border-y border-border">
+                <span className="text-sm font-bold text-foreground">Gross Profit</span>
+                <span className={`text-sm font-bold ${plStatement.grossProfit >= 0 ? "text-emerald-600" : "text-destructive"}`}>
+                  ৳{plStatement.grossProfit.toLocaleString("en-IN")}
+                </span>
+              </div>
+
+              {/* Operating Expenses */}
+              <div className="pt-2">
+                <div className="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-muted/50">
+                  <span className="text-sm font-semibold text-foreground">Operating Expenses</span>
+                  <span className="text-sm font-bold text-destructive">৳{plStatement.totalExpenses.toLocaleString("en-IN")}</span>
+                </div>
+                {plStatement.expenseBreakdown.map((eb) => (
+                  <div key={eb.category} className="flex justify-between items-center py-1.5 px-3 pl-7">
+                    <span className="text-xs text-muted-foreground">{eb.category}</span>
+                    <span className="text-xs font-medium text-muted-foreground">৳{eb.amount.toLocaleString("en-IN")}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Net Profit */}
+              <div className="flex justify-between items-center py-3 px-4 mt-2 bg-primary/10 rounded-xl border border-primary/20">
+                <div>
+                  <span className="text-sm font-bold text-foreground">Net Profit</span>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    Margin: {plStatement.margin.toFixed(1)}%
+                  </span>
+                </div>
+                <span className={`text-lg font-black ${plStatement.netProfit >= 0 ? "text-emerald-600" : "text-destructive"}`}>
+                  {plStatement.netProfit >= 0 ? "+" : ""}৳{plStatement.netProfit.toLocaleString("en-IN")}
+                </span>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-card rounded-xl border border-border overflow-hidden">
             <div className="p-4 lg:p-6 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
