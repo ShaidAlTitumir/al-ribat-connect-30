@@ -29,6 +29,7 @@ const Index = () => {
   });
   const [partners, setPartners] = useState<PartnerEquity[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
+  const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
 
   useEffect(() => {
     if (!businessId) return;
