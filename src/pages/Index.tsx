@@ -100,7 +100,7 @@ const Index = () => {
     });
     const totalCap = Object.values(partnerCapMap).reduce((s, v) => s + v, 0);
     const partnerEquities: PartnerEquity[] = partnersList
-      .filter(p => p.status === "accepted")
+      .filter(p => partnerCapMap[p.id] !== undefined)
       .map((p) => ({
         name: p.name,
         totalBdt: partnerCapMap[p.id] || 0,
