@@ -35,7 +35,7 @@ interface PLStatement {
 }
 
 const Reports = () => {
-  const { businessId, exchangeRate } = useBusiness();
+  const { businessId, exchangeRate, businessName, businessPhone, businessAddress } = useBusiness();
   const [period, setPeriod] = useState("month");
   const [metrics, setMetrics] = useState({ sales: 0, profit: 0, dues: 0, netProfit: 0 });
   const [partnerShares, setPartnerShares] = useState<any[]>([]);
@@ -230,7 +230,7 @@ const Reports = () => {
             </div>
             <button onClick={() => exportToCSV(monthlyTrends.map(t => ({
               Month: t.month, Sales: t.sales, Expenses: t.expenses, "Stock Cost": t.stockCost, Profit: t.profit
-            })), `report-${period}`)}
+            })), `report-${period}`, { name: businessName, phone: businessPhone, address: businessAddress })}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground bg-muted rounded-lg border border-border mb-2">
               <span className="material-symbols-outlined text-[16px]">download</span> Export CSV
             </button>

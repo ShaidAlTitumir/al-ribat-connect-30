@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { exportToCSV } from "@/lib/exportUtils";
 
 const Sales = () => {
-  const { businessId, exchangeRate } = useBusiness();
+  const { businessId, exchangeRate, businessName, businessPhone, businessAddress } = useBusiness();
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
 
@@ -269,7 +269,7 @@ const Sales = () => {
                     Total: s.quantity * s.unit_price_bdt, Received: s.received_now_bdt,
                     Due: s.due, Customer: (s as any).customers?.name || "Walk-in",
                     Date: format(new Date(s.created_at), "yyyy-MM-dd"),
-                  })), "sales-export")}
+                  })), "sales-export", { name: businessName, phone: businessPhone, address: businessAddress })}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground bg-muted rounded-lg border border-border">
                     <span className="material-symbols-outlined text-[16px]">download</span> Export
                   </button>

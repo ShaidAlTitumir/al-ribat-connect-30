@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { exportToCSV } from "@/lib/exportUtils";
 
 const Expenses = () => {
-  const { businessId, exchangeRate } = useBusiness();
+  const { businessId, exchangeRate, businessName, businessPhone, businessAddress } = useBusiness();
   const { user } = useAuth();
   const [expenses, setExpenses] = useState<any[]>([]);
   const [form, setForm] = useState({ title: "", amount: "", category: "Shipping" });
@@ -194,7 +194,7 @@ const Expenses = () => {
                         Title: e.title, Amount: e.amount, Currency: e.currency,
                         Category: e.category || "Other",
                         Date: format(new Date(e.created_at), "yyyy-MM-dd"),
-                      })), "expenses-export")}
+                      })), "expenses-export", { name: businessName, phone: businessPhone, address: businessAddress })}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground bg-muted rounded-lg border border-border">
                         <span className="material-symbols-outlined text-[16px]">download</span> Export
                       </button>
