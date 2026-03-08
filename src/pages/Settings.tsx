@@ -8,7 +8,7 @@ import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 
 const Settings = () => {
   const { user } = useAuth();
-  const { businessId } = useBusiness();
+  const { businessId, userRole } = useBusiness();
   const [profile, setProfile] = useState({ full_name: "", phone: "", username: "" });
   const [business, setBusiness] = useState({ name: "", default_currency: "BDT" });
   const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
