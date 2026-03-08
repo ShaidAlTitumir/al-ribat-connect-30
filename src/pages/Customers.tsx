@@ -85,6 +85,7 @@ const Customers = () => {
       await supabase.from("customer_ledger").insert({
         customer_id: selectedCustomerId, transaction_type: "payment", amount: amt,
         business_id: businessId, user_id: user.id,
+        created_at: paymentDate.toISOString(),
       });
       await supabase.from("activity_log").insert({
         action: "Collected due payment", details: { customer: selectedCustomer?.name, amount: amt },
