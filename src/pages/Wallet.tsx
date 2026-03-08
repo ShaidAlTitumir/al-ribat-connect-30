@@ -17,6 +17,8 @@ const Wallet = () => {
   const [saving, setSaving] = useState(false);
   const [useManualRate, setUseManualRate] = useState(false);
   const [manualRate, setManualRate] = useState("");
+  const [editingEx, setEditingEx] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ amount_from: 0, rate: 0 });
 
   // Balances from capital contributions + exchanges
   const [bdtBalance, setBdtBalance] = useState(0);
