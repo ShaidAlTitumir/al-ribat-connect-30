@@ -30,6 +30,7 @@ const Index = () => {
   const [kpis, setKpis] = useState({
     bdtBalance: 0, rmbBalance: 0, totalValueBdt: 0,
     inventory: 0, dues: 0, revenue: 0, netProfit: 0,
+    totalProfit: 0, totalExpenses: 0, totalCOGS: 0,
   });
   const [partners, setPartners] = useState<PartnerEquity[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
@@ -107,7 +108,8 @@ const Index = () => {
     // Net Profit = Revenue - COGS - Operating Expenses
     const netProfit = totalRevenue - totalCOGS - totalExpenses;
 
-    setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, revenue: totalRevenue, netProfit });
+    const totalProfit = sales.reduce((s, r) => s + r.expected_profit, 0);
+    setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, revenue: totalRevenue, netProfit, totalProfit, totalExpenses, totalCOGS });
 
     const partnerCapMap: Record<string, number> = {};
     caps.forEach((c) => {
@@ -251,6 +253,38 @@ const Index = () => {
               <p className={`text-lg lg:text-2xl font-black mt-0.5 ${kpis.netProfit >= 0 ? "text-foreground" : "text-destructive"}`}>
                 ৳{kpis.netProfit.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
               </p>
+            </div>
+          </div>
+
+          {/* P&L Breakdown */}
+          <div className="bg-card rounded-xl border border-border p-3 lg:p-5">
+            <h3 className="text-xs lg:text-sm font-bold text-foreground mb-2 lg:mb-3 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-[16px] lg:text-[20px]">receipt_long</span>
+              Profit & Loss Breakdown
+            </h3>
+            <div className="space-y-1.5 text-[11px] lg:text-xs">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Total Revenue (Sales)</span>
+                <span className="font-bold text-foreground">৳{kpis.revenue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground pl-3">− Cost of Goods Sold</span>
+                <span className="font-medium text-destructive">৳{kpis.totalCOGS.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="border-t border-border my-1.5" />
+              <div className="flex justify-between">
+                <span className="font-semibold text-foreground">Gross Profit (Expected)</span>
+                <span className={`font-bold ${kpis.totalProfit >= 0 ? "text-emerald-600" : "text-destructive"}`}>৳{kpis.totalProfit.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground pl-3">− Operating Expenses</span>
+                <span className="font-medium text-destructive">৳{kpis.totalExpenses.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="border-t border-border my-1.5" />
+              <div className="flex justify-between">
+                <span className="font-bold text-foreground">Net Profit</span>
+                <span className={`font-bold ${kpis.netProfit >= 0 ? "text-emerald-600" : "text-destructive"}`}>৳{kpis.netProfit.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+              </div>
             </div>
           </div>
         </section>
