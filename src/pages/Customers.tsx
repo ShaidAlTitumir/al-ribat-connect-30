@@ -364,17 +364,30 @@ const Customers = () => {
             </div>
           </div>
 
-          {/* Right: Ledger */}
           <div className="lg:col-span-2">
             <div className="bg-card rounded-xl border border-border min-h-[400px] flex flex-col">
-              <div className="p-4 border-b border-border flex items-center justify-between">
-                <h3 className="text-lg font-bold">
-                  {selectedCustomer ? `${selectedCustomer.name}'s Ledger` : "Customer Ledger"}
-                </h3>
+              <div className="p-4 border-b border-border">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-bold">
+                    {selectedCustomer ? selectedCustomer.name : "Customer Details"}
+                  </h3>
+                  {selectedCustomer && (
+                    <span className={`text-sm font-bold ${(selectedCustomer.total_due || 0) > 0 ? "text-destructive" : "text-emerald-600"}`}>
+                      Due: ৳{(selectedCustomer.total_due || 0).toFixed(0)}
+                    </span>
+                  )}
+                </div>
                 {selectedCustomer && (
-                  <span className={`text-sm font-bold ${(selectedCustomer.total_due || 0) > 0 ? "text-destructive" : "text-emerald-600"}`}>
-                    Due: ৳{(selectedCustomer.total_due || 0).toFixed(0)}
-                  </span>
+                  <div className="flex gap-1 bg-muted p-1 rounded-lg">
+                    {(["ledger", "purchases"] as const).map((t) => (
+                      <button key={t} onClick={() => setActiveTab(t)}
+                        className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${
+                          activeTab === t ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
+                        }`}>
+                        {t === "ledger" ? `Ledger (${ledger.length})` : `Purchases (${purchaseHistory.length})`}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
               {!selectedCustomerId ? (
@@ -383,35 +396,83 @@ const Customers = () => {
                   <h4 className="font-bold">Select a customer</h4>
                   <p className="text-muted-foreground text-sm mt-1">Choose a customer to view their transaction history.</p>
                 </div>
-              ) : ledger.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                  <span className="material-symbols-outlined text-4xl text-muted-foreground/40 mb-3">receipt_long</span>
-                  <h4 className="font-bold">No transactions yet</h4>
-                  <p className="text-muted-foreground text-sm mt-1">This customer has no transaction history.</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border overflow-y-auto max-h-[500px]">
-                  {ledger.map((entry) => (
-                    <div key={entry.id} className="p-3 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          entry.transaction_type === "payment" ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-600"
-                        }`}>
-                          <span className="material-symbols-outlined text-[18px]">
-                            {entry.transaction_type === "payment" ? "arrow_downward" : "arrow_upward"}
-                          </span>
+              ) : activeTab === "ledger" ? (
+                ledger.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                    <span className="material-symbols-outlined text-4xl text-muted-foreground/40 mb-3">receipt_long</span>
+                    <h4 className="font-bold">No transactions yet</h4>
+                    <p className="text-muted-foreground text-sm mt-1">This customer has no ledger entries.</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border overflow-y-auto max-h-[500px]">
+                    {ledger.map((entry) => (
+                      <div key={entry.id} className="p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            entry.transaction_type === "payment" ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+                          }`}>
+                            <span className="material-symbols-outlined text-[18px]">
+                              {entry.transaction_type === "payment" ? "arrow_downward" : "arrow_upward"}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm capitalize">{entry.transaction_type}</p>
+                            <p className="text-xs text-muted-foreground">{format(new Date(entry.created_at), "MMM d, yyyy h:mm a")}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold text-sm capitalize">{entry.transaction_type}</p>
-                          <p className="text-xs text-muted-foreground">{format(new Date(entry.created_at), "MMM d, yyyy h:mm a")}</p>
+                        <span className={`font-bold ${entry.transaction_type === "payment" ? "text-emerald-600" : "text-destructive"}`}>
+                          {entry.transaction_type === "payment" ? "-" : "+"}৳{entry.amount}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              ) : (
+                purchaseHistory.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                    <span className="material-symbols-outlined text-4xl text-muted-foreground/40 mb-3">shopping_bag</span>
+                    <h4 className="font-bold">No purchases yet</h4>
+                    <p className="text-muted-foreground text-sm mt-1">This customer hasn't made any purchases.</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border overflow-y-auto max-h-[500px]">
+                    {purchaseHistory.map((sale) => (
+                      <div key={sale.id} className="p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <span className="material-symbols-outlined text-[18px]">shopping_cart</span>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm">{sale.inventory_items?.name || "Item"}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {sale.quantity} × ৳{sale.unit_price_bdt} · {format(new Date(sale.created_at), "MMM d, yyyy")}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-sm">৳{(sale.quantity * sale.unit_price_bdt).toFixed(0)}</p>
+                          {sale.due > 0 && (
+                            <p className="text-xs text-destructive font-medium">Due: ৳{sale.due}</p>
+                          )}
+                          {sale.due === 0 && (
+                            <p className="text-xs text-emerald-600 font-medium">Paid</p>
+                          )}
                         </div>
                       </div>
-                      <span className={`font-bold ${entry.transaction_type === "payment" ? "text-emerald-600" : "text-destructive"}`}>
-                        {entry.transaction_type === "payment" ? "-" : "+"}৳{entry.amount}
-                      </span>
+                    ))}
+                    {/* Purchase summary */}
+                    <div className="p-3 bg-muted/50">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium text-muted-foreground">Total Purchases</span>
+                        <span className="font-bold">৳{purchaseHistory.reduce((s, p) => s + p.quantity * p.unit_price_bdt, 0).toFixed(0)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm mt-1">
+                        <span className="font-medium text-muted-foreground">Total Paid</span>
+                        <span className="font-bold text-emerald-600">৳{purchaseHistory.reduce((s, p) => s + p.received_now_bdt, 0).toFixed(0)}</span>
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )
               )}
             </div>
           </div>
