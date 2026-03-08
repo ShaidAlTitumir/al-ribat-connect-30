@@ -252,7 +252,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
           shipping_method: shippingMethod,
           total_landed_cost: totalLanded,
           landed_per_unit: landedPerUnit,
-          rate: exchangeRate,
+          rate: activeRate,
         },
         business_id: businessId, user_id: user.id,
       });
