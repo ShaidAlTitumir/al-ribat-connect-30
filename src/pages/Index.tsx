@@ -51,7 +51,7 @@ const Index = () => {
       supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity").eq("business_id", businessId!),
       supabase.from("customer_ledger").select("amount").eq("business_id", businessId!).eq("transaction_type", "payment"),
       supabase.from("expenses").select("amount, currency").eq("business_id", businessId!),
-      supabase.from("purchase_transactions").select("total_landed_cost_bdt").eq("business_id", businessId!),
+      supabase.from("purchase_transactions").select("total_landed_cost_bdt, buying_cost_per_unit_rmb, quantity, exchange_rate_used").eq("business_id", businessId!),
       supabase.from("inventory_items").select("id, name, current_stock, low_stock_threshold").eq("business_id", businessId!),
       supabase.from("customers").select("total_due").eq("business_id", businessId!),
       supabase.from("exchanges").select("*").eq("business_id", businessId!),
