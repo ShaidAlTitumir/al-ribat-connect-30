@@ -164,7 +164,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const [manualRate, setManualRate] = useState("");
   const [customCategory, setCustomCategory] = useState("");
   const [showCustomCategory, setShowCustomCategory] = useState(false);
-  const [savedCategories, setSavedCategories] = useState<string[]>(["Electronics", "Fashion", "Home Decor", "Accessories", "Other"]);
+  const [savedCategories, setSavedCategories] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     name: "", category: "Electronics", quantity: "", weightPerUnit: "",
