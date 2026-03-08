@@ -66,6 +66,7 @@ const Register = () => {
           data: {
             full_name: form.fullName.trim(),
             phone: form.phone.trim(),
+            username: form.username.trim().toLowerCase(),
           },
         },
       });
