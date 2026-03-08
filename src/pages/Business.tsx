@@ -36,6 +36,13 @@ interface DeletionVote {
   voted_at: string | null;
 }
 
+interface MonthlyData {
+  month: string;
+  sales: number;
+  profit: number;
+  expenses: number;
+}
+
 interface BusinessStats {
   totalSalesRevenue: number;
   totalExpenses: number;
@@ -45,6 +52,7 @@ interface BusinessStats {
   totalDue: number;
   customerCount: number;
   totalCapital: number;
+  monthlyData: MonthlyData[];
 }
 
 const Business = () => {
