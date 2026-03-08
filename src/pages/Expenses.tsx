@@ -44,13 +44,19 @@ const Expenses = () => {
     if (!amt || amt <= 0) { toast.error("Enter a valid amount"); return; }
 
     setSaving(true);
+    const activeRate = useManualRate && manualRate ? parseFloat(manualRate) : exchangeRate;
+    const bdtEquivalent = currency === "RMB" ? amt * activeRate : amt;
     try {
       await supabase.from("expenses").insert({
         title: form.title.trim(), amount: amt, currency, category: form.category,
         business_id: businessId, user_id: user.id,
       });
       await supabase.from("activity_log").insert({
-        action: "Added expense", details: { title: form.title, amount: amt, currency },
+        action: "Added expense",
+        details: {
+          title: form.title, amount: amt, currency,
+          ...(currency === "RMB" ? { rate: activeRate, bdt_equivalent: bdtEquivalent } : {}),
+        },
         business_id: businessId, user_id: user.id,
       });
       toast.success("Expense saved!");
