@@ -233,6 +233,23 @@ const Settings = () => {
           </div>
         </section>
 
+        {/* Appearance */}
+        <section className="bg-card rounded-xl border border-border">
+          <div className="p-4 lg:p-6 flex items-center gap-3 border-b border-border">
+            <span className="material-symbols-outlined text-primary">dark_mode</span>
+            <h3 className="font-bold text-lg">Appearance</h3>
+          </div>
+          <div className="p-4 lg:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-foreground">Dark Mode</p>
+                <p className="text-sm text-muted-foreground">Switch between light and dark theme</p>
+              </div>
+              <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
+            </div>
+          </div>
+        </section>
+
         {/* Builder Credit */}
         <div className="text-center py-6 border-t border-border mt-4">
           <p className="text-xs text-muted-foreground">
