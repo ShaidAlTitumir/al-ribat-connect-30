@@ -792,6 +792,63 @@ const Business = () => {
                               </div>
                             </div>
 
+                            {/* Monthly Trend Chart */}
+                            {stats.monthlyData.some(m => m.sales > 0 || m.expenses > 0 || m.profit > 0) && (
+                              <div className="bg-card rounded-lg border border-border p-4">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <span className="material-symbols-outlined text-primary text-[16px]">show_chart</span>
+                                  <span className="text-xs font-bold text-foreground">Monthly Trends (Last 6 Months)</span>
+                                </div>
+                                <div className="h-48">
+                                  <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={stats.monthlyData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                                      <defs>
+                                        <linearGradient id={`salesGrad-${b.id}`} x1="0" y1="0" x2="0" y2="1">
+                                          <stop offset="5%" stopColor="hsl(217, 84%, 53%)" stopOpacity={0.3} />
+                                          <stop offset="95%" stopColor="hsl(217, 84%, 53%)" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id={`profitGrad-${b.id}`} x1="0" y1="0" x2="0" y2="1">
+                                          <stop offset="5%" stopColor="hsl(160, 84%, 39%)" stopOpacity={0.3} />
+                                          <stop offset="95%" stopColor="hsl(160, 84%, 39%)" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id={`expGrad-${b.id}`} x1="0" y1="0" x2="0" y2="1">
+                                          <stop offset="5%" stopColor="hsl(0, 72%, 51%)" stopOpacity={0.2} />
+                                          <stop offset="95%" stopColor="hsl(0, 72%, 51%)" stopOpacity={0} />
+                                        </linearGradient>
+                                      </defs>
+                                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                                      <XAxis dataKey="month" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                                      <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={45}
+                                        tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
+                                      <Tooltip
+                                        contentStyle={{
+                                          backgroundColor: "hsl(var(--card))",
+                                          border: "1px solid hsl(var(--border))",
+                                          borderRadius: "8px",
+                                          fontSize: "11px",
+                                          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                                        }}
+                                        labelStyle={{ fontWeight: 700, color: "hsl(var(--foreground))" }}
+                                        formatter={(value: number, name: string) => [`৳${value.toLocaleString("en-IN")}`, name.charAt(0).toUpperCase() + name.slice(1)]}
+                                      />
+                                      <Legend iconType="circle" iconSize={6} wrapperStyle={{ fontSize: "10px", paddingTop: "8px" }} />
+                                      <Area type="monotone" dataKey="sales" stroke="hsl(217, 84%, 53%)" fill={`url(#salesGrad-${b.id})`} strokeWidth={2} dot={false} activeDot={{ r: 3, strokeWidth: 0 }} />
+                                      <Area type="monotone" dataKey="profit" stroke="hsl(160, 84%, 39%)" fill={`url(#profitGrad-${b.id})`} strokeWidth={2} dot={false} activeDot={{ r: 3, strokeWidth: 0 }} />
+                                      <Area type="monotone" dataKey="expenses" stroke="hsl(0, 72%, 51%)" fill={`url(#expGrad-${b.id})`} strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={{ r: 3, strokeWidth: 0 }} />
+                                    </AreaChart>
+                                  </ResponsiveContainer>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* No data message */}
+                            {stats.monthlyData.every(m => m.sales === 0 && m.expenses === 0) && (
+                              <div className="bg-card rounded-lg border border-border p-4 text-center">
+                                <span className="material-symbols-outlined text-2xl text-muted-foreground/30 block mb-1">show_chart</span>
+                                <p className="text-xs text-muted-foreground">No sales or expenses data yet to show trends.</p>
+                              </div>
+                            )}
+
                             {/* Meta info */}
                             <div className="flex items-center gap-4 flex-wrap pt-1 border-t border-border">
                               <span className="text-[10px] text-muted-foreground flex items-center gap-1">
