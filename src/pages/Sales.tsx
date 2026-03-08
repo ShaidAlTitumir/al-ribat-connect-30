@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { exportToCSV } from "@/lib/exportUtils";
 
 const Sales = () => {
-  const { businessId, exchangeRate } = useBusiness();
+  const { businessId, exchangeRate, businessName, businessPhone, businessAddress } = useBusiness();
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
 
