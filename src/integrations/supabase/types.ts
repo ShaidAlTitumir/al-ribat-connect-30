@@ -512,6 +512,83 @@ export type Database = {
           },
         ]
       }
+      partner_leave_requests: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          partner_id: string
+          requested_by: string
+          status: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          partner_id: string
+          requested_by: string
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          partner_id?: string
+          requested_by?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_leave_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_leave_requests_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_leave_votes: {
+        Row: {
+          created_at: string
+          id: string
+          request_id: string
+          user_id: string
+          vote: string
+          voted_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          request_id: string
+          user_id: string
+          vote?: string
+          voted_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          request_id?: string
+          user_id?: string
+          vote?: string
+          voted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_leave_votes_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "partner_leave_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_transfers: {
         Row: {
           amount: number
