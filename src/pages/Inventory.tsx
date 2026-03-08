@@ -369,6 +369,29 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                   <input className="pl-7 w-full rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" placeholder="0.00"
                     value={form.buyingCostRmb} onChange={(e) => updateForm("buyingCostRmb", e.target.value)} />
                 </div>
+                {buyRmb > 0 && (
+                  <span className="text-xs text-muted-foreground">= ৳{buyingPerUnitBdt.toFixed(2)} BDT/unit @ {activeRate} rate</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold text-foreground">RMB Rate</label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <span className="text-xs text-muted-foreground">Manual</span>
+                    <button onClick={() => setUseManualRate(!useManualRate)}
+                      className={`relative w-9 h-5 rounded-full transition-colors ${useManualRate ? "bg-primary" : "bg-muted border border-border"}`}>
+                      <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-background shadow transition-transform ${useManualRate ? "translate-x-4" : ""}`} />
+                    </button>
+                  </label>
+                </div>
+                {useManualRate ? (
+                  <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" step="0.01" placeholder="Enter rate"
+                    value={manualRate} onChange={(e) => setManualRate(e.target.value)} />
+                ) : (
+                  <div className="rounded-lg border border-border bg-muted px-4 py-2.5 text-muted-foreground">
+                    {exchangeRate} BDT/RMB (default)
+                  </div>
+                )}
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-foreground">Shipping Method</label>
