@@ -49,29 +49,79 @@ export type Database = {
           },
         ]
       }
+      business_members: {
+        Row: {
+          business_id: string
+          id: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_members_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       businesses: {
         Row: {
+          address: string | null
+          business_type: string | null
           created_at: string
           default_currency: string
+          description: string | null
           exchange_rate: number
           id: string
+          manual_value: number | null
           name: string
+          owner_id: string | null
+          phone: string | null
           updated_at: string
         }
         Insert: {
+          address?: string | null
+          business_type?: string | null
           created_at?: string
           default_currency?: string
+          description?: string | null
           exchange_rate?: number
           id?: string
+          manual_value?: number | null
           name?: string
+          owner_id?: string | null
+          phone?: string | null
           updated_at?: string
         }
         Update: {
+          address?: string | null
+          business_type?: string | null
           created_at?: string
           default_currency?: string
+          description?: string | null
           exchange_rate?: number
           id?: string
+          manual_value?: number | null
           name?: string
+          owner_id?: string | null
+          phone?: string | null
           updated_at?: string
         }
         Relationships: []
