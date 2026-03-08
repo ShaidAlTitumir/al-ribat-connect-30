@@ -252,14 +252,14 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const activeRate = useManualRate && manualRate ? parseFloat(manualRate) : exchangeRate;
 
   const qty = parseInt(form.quantity) || 0;
-  const weight = parseFloat(form.weightPerUnit) || 0;
+  const totalWeight = parseFloat(form.totalWeight) || 0;
+  const weightPerUnit = qty > 0 ? totalWeight / qty : 0;
   const buyRmb = parseFloat(form.buyingCostRmb) || 0;
   const shipRate = parseFloat(form.shippingRate) || 0;
   const addCost = parseFloat(form.additionalCost) || 0;
   const sellPrice = parseFloat(form.sellingPrice) || 0;
 
   const buyingPerUnitBdt = buyRmb * activeRate;
-  const totalWeight = qty * weight;
   const totalBuyingBdt = buyRmb * qty * activeRate;
   const totalShipping = totalWeight * shipRate;
   const totalLanded = totalBuyingBdt + totalShipping + addCost;
