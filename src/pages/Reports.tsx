@@ -60,20 +60,39 @@ const Reports = () => {
     }
     const start = startDate.toISOString();
 
-    const { data: salesData } = await supabase.from("sales").select("unit_price_bdt, quantity, expected_profit, due")
+    const { data: salesData } = await supabase.from("sales").select("unit_price_bdt, quantity, expected_profit, due, cost_rate")
       .eq("business_id", businessId!).gte("created_at", start);
     const totalSales = (salesData || []).reduce((s, r) => s + r.unit_price_bdt * r.quantity, 0);
     const totalProfit = (salesData || []).reduce((s, r) => s + r.expected_profit, 0);
+    const costOfGoods = totalSales - totalProfit;
 
     const { data: custData } = await supabase.from("customers").select("total_due").eq("business_id", businessId!);
     const totalDues = (custData || []).reduce((s, c) => s + c.total_due, 0);
 
-    const { data: expData } = await supabase.from("expenses").select("amount, currency")
+    const { data: expData } = await supabase.from("expenses").select("amount, currency, category")
       .eq("business_id", businessId!).gte("created_at", start);
     const totalExpenses = (expData || []).reduce((s, e) => s + (e.currency === "BDT" ? e.amount : e.amount * exchangeRate), 0);
 
+    // Expense breakdown by category
+    const catMap: Record<string, number> = {};
+    (expData || []).forEach((e) => {
+      const cat = e.category || "Other";
+      const amt = e.currency === "BDT" ? e.amount : e.amount * exchangeRate;
+      catMap[cat] = (catMap[cat] || 0) + amt;
+    });
+    const expenseBreakdown = Object.entries(catMap)
+      .map(([category, amount]) => ({ category, amount }))
+      .sort((a, b) => b.amount - a.amount);
+
     const netProfit = totalProfit - totalExpenses;
+    const grossProfit = totalSales - costOfGoods;
+    const margin = totalSales > 0 ? (netProfit / totalSales) * 100 : 0;
+
     setMetrics({ sales: totalSales, profit: totalProfit, dues: totalDues, netProfit });
+    setPlStatement({
+      totalRevenue: totalSales, costOfGoods, grossProfit,
+      totalExpenses, netProfit, margin, expenseBreakdown,
+    });
 
     const { data: partners } = await supabase.from("partners").select("id, name, role, status").eq("business_id", businessId!).eq("status", "accepted");
     const { data: caps } = await supabase.from("capital_contributions").select("partner_id, amount, currency").eq("business_id", businessId!);
