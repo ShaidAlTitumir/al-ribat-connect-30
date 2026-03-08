@@ -236,27 +236,51 @@ const Expenses = () => {
                 ) : (
                   <div className="divide-y divide-border overflow-y-auto max-h-[600px]">
                     {expenses.map((exp) => (
-                      <div key={exp.id} className="p-3 flex items-center justify-between hover:bg-muted/50">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-destructive/10 text-destructive flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[18px]">remove</span>
+                      <div key={exp.id} className="p-3 hover:bg-muted/50">
+                        {editingExp?.id === exp.id ? (
+                          <div className="space-y-2">
+                            <div className="grid grid-cols-3 gap-2">
+                              <input value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})}
+                                className="col-span-2 h-9 bg-muted border border-border rounded-lg px-3 text-sm text-foreground" placeholder="Title" />
+                              <input type="number" value={editForm.amount} onChange={e => setEditForm({...editForm, amount: parseFloat(e.target.value) || 0})}
+                                className="h-9 bg-muted border border-border rounded-lg px-3 text-sm text-foreground" />
+                            </div>
+                            <div className="flex justify-end gap-2">
+                              <button onClick={() => setEditingExp(null)} className="px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted">Cancel</button>
+                              <button onClick={handleEditSave} disabled={saving}
+                                className="px-3 py-1.5 text-xs font-bold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50">
+                                {saving ? "Saving..." : "Save"}
+                              </button>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-semibold text-sm">{exp.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {exp.category} • {format(new Date(exp.created_at), "MMM d, yyyy")}
-                            </p>
+                        ) : (
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-destructive/10 text-destructive flex items-center justify-center">
+                                <span className="material-symbols-outlined text-[18px]">remove</span>
+                              </div>
+                              <div>
+                                <p className="font-semibold text-sm">{exp.title}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {exp.category} • {format(new Date(exp.created_at), "MMM d, yyyy")}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-sm text-destructive">
+                                {exp.currency === "BDT" ? "৳" : "¥"}{exp.amount}
+                              </span>
+                              <button onClick={() => startEdit(exp)}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors" title="Edit">
+                                <span className="material-symbols-outlined text-[18px]">edit</span>
+                              </button>
+                              <button onClick={() => handleDelete(exp.id)}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors" title="Delete">
+                                <span className="material-symbols-outlined text-[18px]">delete</span>
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold text-sm text-destructive">
-                            {exp.currency === "BDT" ? "৳" : "¥"}{exp.amount}
-                          </span>
-                          <button onClick={() => handleDelete(exp.id)}
-                            className="text-muted-foreground hover:text-destructive transition-colors">
-                            <span className="material-symbols-outlined text-[18px]">delete</span>
-                          </button>
-                        </div>
+                        )}
                       </div>
                     ))}
                   </div>
