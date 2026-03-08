@@ -445,10 +445,29 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">¥</span>
                   <input className="pl-7 w-full rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" placeholder="0.00"
-                    value={form.buyingCostRmb} onChange={(e) => updateForm("buyingCostRmb", e.target.value)} />
+                    value={form.buyingCostRmb} onChange={(e) => {
+                      updateForm("buyingCostRmb", e.target.value);
+                      const perUnit = parseFloat(e.target.value) || 0;
+                      if (qty > 0 && perUnit > 0) updateForm("totalBuyingCostRmb", (perUnit * qty).toFixed(2));
+                    }} />
                 </div>
                 {buyRmb > 0 && (
                   <span className="text-xs text-muted-foreground">= ৳{buyingPerUnitBdt.toFixed(2)} BDT/unit @ {activeRate} rate</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-foreground">Total Buying Cost (RMB)</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">¥</span>
+                  <input className="pl-7 w-full rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" placeholder="0.00"
+                    value={form.totalBuyingCostRmb} onChange={(e) => {
+                      updateForm("totalBuyingCostRmb", e.target.value);
+                      const total = parseFloat(e.target.value) || 0;
+                      if (qty > 0 && total > 0) updateForm("buyingCostRmb", (total / qty).toFixed(2));
+                    }} />
+                </div>
+                {parseFloat(form.totalBuyingCostRmb) > 0 && (
+                  <span className="text-xs text-muted-foreground">= ৳{(parseFloat(form.totalBuyingCostRmb) * activeRate).toFixed(2)} BDT total</span>
                 )}
               </div>
               <div className="flex flex-col gap-1.5">
