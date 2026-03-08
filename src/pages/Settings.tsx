@@ -10,7 +10,7 @@ const Settings = () => {
   const { businessId } = useBusiness();
   const [profile, setProfile] = useState({ full_name: "", phone: "", username: "" });
   const [business, setBusiness] = useState({ name: "", default_currency: "BDT" });
-  const [passwords, setPasswords] = useState({ newPassword: "", confirmPassword: "" });
+  const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [saving, setSaving] = useState("");
 
   useEffect(() => {
