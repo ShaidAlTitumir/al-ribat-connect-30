@@ -85,25 +85,27 @@ const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
 
       {/* Mobile rate dropdown */}
       {rateOpen && (
-        <div className="lg:hidden fixed inset-0 z-50">
-          <div className="absolute inset-0" onClick={() => setRateOpen(false)} />
-          <div className="absolute top-[6.5rem] right-4 bg-card border border-border rounded-xl shadow-xl p-3 w-52 animate-fade-in">
-            <p className="text-xs font-medium text-muted-foreground mb-2">Exchange Rate</p>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">1¥ =</span>
+        <div className="lg:hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setRateOpen(false)} />
+          <div className="relative w-full sm:w-80 bg-card border border-border rounded-t-2xl sm:rounded-2xl shadow-2xl p-5 pb-8 sm:pb-5 animate-in slide-in-from-bottom-4 duration-200">
+            <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-4 sm:hidden" />
+            <p className="text-sm font-semibold text-foreground mb-3">Exchange Rate</p>
+            <div className="flex items-center gap-3 bg-muted rounded-xl p-3">
+              <span className="text-sm font-medium text-muted-foreground">1¥ =</span>
               <input
                 type="number"
                 value={exchangeRate}
                 onChange={(e) => setExchangeRate(parseFloat(e.target.value) || 0)}
-                className="flex-1 text-center text-sm font-bold bg-muted border border-border rounded-lg px-2 py-1.5 outline-none text-foreground"
+                className="flex-1 text-center text-lg font-bold bg-card border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-foreground"
                 step="0.5"
+                autoFocus
               />
-              <span className="text-xs text-muted-foreground">৳</span>
+              <span className="text-sm font-medium text-muted-foreground">৳</span>
             </div>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="w-full mt-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
+              className="w-full mt-4 px-4 py-2.5 bg-primary text-primary-foreground text-sm font-bold rounded-xl hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save Rate"}
             </button>
