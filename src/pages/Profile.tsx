@@ -108,9 +108,10 @@ const Profile = () => {
       if (res.error) throw new Error(res.error.message || "Failed to delete account");
       const result = res.data as any;
       if (result?.error) throw new Error(result.error);
-      await supabase.auth.signOut();
       toast.success("Your account has been permanently deleted");
-      navigate("/login");
+      // Sign out and force redirect - signOut may fail since user is deleted, that's ok
+      try { await supabase.auth.signOut(); } catch {}
+      window.location.href = "/login";
     } catch (err: any) {
       toast.error(err.message || "Failed to delete account");
     } finally {
