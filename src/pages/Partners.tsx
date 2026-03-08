@@ -882,9 +882,19 @@ const Partners = () => {
                               : `${targetPartner?.name || "Partner"} wants to leave`}
                           </p>
                         </div>
-                        <p className="text-xs text-muted-foreground mb-2">
+                        <p className="text-xs text-muted-foreground mb-1">
                           Requested {format(new Date(r.created_at), "MMM d, yyyy")}
                         </p>
+                        {r.settlement_amount > 0 && (
+                          <div className="p-2 rounded-md bg-accent/50 border border-border mb-2">
+                            <p className="text-xs font-bold text-foreground">
+                              Settlement: {r.settlement_currency === "RMB" ? "¥" : "৳"}{r.settlement_amount}
+                            </p>
+                            {r.settlement_notes && (
+                              <p className="text-[10px] text-muted-foreground mt-0.5">{r.settlement_notes}</p>
+                            )}
+                          </div>
+                        )}
                         {myVote && myVote.vote !== "pending" ? (
                           <p className={`text-xs font-bold capitalize ${myVote.vote === "approved" ? "text-green-500" : "text-destructive"}`}>
                             You {myVote.vote}
