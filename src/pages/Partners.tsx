@@ -12,13 +12,11 @@ const Partners = () => {
   const [partners, setPartners] = useState<any[]>([]);
   const [contributions, setContributions] = useState<any[]>([]);
   const [currency, setCurrency] = useState<"BDT" | "RMB">("BDT");
-  const [partnerName, setPartnerName] = useState("");
   const [partnerRole, setPartnerRole] = useState("working");
   const [selectedPartnerId, setSelectedPartnerId] = useState("");
   const [capitalAmount, setCapitalAmount] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
   const [pendingInvites, setPendingInvites] = useState<any[]>([]);
-  const [addMethod, setAddMethod] = useState<"name" | "username">("name");
   const [searchUsername, setSearchUsername] = useState("");
   const [foundUser, setFoundUser] = useState<any>(null);
   const [searchingUser, setSearchingUser] = useState(false);
