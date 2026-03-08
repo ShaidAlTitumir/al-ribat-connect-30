@@ -618,6 +618,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_partner_to_business: {
+        Args: { _business_id: string; _role: string; _target_user_id: string }
+        Returns: undefined
+      }
       get_user_business_id: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {

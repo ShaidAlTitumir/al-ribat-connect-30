@@ -61,34 +61,44 @@ const Partners = () => {
 
   const handleAddByUsername = async () => {
     if (!businessId || !user || !foundUser) return;
-    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-    const { error } = await supabase.from("partners").insert({
-      name: foundUser.full_name || foundUser.username || "Partner",
-      role: partnerRole, invitation_code: code,
-      status: "accepted", business_id: businessId,
-      user_id: foundUser.user_id, invited_by: user.id,
-    });
-    if (error) { toast.error(error.message); return; }
-    // Update the found user's profile to link to this business
-    await supabase.from("profiles")
-      .update({ business_id: businessId, role: partnerRole })
-      .eq("user_id", foundUser.user_id);
-    // Send notification to the added user
-    const { data: myProfile } = await supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    await supabase.from("notifications").insert({
-      user_id: foundUser.user_id,
-      title: "You've been added as a partner",
-      message: `${myProfile?.full_name || "Someone"} added you as a ${partnerRole} partner.`,
-      type: "partner_added",
-      business_id: businessId,
-    } as any);
-    toast.success(`${foundUser.full_name || foundUser.username} added as partner!`);
-    setSearchUsername(""); setFoundUser(null);
-    fetchData();
+    try {
+      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+      const { error } = await supabase.from("partners").insert({
+        name: foundUser.full_name || foundUser.username || "Partner",
+        role: partnerRole, invitation_code: code,
+        status: "accepted", business_id: businessId,
+        user_id: foundUser.user_id, invited_by: user.id,
+      });
+      if (error) { toast.error(error.message); return; }
+
+      // Update the found user's profile via secure function
+      const { error: rpcError } = await supabase.rpc("add_partner_to_business" as any, {
+        _target_user_id: foundUser.user_id,
+        _business_id: businessId,
+        _role: partnerRole,
+      });
+      if (rpcError) console.error("Profile update error:", rpcError.message);
+
+      // Send notification to the added user
+      const { data: myProfile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      await (supabase.from("notifications") as any).insert({
+        user_id: foundUser.user_id,
+        title: "You've been added as a partner",
+        message: `${myProfile?.full_name || "Someone"} added you as a ${partnerRole} partner.`,
+        type: "partner_added",
+        business_id: businessId,
+      });
+
+      toast.success(`${foundUser.full_name || foundUser.username} added as partner!`);
+      setSearchUsername(""); setFoundUser(null);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add partner");
+    }
   };
 
   const handleAddCapital = async () => {
