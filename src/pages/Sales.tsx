@@ -327,9 +327,9 @@ const Sales = () => {
                     className="w-full h-11 bg-muted border border-border rounded-lg px-4 text-foreground" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-1.5">Landed Cost (Auto)</label>
-                  <div className="w-full h-11 bg-muted/80 border border-border rounded-lg px-4 flex items-center text-muted-foreground font-medium">
-                    ৳{landedCost.toFixed(2)}
+                  <label className="block text-sm font-semibold mb-1.5">Total Amount</label>
+                  <div className="w-full h-11 bg-muted/80 border border-border rounded-lg px-4 flex items-center text-foreground font-bold">
+                    ৳{total.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
                   </div>
                 </div>
                 <div>
