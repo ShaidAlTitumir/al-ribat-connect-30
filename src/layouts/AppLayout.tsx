@@ -3,7 +3,6 @@ import { Outlet, useLocation } from "react-router-dom";
 import AppSidebar from "@/components/AppSidebar";
 import { useBusiness } from "@/contexts/BusinessContext";
 import NotificationBell from "@/components/NotificationBell";
-import { useBusiness } from "@/contexts/BusinessContext";
 
 interface MobileHeaderContextType {
   setPageHeader: (node: ReactNode) => void;
