@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -7,26 +6,16 @@ interface AppSidebarProps {
   onClose: () => void;
 }
 
-const mainNav = [
+const navItems = [
   { icon: "home", label: "Home", path: "/" },
   { icon: "receipt_long", label: "Sales", path: "/sales" },
   { icon: "person_search", label: "Customers", path: "/customers" },
   { icon: "group", label: "Partners", path: "/partners" },
-];
-
-const moreNav = [
   { icon: "inventory_2", label: "Inventory", path: "/inventory" },
   { icon: "currency_exchange", label: "Wallet", path: "/wallet" },
   { icon: "account_balance_wallet", label: "Expenses", path: "/expenses" },
   { icon: "description", label: "Reports", path: "/reports" },
 ];
-
-const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
-  const location = useLocation();
-  const { signOut } = useAuth();
-  const [moreOpen, setMoreOpen] = useState(() =>
-    moreNav.some((item) => location.pathname === item.path)
-  );
 
   const linkClass = (path: string) => {
     const isActive = location.pathname === path;
