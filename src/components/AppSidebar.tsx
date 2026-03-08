@@ -26,7 +26,7 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
-  const { userRole, businessName } = useBusiness();
+  const { userRole, businessName, isSolo } = useBusiness();
   const { theme, toggleTheme } = useTheme();
 
   const displayName = user?.user_metadata?.full_name || user?.email || "User";
