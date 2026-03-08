@@ -131,7 +131,7 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <BusinessContext.Provider value={{ businessId, businessName, businessPhone, businessAddress, exchangeRate, setExchangeRate, saveExchangeRate, loading, userRole, switchBusiness }}>
+    <BusinessContext.Provider value={{ businessId, businessName, businessPhone, businessAddress, businessType, exchangeRate, setExchangeRate, saveExchangeRate, loading, userRole, switchBusiness, isSolo }}>
       {children}
     </BusinessContext.Provider>
   );
