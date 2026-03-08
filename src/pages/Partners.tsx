@@ -35,18 +35,6 @@ const Partners = () => {
     setPendingInvites(inv || []);
   };
 
-  const handleAddPartner = async () => {
-    if (!businessId || !user || !partnerName.trim()) { toast.error("Enter partner name"); return; }
-    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-    const { error } = await supabase.from("partners").insert({
-      name: partnerName.trim(), role: partnerRole, invitation_code: code,
-      status: "accepted", business_id: businessId, user_id: null, invited_by: user.id,
-    });
-    if (error) { toast.error(error.message); return; }
-    toast.success("Partner added!");
-    setPartnerName(""); setPartnerRole("working");
-    fetchData();
-  };
 
   const handleSearchUser = async () => {
     if (!searchUsername.trim()) { toast.error("Enter a username"); return; }
