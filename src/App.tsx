@@ -15,6 +15,7 @@ import Partners from "./pages/Partners";
 import Reports from "./pages/Reports";
 import Wallet from "./pages/Wallet";
 import Customers from "./pages/Customers";
+import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -51,6 +52,7 @@ const App = () => (
               <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
               <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
               <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
