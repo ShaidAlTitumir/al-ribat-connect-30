@@ -144,7 +144,59 @@ const Business = () => {
     setLoading(false);
   };
 
-  const resetForm = () => {
+  const fetchBusinessStats = async (bizId: string) => {
+    if (businessStats[bizId]) return; // already fetched
+
+    const [salesRes, expensesRes, inventoryRes, customersRes, capitalRes] = await Promise.all([
+      (supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity") as any)
+        .eq("business_id", bizId),
+      (supabase.from("expenses").select("amount, currency") as any)
+        .eq("business_id", bizId),
+      (supabase.from("inventory_items").select("id, current_stock") as any)
+        .eq("business_id", bizId),
+      (supabase.from("customers").select("id, total_due") as any)
+        .eq("business_id", bizId),
+      (supabase.from("capital_contributions").select("amount, currency") as any)
+        .eq("business_id", bizId),
+    ]);
+
+    const sales = salesRes.data || [];
+    const expenses = expensesRes.data || [];
+    const inventory = inventoryRes.data || [];
+    const customers = customersRes.data || [];
+    const capital = capitalRes.data || [];
+
+    const totalSalesRevenue = sales.reduce((s: number, r: any) => s + Number(r.unit_price_bdt) * Number(r.quantity), 0);
+    const totalProfit = sales.reduce((s: number, r: any) => s + Number(r.expected_profit), 0);
+    const totalExpenses = expenses.reduce((s: number, e: any) => s + Number(e.amount), 0);
+    const totalStock = inventory.reduce((s: number, i: any) => s + Number(i.current_stock), 0);
+    const totalDue = customers.reduce((s: number, c: any) => s + Number(c.total_due), 0);
+    const totalCapital = capital.reduce((s: number, c: any) => s + Number(c.amount), 0);
+
+    setBusinessStats(prev => ({
+      ...prev,
+      [bizId]: {
+        totalSalesRevenue,
+        totalExpenses,
+        totalProfit,
+        inventoryItems: inventory.length,
+        totalStock,
+        totalDue,
+        customerCount: customers.length,
+        totalCapital,
+      }
+    }));
+  };
+
+  const toggleExpand = (bizId: string) => {
+    if (expandedId === bizId) {
+      setExpandedId(null);
+    } else {
+      setExpandedId(bizId);
+      fetchBusinessStats(bizId);
+    }
+  };
+
     setFormName(""); setFormType(""); setFormDescription("");
     setFormAddress(""); setFormPhone(""); setFormManualValue("");
     setShowCreate(false); setEditingId(null);
