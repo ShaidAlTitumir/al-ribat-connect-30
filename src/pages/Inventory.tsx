@@ -37,15 +37,28 @@ const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamp
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [itemStats, setItemStats] = useState<Record<string, { totalCost: number; totalSale: number; profit: number }>>({});
 
   const fetchItems = async () => {
     if (!businessId) return;
-    const { data } = await supabase
-      .from("inventory_items")
-      .select("*")
-      .eq("business_id", businessId)
-      .order("created_at", { ascending: false });
-    setItems(data || []);
+    const [{ data: itemsData }, { data: purchases }, { data: sales }] = await Promise.all([
+      supabase.from("inventory_items").select("*").eq("business_id", businessId).order("created_at", { ascending: false }),
+      supabase.from("purchase_transactions").select("item_id, total_landed_cost_bdt").eq("business_id", businessId),
+      supabase.from("sales").select("item_id, unit_price_bdt, quantity, expected_profit").eq("business_id", businessId),
+    ]);
+    setItems(itemsData || []);
+
+    const stats: Record<string, { totalCost: number; totalSale: number; profit: number }> = {};
+    (purchases || []).forEach((p) => {
+      if (!stats[p.item_id]) stats[p.item_id] = { totalCost: 0, totalSale: 0, profit: 0 };
+      stats[p.item_id].totalCost += p.total_landed_cost_bdt || 0;
+    });
+    (sales || []).forEach((s) => {
+      if (!stats[s.item_id]) stats[s.item_id] = { totalCost: 0, totalSale: 0, profit: 0 };
+      stats[s.item_id].totalSale += (s.unit_price_bdt || 0) * (s.quantity || 0);
+      stats[s.item_id].profit += s.expected_profit || 0;
+    });
+    setItemStats(stats);
     setLoading(false);
   };
 
