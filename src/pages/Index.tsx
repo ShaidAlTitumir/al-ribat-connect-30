@@ -280,13 +280,63 @@ const Index = () => {
                 const match = iconMap[act.action] || { icon: "bolt", color: "text-primary bg-primary/10" };
                 const details = act.details || {};
                 let subtitle = "";
-                if (details.item_name) subtitle += details.item_name;
-                if (details.quantity) subtitle += ` × ${details.quantity}`;
-                if (details.customer_name) subtitle += details.customer_name;
-                if (details.partner_name) subtitle += details.partner_name;
-                if (details.title) subtitle += details.title;
-                if (details.amount) subtitle += ` • ${details.currency === "RMB" ? "¥" : "৳"}${details.amount}`;
-                if (details.total) subtitle += ` • ৳${details.total}`;
+                
+                // Build rich subtitle based on action type
+                switch (act.action) {
+                  case "Recorded sale":
+                    subtitle = `${details.item_name || ""} × ${details.quantity || ""}`;
+                    if (details.customer_name) subtitle += ` → ${details.customer_name}`;
+                    subtitle += ` • ৳${details.total || 0}`;
+                    if (details.received > 0) subtitle += ` (received ৳${details.received})`;
+                    if (details.due > 0) subtitle += ` (due ৳${details.due})`;
+                    if (details.profit) subtitle += ` • Profit: ৳${details.profit}`;
+                    break;
+                  case "Added capital contribution":
+                    subtitle = details.partner_name || "";
+                    subtitle += ` • ${details.currency === "RMB" ? "¥" : "৳"}${details.amount}`;
+                    if (details.currency === "RMB" && details.rate) {
+                      subtitle += ` @ ${details.rate} BDT/RMB`;
+                      if (details.bdt_equivalent) subtitle += ` = ৳${details.bdt_equivalent.toFixed(0)}`;
+                    }
+                    break;
+                  case "Currency exchange":
+                    subtitle = `${details.from === "BDT" ? "৳" : "¥"}${details.amount_from || details.amount || 0}`;
+                    subtitle += ` → ${details.to === "BDT" ? "৳" : "¥"}${details.amount_to || ""}`;
+                    if (details.rate) subtitle += ` @ ${details.rate} BDT/RMB`;
+                    break;
+                  case "Added new inventory item":
+                  case "Restocked inventory item":
+                    subtitle = `${details.item_name || ""} × ${details.quantity || ""}`;
+                    if (details.buying_cost_rmb) subtitle += ` • Buy: ¥${details.buying_cost_rmb}/unit`;
+                    if (details.total_landed_cost) subtitle += ` • Landed: ৳${details.total_landed_cost}`;
+                    if (details.rate) subtitle += ` @ ${details.rate}`;
+                    break;
+                  case "Added expense":
+                  case "Deleted expense":
+                    subtitle = details.title || "";
+                    subtitle += ` • ${details.currency === "RMB" ? "¥" : "৳"}${details.amount}`;
+                    break;
+                  case "Collected due payment":
+                    subtitle = `${details.customer || ""} • ৳${details.amount || 0}`;
+                    break;
+                  case "Added new customer":
+                    subtitle = details.customer_name || "";
+                    if (details.phone) subtitle += ` • ${details.phone}`;
+                    break;
+                  case "Deleted customer":
+                    subtitle = details.customer_name || "";
+                    break;
+                  case "Added new partner":
+                    subtitle = `${details.partner_name || ""} • ${details.role || ""}`;
+                    break;
+                  case "Removed partner":
+                    subtitle = details.partner_name || "";
+                    break;
+                  default:
+                    if (details.item_name) subtitle += details.item_name;
+                    if (details.amount) subtitle += ` • ${details.currency === "RMB" ? "¥" : "৳"}${details.amount}`;
+                    break;
+                }
                 return (
                   <div key={act.id} className="p-3 flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${match.color}`}>
