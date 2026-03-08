@@ -160,22 +160,35 @@ const Settings = () => {
           </div>
         </section>
 
-        {/* Security */}
         <section className="bg-card rounded-xl border border-border">
-          <div className="p-4 lg:p-6 flex items-center gap-3 border-b border-border">
-            <span className="material-symbols-outlined text-primary">lock</span>
-            <h3 className="font-bold text-lg">Security</h3>
+          <div className="p-4 lg:p-6 flex items-center justify-between border-b border-border">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-primary">lock</span>
+              <h3 className="font-bold text-lg">Security</h3>
+            </div>
+            <button
+              onClick={handleForgotPasswordFromSettings}
+              disabled={saving === "forgot"}
+              className="text-primary text-xs font-semibold hover:underline disabled:opacity-50"
+            >
+              {saving === "forgot" ? "Sending..." : "Forgot Password?"}
+            </button>
           </div>
           <div className="p-4 lg:p-6 space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-muted-foreground">Current Password</label>
+              <input className="w-full h-11 rounded-lg border border-border bg-card px-4 text-foreground focus:ring-2 focus:ring-primary/20" type="password" placeholder="••••••••"
+                value={passwords.currentPassword} onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })} />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-muted-foreground">New Password</label>
-                <input className="w-full h-11 rounded-lg border border-border bg-card px-4 text-foreground" type="password" placeholder="••••••••"
+                <input className="w-full h-11 rounded-lg border border-border bg-card px-4 text-foreground focus:ring-2 focus:ring-primary/20" type="password" placeholder="••••••••"
                   value={passwords.newPassword} onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })} />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-muted-foreground">Confirm Password</label>
-                <input className="w-full h-11 rounded-lg border border-border bg-card px-4 text-foreground" type="password" placeholder="••••••••"
+                <input className="w-full h-11 rounded-lg border border-border bg-card px-4 text-foreground focus:ring-2 focus:ring-primary/20" type="password" placeholder="••••••••"
                   value={passwords.confirmPassword} onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })} />
               </div>
             </div>
