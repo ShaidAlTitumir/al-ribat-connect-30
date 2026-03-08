@@ -347,16 +347,67 @@ const Index = () => {
                     if (details.amount) subtitle += ` • ${details.currency === "RMB" ? "¥" : "৳"}${details.amount}`;
                     break;
                 }
+                // Build expanded detail rows
+                const detailRows: { label: string; value: string }[] = [];
+                if (details.item_name) detailRows.push({ label: "Item", value: details.item_name });
+                if (details.quantity) detailRows.push({ label: "Quantity", value: String(details.quantity) });
+                if (details.unit_price) detailRows.push({ label: "Unit Price", value: `৳${details.unit_price}` });
+                if (details.total) detailRows.push({ label: "Total", value: `৳${details.total}` });
+                if (details.received !== undefined && details.received !== null) detailRows.push({ label: "Received", value: `৳${details.received}` });
+                if (details.due > 0) detailRows.push({ label: "Due", value: `৳${details.due}` });
+                if (details.profit !== undefined) detailRows.push({ label: "Profit", value: `৳${details.profit}` });
+                if (details.customer_name) detailRows.push({ label: "Customer", value: details.customer_name });
+                if (details.customer) detailRows.push({ label: "Customer", value: details.customer });
+                if (details.partner_name) detailRows.push({ label: "Partner", value: details.partner_name });
+                if (details.role) detailRows.push({ label: "Role", value: details.role });
+                if (details.amount !== undefined) detailRows.push({ label: "Amount", value: `${details.currency === "RMB" ? "¥" : "৳"}${details.amount}` });
+                if (details.amount_from) detailRows.push({ label: "From", value: `${details.from === "BDT" ? "৳" : "¥"}${details.amount_from}` });
+                if (details.amount_to) detailRows.push({ label: "To", value: `${details.to === "BDT" ? "৳" : "¥"}${details.amount_to}` });
+                if (details.rate) detailRows.push({ label: "Rate", value: `1 RMB = ${details.rate} BDT` });
+                if (details.bdt_equivalent) detailRows.push({ label: "BDT Equivalent", value: `৳${Number(details.bdt_equivalent).toFixed(0)}` });
+                if (details.buying_cost_rmb) detailRows.push({ label: "Buy Cost", value: `¥${details.buying_cost_rmb}/unit` });
+                if (details.shipping_method) detailRows.push({ label: "Shipping", value: details.shipping_method });
+                if (details.total_landed_cost) detailRows.push({ label: "Landed Cost", value: `৳${details.total_landed_cost}` });
+                if (details.landed_per_unit) detailRows.push({ label: "Per Unit", value: `৳${details.landed_per_unit}` });
+                if (details.title) detailRows.push({ label: "Title", value: details.title });
+                if (details.phone) detailRows.push({ label: "Phone", value: details.phone });
+                if (details.address) detailRows.push({ label: "Address", value: details.address });
+                if (details.shop_name) detailRows.push({ label: "Shop", value: details.shop_name });
+                if (details.old_amount !== undefined) detailRows.push({ label: "Previous", value: `${details.old_currency === "RMB" ? "¥" : "৳"}${details.old_amount}` });
+                if (details.new_amount !== undefined) detailRows.push({ label: "Updated", value: `${details.new_currency === "RMB" ? "¥" : "৳"}${details.new_amount}` });
+
+                const isExpanded = expandedActivity === act.id;
+
                 return (
-                  <div key={act.id} className="p-3 flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${match.color}`}>
-                      <span className="material-symbols-outlined text-[18px]">{match.icon}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate">{act.action}</p>
-                      {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
-                      <p className="text-[10px] text-muted-foreground">{format(new Date(act.created_at), "MMM d, h:mm a")}</p>
-                    </div>
+                  <div key={act.id} className="transition-colors hover:bg-muted/30">
+                    <button
+                      onClick={() => setExpandedActivity(isExpanded ? null : act.id)}
+                      className="w-full p-3 flex items-center gap-3 text-left"
+                    >
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${match.color}`}>
+                        <span className="material-symbols-outlined text-[18px]">{match.icon}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate">{act.action}</p>
+                        {!isExpanded && subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
+                        <p className="text-[10px] text-muted-foreground">{format(new Date(act.created_at), "MMM d, h:mm a")}</p>
+                      </div>
+                      <span className={`material-symbols-outlined text-muted-foreground text-[18px] shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}>
+                        expand_more
+                      </span>
+                    </button>
+                    {isExpanded && detailRows.length > 0 && (
+                      <div className="px-3 pb-3 ml-11 animate-in slide-in-from-top-1 duration-200">
+                        <div className="bg-muted rounded-lg p-3 space-y-1.5">
+                          {detailRows.map((row, i) => (
+                            <div key={i} className="flex justify-between items-center text-xs">
+                              <span className="text-muted-foreground">{row.label}</span>
+                              <span className="font-semibold text-foreground">{row.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
