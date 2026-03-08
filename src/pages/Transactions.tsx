@@ -77,53 +77,53 @@ const TransactionList = ({ onSend }: { onSend: () => void }) => {
   };
 
   return (
-    <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
+    <div className="p-3 lg:p-8 space-y-4 lg:space-y-6 max-w-7xl mx-auto w-full">
       {/* Summary Cards */}
-      <section className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-6">
-        <div className="bg-card p-4 lg:p-6 rounded-xl border border-border">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-muted-foreground text-xs lg:text-sm font-medium">Total Transfers</span>
-            <span className="material-symbols-outlined text-primary text-[20px]">swap_horiz</span>
+      <section className="grid grid-cols-3 gap-2 lg:gap-6">
+        <div className="bg-card p-3 lg:p-6 rounded-xl border border-border">
+          <div className="flex items-center justify-between mb-1 lg:mb-2">
+            <span className="text-muted-foreground text-[10px] lg:text-sm font-medium">Transfers</span>
+            <span className="material-symbols-outlined text-primary text-[16px] lg:text-[20px]">swap_horiz</span>
           </div>
-          <div className="text-2xl lg:text-3xl font-bold text-foreground">{transfers.length}</div>
+          <div className="text-xl lg:text-3xl font-bold text-foreground">{transfers.length}</div>
         </div>
-        <div className="bg-card p-4 lg:p-6 rounded-xl border border-border">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-muted-foreground text-xs lg:text-sm font-medium">Total Amount</span>
-            <span className="material-symbols-outlined text-emerald-500 text-[20px]">payments</span>
+        <div className="bg-card p-3 lg:p-6 rounded-xl border border-border">
+          <div className="flex items-center justify-between mb-1 lg:mb-2">
+            <span className="text-muted-foreground text-[10px] lg:text-sm font-medium">Amount</span>
+            <span className="material-symbols-outlined text-emerald-500 text-[16px] lg:text-[20px]">payments</span>
           </div>
-          <div className="text-2xl lg:text-3xl font-bold text-foreground">৳{totalTransferred.toLocaleString()}</div>
+          <div className="text-xl lg:text-3xl font-bold text-foreground">৳{totalTransferred.toLocaleString()}</div>
         </div>
-        <div className="bg-card p-4 lg:p-6 rounded-xl border border-border col-span-2 lg:col-span-1">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-muted-foreground text-xs lg:text-sm font-medium">Partners</span>
-            <span className="material-symbols-outlined text-accent-foreground text-[20px]">group</span>
+        <div className="bg-card p-3 lg:p-6 rounded-xl border border-border">
+          <div className="flex items-center justify-between mb-1 lg:mb-2">
+            <span className="text-muted-foreground text-[10px] lg:text-sm font-medium">Partners</span>
+            <span className="material-symbols-outlined text-accent-foreground text-[16px] lg:text-[20px]">group</span>
           </div>
-          <div className="text-2xl lg:text-3xl font-bold text-foreground">{partners.length}</div>
+          <div className="text-xl lg:text-3xl font-bold text-foreground">{partners.length}</div>
         </div>
       </section>
 
       {/* Search & Filter */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
+      <div className="space-y-2 lg:space-y-0 lg:flex lg:items-center lg:justify-between lg:gap-3">
+        <div className="relative flex-1 lg:max-w-md">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">search</span>
           <input
-            className="w-full bg-card border border-border rounded-lg pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-foreground"
-            placeholder="Search by partner or transaction ID..."
+            className="w-full bg-card border border-border rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-foreground"
+            placeholder="Search partner or ID..."
             value={search} onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-4 px-4 lg:mx-0 lg:px-0 scrollbar-hide">
           {["all", ...METHODS.map((m) => m.id)].map((m) => (
             <button key={m} onClick={() => setFilterMethod(m)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-[10px] lg:text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
                 filterMethod === m ? "bg-primary text-primary-foreground" : "bg-card border border-border text-muted-foreground"
               }`}>
               {m === "all" ? "All" : METHODS.find((mt) => mt.id === m)?.label || m}
             </button>
           ))}
-          <button onClick={onSend} className="flex items-center gap-1 bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-bold">
-            <span className="material-symbols-outlined text-[18px]">send</span> Send
+          <button onClick={onSend} className="flex items-center gap-1 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-[10px] lg:text-sm font-bold whitespace-nowrap shrink-0">
+            <span className="material-symbols-outlined text-[16px]">send</span> Send
           </button>
         </div>
       </div>
