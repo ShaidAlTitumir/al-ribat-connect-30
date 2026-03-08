@@ -45,14 +45,35 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (data?.business_id) {
-        setBusinessId(data.business_id);
-        setUserRole(data.role || "admin");
+      let activeBizId = data?.business_id || null;
+      let role = data?.role || "admin";
+
+      // If no business from profile, check business_members
+      if (!activeBizId) {
+        const { data: memberships } = await supabase
+          .from("business_members")
+          .select("business_id, role")
+          .eq("user_id", user.id)
+          .limit(1);
+        if (memberships && memberships.length > 0) {
+          activeBizId = memberships[0].business_id;
+          role = memberships[0].role || "member";
+          // Also update profile so future loads are faster
+          await supabase
+            .from("profiles")
+            .update({ business_id: activeBizId, role })
+            .eq("user_id", user.id);
+        }
+      }
+
+      if (activeBizId) {
+        setBusinessId(activeBizId);
+        setUserRole(role);
 
         const { data: biz } = await supabase
           .from("businesses")
           .select("exchange_rate")
-          .eq("id", data.business_id)
+          .eq("id", activeBizId)
           .maybeSingle();
 
         if (biz?.exchange_rate) {
