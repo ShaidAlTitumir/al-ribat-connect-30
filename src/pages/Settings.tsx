@@ -205,6 +205,40 @@ const Settings = () => {
           </DialogContent>
         </Dialog>
 
+        <Dialog open={showDeleteAccount} onOpenChange={(open) => { setShowDeleteAccount(open); if (!open) setDeleteAccountText(""); }}>
+          <DialogContent className="border-destructive/50 max-w-md mx-3">
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-destructive text-2xl">person_remove</span>
+                <DialogTitle className="text-destructive text-base">Delete your account?</DialogTitle>
+              </div>
+              <DialogDescription className="text-xs sm:text-sm">
+                This will <strong className="text-foreground">permanently delete your account</strong>, your profile, and all businesses you are the sole owner of. If a business has other partners, you will be removed but the business will remain. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Type <span className="text-destructive font-mono">DELETE MY ACCOUNT</span> to confirm</label>
+              <input
+                className="w-full h-10 rounded-lg border border-destructive/50 bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-destructive/20 transition-all"
+                value={deleteAccountText}
+                onChange={(e) => setDeleteAccountText(e.target.value)}
+                placeholder="DELETE MY ACCOUNT"
+              />
+            </div>
+            <div className="flex gap-2.5 justify-end">
+              <button onClick={() => { setShowDeleteAccount(false); setDeleteAccountText(""); }}
+                className="px-4 py-2 rounded-lg border border-border font-semibold hover:bg-muted text-sm active:scale-[0.98] transition-all">Cancel</button>
+              <button
+                onClick={deleteAccount}
+                disabled={deleteAccountText !== "DELETE MY ACCOUNT" || saving === "delete-account"}
+                className="bg-destructive text-destructive-foreground font-bold px-4 py-2 rounded-lg hover:bg-destructive/90 disabled:opacity-50 active:scale-[0.98] transition-all text-sm"
+              >
+                {saving === "delete-account" ? "Deleting..." : "Delete Forever"}
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Builder Credit */}
         <div className="text-center py-4 sm:py-6 border-t border-border mt-2">
           <p className="text-[10px] sm:text-xs text-muted-foreground">
