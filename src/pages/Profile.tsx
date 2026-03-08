@@ -16,6 +16,7 @@ const Profile = () => {
   const [saving, setSaving] = useState("");
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleteAccountText, setDeleteAccountText] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -88,8 +89,17 @@ const Profile = () => {
 
   const deleteAccount = async () => {
     if (deleteAccountText !== "DELETE MY ACCOUNT") return;
+    if (!deletePassword) { toast.error("Enter your password to confirm"); return; }
+    if (!user?.email) { toast.error("User not found"); return; }
     setSaving("delete-account");
     try {
+      // Verify password first
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: deletePassword,
+      });
+      if (authError) { toast.error("Incorrect password"); setSaving(""); return; }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { toast.error("Not authenticated"); return; }
       const res = await supabase.functions.invoke("delete-account", {
@@ -241,7 +251,7 @@ const Profile = () => {
           </div>
         </section>
 
-        <Dialog open={showDeleteAccount} onOpenChange={(open) => { setShowDeleteAccount(open); if (!open) setDeleteAccountText(""); }}>
+        <Dialog open={showDeleteAccount} onOpenChange={(open) => { setShowDeleteAccount(open); if (!open) { setDeleteAccountText(""); setDeletePassword(""); } }}>
           <DialogContent className="border-destructive/50 max-w-md mx-3">
             <DialogHeader>
               <div className="flex items-center gap-3">
@@ -252,21 +262,33 @@ const Profile = () => {
                 This will <strong className="text-foreground">permanently delete your account</strong>, your profile, and all businesses you are the sole owner of. If a business has other partners, you will be removed but the business will remain. This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground">Type <span className="text-destructive font-mono">DELETE MY ACCOUNT</span> to confirm</label>
-              <input
-                className="w-full h-10 rounded-lg border border-destructive/50 bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-destructive/20 transition-all"
-                value={deleteAccountText}
-                onChange={(e) => setDeleteAccountText(e.target.value)}
-                placeholder="DELETE MY ACCOUNT"
-              />
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">Your Password</label>
+                <input
+                  type="password"
+                  className="w-full h-10 rounded-lg border border-destructive/50 bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-destructive/20 transition-all"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">Type <span className="text-destructive font-mono">DELETE MY ACCOUNT</span> to confirm</label>
+                <input
+                  className="w-full h-10 rounded-lg border border-destructive/50 bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-destructive/20 transition-all"
+                  value={deleteAccountText}
+                  onChange={(e) => setDeleteAccountText(e.target.value)}
+                  placeholder="DELETE MY ACCOUNT"
+                />
+              </div>
             </div>
             <div className="flex gap-2.5 justify-end">
-              <button onClick={() => { setShowDeleteAccount(false); setDeleteAccountText(""); }}
+              <button onClick={() => { setShowDeleteAccount(false); setDeleteAccountText(""); setDeletePassword(""); }}
                 className="px-4 py-2 rounded-lg border border-border font-semibold hover:bg-muted text-sm active:scale-[0.98] transition-all">Cancel</button>
               <button
                 onClick={deleteAccount}
-                disabled={deleteAccountText !== "DELETE MY ACCOUNT" || saving === "delete-account"}
+                disabled={deleteAccountText !== "DELETE MY ACCOUNT" || !deletePassword || saving === "delete-account"}
                 className="bg-destructive text-destructive-foreground font-bold px-4 py-2 rounded-lg hover:bg-destructive/90 disabled:opacity-50 active:scale-[0.98] transition-all text-sm"
               >
                 {saving === "delete-account" ? "Deleting..." : "Delete Forever"}
