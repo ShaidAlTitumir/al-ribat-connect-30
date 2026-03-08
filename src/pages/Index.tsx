@@ -213,7 +213,7 @@ const Index = () => {
         {/* Business Snapshot */}
         <section>
           <h3 className="text-sm lg:text-lg font-bold mb-2 lg:mb-3">Business Snapshot</h3>
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 lg:gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 lg:gap-4">
             {/* Total Business Value */}
             <div className="bg-card p-3 lg:p-5 rounded-xl border border-border col-span-2 lg:col-span-1">
               <div className="flex items-center justify-between mb-1 lg:mb-2">
@@ -233,6 +233,44 @@ const Index = () => {
                   <span className="font-bold">¥{kpis.rmbBalance.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
                 </div>
               </div>
+            </div>
+
+            {/* Cash in Hand */}
+            <div className="bg-card p-3 lg:p-5 rounded-xl border border-border">
+              <div className="flex items-center justify-between mb-1 lg:mb-2">
+                <span className="p-1 lg:p-1.5 rounded-lg text-teal-600 bg-teal-50">
+                  <span className="material-symbols-outlined text-[16px] lg:text-[20px]">payments</span>
+                </span>
+                <button onClick={() => { setEditingCash(!editingCash); setCashInput(String(cashBalance ?? Math.round(calculatedCash))); }}
+                  className="text-muted-foreground hover:text-foreground">
+                  <span className="material-symbols-outlined text-[14px]">{editingCash ? "close" : "edit"}</span>
+                </button>
+              </div>
+              <p className="text-muted-foreground text-[10px] lg:text-xs font-medium">Cash in Hand</p>
+              {editingCash ? (
+                <div className="mt-1 space-y-1.5">
+                  <input type="number" value={cashInput} onChange={(e) => setCashInput(e.target.value)}
+                    className="w-full text-sm font-bold bg-muted border border-border rounded-lg px-2 py-1.5 text-foreground"
+                    placeholder="Enter cash amount" autoFocus />
+                  <div className="flex gap-1">
+                    <button onClick={handleSaveCash}
+                      className="flex-1 text-[10px] font-bold bg-primary text-primary-foreground rounded-md py-1 active:scale-95">Save</button>
+                    {cashBalance !== null && (
+                      <button onClick={handleResetCash}
+                        className="text-[10px] font-bold text-muted-foreground hover:text-foreground bg-muted rounded-md px-2 py-1 active:scale-95">Auto</button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="text-lg lg:text-2xl font-black mt-0.5 text-foreground">
+                    ৳{(cashBalance ?? calculatedCash).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                  </p>
+                  {cashBalance !== null && (
+                    <p className="text-[9px] text-muted-foreground mt-0.5">Manual · Auto: ৳{calculatedCash.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+                  )}
+                </>
+              )}
             </div>
 
             {/* Revenue */}
