@@ -60,7 +60,8 @@ const Partners = () => {
   };
 
   const handleAddByUsername = async () => {
-    if (!businessId || !user || !foundUser) return;
+    if (!businessId) { toast.error("No business found. Please log out and log back in."); return; }
+    if (!user || !foundUser) { toast.error("Please search for a user first"); return; }
     try {
       const code = Math.random().toString(36).substring(2, 10).toUpperCase();
       const { error } = await supabase.from("partners").insert({
@@ -98,6 +99,44 @@ const Partners = () => {
       fetchData();
     } catch (err: any) {
       toast.error(err.message || "Failed to add partner");
+    }
+  };
+
+  const handleRemovePartner = async (partner: any) => {
+    if (!businessId || !user) return;
+    const confirmed = window.confirm(`Remove ${partner.name} from the business?`);
+    if (!confirmed) return;
+    try {
+      // Delete partner record
+      const { error } = await supabase.from("partners").delete().eq("id", partner.id);
+      if (error) { toast.error(error.message); return; }
+
+      // If partner has a linked user, reset their profile's business_id
+      if (partner.user_id) {
+        try {
+          await supabase.rpc("add_partner_to_business" as any, {
+            _target_user_id: partner.user_id,
+            _business_id: null as any,
+            _role: "admin",
+          });
+        } catch {}
+
+        // Notify removed partner
+        try {
+          await (supabase.from("notifications") as any).insert({
+            user_id: partner.user_id,
+            title: "You've been removed from a business",
+            message: `You have been removed as a partner.`,
+            type: "partner_removed",
+            business_id: businessId,
+          });
+        } catch {}
+      }
+
+      toast.success(`${partner.name} removed`);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to remove partner");
     }
   };
 
@@ -311,9 +350,18 @@ const Partners = () => {
                         <p className="font-bold text-sm">{p.name}</p>
                         <p className="text-xs text-muted-foreground capitalize">{p.role}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-sm">৳{p.totalCapital.toFixed(0)}</p>
-                        <p className="text-xs text-primary font-bold">{pct.toFixed(1)}%</p>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="font-bold text-sm">৳{p.totalCapital.toFixed(0)}</p>
+                          <p className="text-xs text-primary font-bold">{pct.toFixed(1)}%</p>
+                        </div>
+                        <button
+                          onClick={() => handleRemovePartner(p)}
+                          className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                          title="Remove partner"
+                        >
+                          <span className="material-symbols-outlined text-base">person_remove</span>
+                        </button>
                       </div>
                     </div>
                   );
