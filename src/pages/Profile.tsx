@@ -251,7 +251,7 @@ const Profile = () => {
           </div>
         </section>
 
-        <Dialog open={showDeleteAccount} onOpenChange={(open) => { setShowDeleteAccount(open); if (!open) setDeleteAccountText(""); }}>
+        <Dialog open={showDeleteAccount} onOpenChange={(open) => { setShowDeleteAccount(open); if (!open) { setDeleteAccountText(""); setDeletePassword(""); } }}>
           <DialogContent className="border-destructive/50 max-w-md mx-3">
             <DialogHeader>
               <div className="flex items-center gap-3">
