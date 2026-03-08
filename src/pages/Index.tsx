@@ -50,7 +50,7 @@ const Index = () => {
 
   const fetchDashboard = async () => {
     const sevenDaysAgo = startOfDay(subDays(new Date(), 6)).toISOString();
-    const [capsRes, salesRes, paymentsRes, expsRes, purchasesRes, invRes, custsRes, exchRes, partnersRes, actsRes, recentSalesRes] = await Promise.all([
+    const [capsRes, salesRes, paymentsRes, expsRes, purchasesRes, invRes, custsRes, exchRes, partnersRes, actsRes, recentSalesRes, bizRes] = await Promise.all([
       supabase.from("capital_contributions").select("amount, currency, partner_id").eq("business_id", businessId!),
       supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity").eq("business_id", businessId!),
       supabase.from("customer_ledger").select("amount").eq("business_id", businessId!).eq("transaction_type", "payment"),
@@ -63,6 +63,7 @@ const Index = () => {
       supabase.from("activity_log").select("*").eq("business_id", businessId!).order("created_at", { ascending: false }).limit(15),
       supabase.from("sales").select("unit_price_bdt, quantity, expected_profit, created_at, item_id, inventory_items(name)")
         .eq("business_id", businessId!).gte("created_at", sevenDaysAgo),
+      supabase.from("businesses").select("cash_balance").eq("id", businessId!).single(),
     ]);
 
     const caps = capsRes.data || [];
