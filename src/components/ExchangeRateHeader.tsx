@@ -24,7 +24,7 @@ const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
   };
 
   return (
-    <header className="h-14 lg:h-16 border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-10 px-4 lg:px-8 flex items-center justify-between">
+    <header className="h-14 lg:h-16 border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-10 px-4 lg:px-8 flex items-center justify-between transition-all duration-200">
       <h2 className="text-lg lg:text-xl font-bold text-foreground">{title}</h2>
       <div className="flex items-center gap-2">
         <NotificationBell />
@@ -43,7 +43,7 @@ const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+          className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:bg-primary/90 transition-all duration-200 active:scale-95 disabled:opacity-50"
         >
           {saving ? "..." : "Save"}
         </button>

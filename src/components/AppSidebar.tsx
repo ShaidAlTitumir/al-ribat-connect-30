@@ -24,10 +24,10 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
 
   const linkClass = (path: string) => {
     const isActive = location.pathname === path;
-    return `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+    return `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 active:scale-[0.97] ${
       isActive
-        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-        : "text-sidebar-foreground hover:bg-muted"
+        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+        : "text-sidebar-foreground hover:bg-muted hover:translate-x-0.5"
     }`;
   };
 
@@ -38,7 +38,7 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
 
   return (
     <aside
-      className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col bg-sidebar border-r border-sidebar-border transition-transform duration-200 ease-in-out
+      className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col bg-sidebar border-r border-sidebar-border transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform
         ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
     >
       {/* Logo */}
@@ -74,7 +74,7 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
         </NavLink>
         <button
           onClick={signOut}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-muted transition-colors w-full mt-1"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-muted transition-all duration-200 active:scale-[0.97] w-full mt-1"
         >
           <span className="material-symbols-outlined text-[22px]">logout</span>
           <span>Sign Out</span>
