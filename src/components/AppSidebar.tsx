@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBusiness } from "@/contexts/BusinessContext";
 import { useTheme } from "@/contexts/ThemeContext";
 
 interface AppSidebarProps {
@@ -23,8 +24,12 @@ const navItems = [
 
 const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
+  const { userRole } = useBusiness();
   const { theme, toggleTheme } = useTheme();
+
+  const displayName = user?.user_metadata?.full_name || user?.email || "User";
+  const initials = displayName.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
 
   const linkClass = (path: string) => {
     const isActive = location.pathname === path;
@@ -70,8 +75,17 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
         ))}
       </nav>
 
-      {/* Footer */}
-      <div className="p-3 sm:p-4 border-t border-sidebar-border">
+      {/* User info */}
+      <div className="p-3 sm:p-4 border-t border-sidebar-border space-y-2">
+        <div className="flex items-center gap-3 px-3 py-2">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
+            {initials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
+            <p className="text-[10px] text-muted-foreground capitalize">{userRole || "member"}</p>
+          </div>
+        </div>
         <NavLink to="/settings" className={linkClass("/settings")}>
           <span className="material-symbols-outlined text-[22px]" style={iconStyle("/settings")}>settings</span>
           <span>Settings</span>
