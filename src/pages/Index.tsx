@@ -32,6 +32,10 @@ const Index = () => {
     inventory: 0, dues: 0, revenue: 0, netProfit: 0,
     totalProfit: 0, totalExpenses: 0, totalCOGS: 0,
   });
+  const [cashBalance, setCashBalance] = useState<number | null>(null); // manual override
+  const [calculatedCash, setCalculatedCash] = useState(0);
+  const [editingCash, setEditingCash] = useState(false);
+  const [cashInput, setCashInput] = useState("");
   const [partners, setPartners] = useState<PartnerEquity[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
