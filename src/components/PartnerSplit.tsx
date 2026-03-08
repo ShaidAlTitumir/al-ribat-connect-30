@@ -1,5 +1,5 @@
 const partners = [
-  { name: "Partner A", share: 40, profit: "৳1,24,000", color: "bg-gold" },
+  { name: "Partner A", share: 40, profit: "৳1,24,000", color: "bg-primary" },
   { name: "Partner B", share: 35, profit: "৳1,08,500", color: "bg-info" },
   { name: "Partner C", share: 25, profit: "৳77,500", color: "bg-success" },
 ];

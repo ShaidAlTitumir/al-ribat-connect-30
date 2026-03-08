@@ -9,7 +9,7 @@ const CurrencyWidget = () => {
           <p className="text-xs text-muted-foreground mb-1">BDT</p>
           <p className="text-lg font-extrabold text-foreground">৳15.60</p>
         </div>
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gold/10 text-gold">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
           <ArrowRightLeft className="h-4 w-4" />
         </div>
         <div className="flex-1 rounded-lg bg-muted p-3 text-center">
