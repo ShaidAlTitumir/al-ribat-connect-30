@@ -4,6 +4,13 @@ import { useBusiness } from "@/contexts/BusinessContext";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { exportToCSV } from "@/lib/exportUtils";
+import { fetchReportData, generatePDFHTML, downloadPDF } from "@/lib/pdfReport";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { CalendarIcon } from "lucide-react";
+import { toast } from "sonner";
 import {
   BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, ComposedChart, Line,
