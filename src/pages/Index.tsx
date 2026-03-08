@@ -471,6 +471,7 @@ const Index = () => {
                   const detailRows: { label: string; value: string }[] = [];
                   if (details.item_name) detailRows.push({ label: "Item", value: details.item_name });
                   if (details.quantity) detailRows.push({ label: "Qty", value: String(details.quantity) });
+                  if (details.unit_price) detailRows.push({ label: "Unit Price", value: `৳${details.unit_price}/pc` });
                   if (details.total) detailRows.push({ label: "Total", value: `৳${details.total}` });
                   if (details.received !== undefined && details.received !== null) detailRows.push({ label: "Received", value: `৳${details.received}` });
                   if (details.due > 0) detailRows.push({ label: "Due", value: `৳${details.due}` });
