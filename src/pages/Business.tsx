@@ -693,9 +693,13 @@ const Business = () => {
                             </span>
                           )}
                         </div>
-                        {b.business_type && (
-                          <p className="text-xs text-muted-foreground mt-0.5">{b.business_type}</p>
-                        )}
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                          b.business_type?.toLowerCase() === "solo"
+                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                            : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        }`}>
+                          {b.business_type?.toLowerCase() === "solo" ? "SOLO" : "PARTNERSHIP"}
+                        </span>
                         {b.description && (
                           <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{b.description}</p>
                         )}
