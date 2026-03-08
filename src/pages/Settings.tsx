@@ -65,6 +65,32 @@ const Settings = () => {
     finally { setSaving(""); }
   };
 
+  const deleteAccount = async () => {
+    if (deleteAccountText !== "DELETE MY ACCOUNT") return;
+    setSaving("delete-account");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error("Not authenticated"); return; }
+
+      const res = await supabase.functions.invoke("delete-account", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      if (res.error) throw new Error(res.error.message || "Failed to delete account");
+      
+      const result = res.data as any;
+      if (result?.error) throw new Error(result.error);
+
+      await supabase.auth.signOut();
+      toast.success("Your account has been permanently deleted");
+      navigate("/login");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete account");
+    } finally {
+      setSaving("");
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <ExchangeRateHeader title="Settings" />
