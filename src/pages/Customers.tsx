@@ -101,7 +101,7 @@ const Customers = () => {
       } as any);
       await supabase.from("activity_log").insert({
         action: "Added new customer",
-        details: { customer_name: newName.trim() },
+        details: { customer_name: newName.trim(), phone: newPhone.trim(), address: newAddress.trim() || null, shop_name: newShopName.trim() || null },
         business_id: businessId, user_id: user.id,
       });
       toast.success("Customer added!");

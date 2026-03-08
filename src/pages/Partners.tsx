@@ -205,8 +205,14 @@ const Partners = () => {
       business_id: businessId, user_id: user.id,
     });
     if (error) { toast.error(error.message); return; }
+    const partnerName = acceptedPartners.find(p => p.id === selectedPartnerId)?.name || "Unknown";
+    const capitalRate = currency === "RMB" ? (useManualRate && parseFloat(manualRate) > 0 ? parseFloat(manualRate) : exchangeRate) : null;
+    const bdtEquivalent = currency === "RMB" ? amt * (capitalRate || exchangeRate) : amt;
     await supabase.from("activity_log").insert({
-      action: "Added capital contribution", details: { amount: amt, currency },
+      action: "Added capital contribution", details: { 
+        partner_name: partnerName, amount: amt, currency, 
+        ...(currency === "RMB" ? { rate: capitalRate, bdt_equivalent: bdtEquivalent } : {})
+      },
       business_id: businessId, user_id: user.id,
     });
     toast.success("Capital added!");

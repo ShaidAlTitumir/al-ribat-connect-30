@@ -112,8 +112,16 @@ const Sales = () => {
       }
 
       // Log activity
+      const custName = custId ? (customers.find(c => c.id === custId)?.name || newCustomerName || "Walk-in") : "Walk-in";
       await supabase.from("activity_log").insert({
-        action: "Recorded sale", details: { item_name: item?.name, quantity, total },
+        action: "Recorded sale", details: { 
+          item_name: item?.name, quantity, total, 
+          unit_price: parseFloat(unitPrice), 
+          received: parseFloat(receivedAmount) || 0,
+          due: Math.max(0, due),
+          customer_name: custName,
+          profit 
+        },
         business_id: businessId, user_id: user.id,
       });
 
