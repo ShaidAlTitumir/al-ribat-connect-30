@@ -274,7 +274,7 @@ const Index = () => {
               <div className="border-t border-border my-1.5" />
               <div className="flex justify-between">
                 <span className="font-semibold text-foreground">Gross Profit (Expected)</span>
-                <span className={`font-bold ${kpis.totalProfit >= 0 ? "text-emerald-600" : "text-destructive"}`}>৳{kpis.totalProfit.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                <span className={`font-bold ${(kpis.totalProfit ?? 0) >= 0 ? "text-emerald-600" : "text-destructive"}`}>৳{(kpis.totalProfit ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground pl-3">− Operating Expenses</span>
