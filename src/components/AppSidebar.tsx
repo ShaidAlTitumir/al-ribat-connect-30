@@ -14,6 +14,7 @@ const navItems = [
   { icon: "group", label: "Partners", path: "/partners" },
   { icon: "inventory_2", label: "Inventory", path: "/inventory" },
   { icon: "currency_exchange", label: "Wallet", path: "/wallet" },
+  { icon: "swap_horiz", label: "Transactions", path: "/transactions" },
   { icon: "account_balance_wallet", label: "Expenses", path: "/expenses" },
   { icon: "description", label: "Reports", path: "/reports" },
 ];

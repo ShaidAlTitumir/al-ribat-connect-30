@@ -509,6 +509,70 @@ export type Database = {
           },
         ]
       }
+      partner_transfers: {
+        Row: {
+          amount: number
+          business_id: string
+          created_at: string
+          currency: string
+          from_partner_id: string
+          id: string
+          method: string
+          notes: string | null
+          to_partner_id: string
+          transaction_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          created_at?: string
+          currency?: string
+          from_partner_id: string
+          id?: string
+          method?: string
+          notes?: string | null
+          to_partner_id: string
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          created_at?: string
+          currency?: string
+          from_partner_id?: string
+          id?: string
+          method?: string
+          notes?: string | null
+          to_partner_id?: string
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_transfers_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_transfers_from_partner_id_fkey"
+            columns: ["from_partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_transfers_to_partner_id_fkey"
+            columns: ["to_partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partners: {
         Row: {
           address: string | null
