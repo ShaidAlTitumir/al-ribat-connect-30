@@ -17,6 +17,9 @@ interface BusinessContextType {
 
 const BusinessContext = createContext<BusinessContextType>({
   businessId: null,
+  businessName: "",
+  businessPhone: "",
+  businessAddress: "",
   exchangeRate: 18,
   setExchangeRate: () => {},
   saveExchangeRate: async () => {},
