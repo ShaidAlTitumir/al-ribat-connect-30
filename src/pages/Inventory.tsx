@@ -38,6 +38,17 @@ const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamp
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
 
+  const fetchItems = async () => {
+    if (!businessId) return;
+    const { data } = await supabase
+      .from("inventory_items")
+      .select("*")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false });
+    setItems(data || []);
+    setLoading(false);
+  };
+
   useEffect(() => {
     if (!businessId) return;
     const fetchItems = async () => {
