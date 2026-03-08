@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusiness } from "@/contexts/BusinessContext";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
-import { format } from "date-fns";
+import { format, subDays, startOfDay } from "date-fns";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, PieChart, Pie, Cell,
+} from "recharts";
 
 const quickActions = [
   { icon: "point_of_sale", label: "Record Sale", path: "/sales" },
