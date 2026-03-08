@@ -398,6 +398,9 @@ const Partners = () => {
     const request = leaveRequests.find(r => r.id === requestId);
     const leavingPartner = request ? acceptedPartners.find(p => p.id === request.partner_id) : null;
 
+    const isRemoval = request?.type === "removal";
+    const label = isRemoval ? "removal" : "leave";
+
     if (vote === "rejected") {
       await (supabase.from("partner_leave_requests") as any)
         .update({ status: "rejected" })
@@ -407,12 +410,14 @@ const Partners = () => {
         await (supabase.from("notifications") as any).insert({
           user_id: request.requested_by,
           business_id: businessId,
-          title: "Leave Request Rejected",
-          message: `Your request to leave the business was rejected by a partner.`,
-          type: "leave_request",
+          title: isRemoval ? "Removal Request Rejected" : "Leave Request Rejected",
+          message: isRemoval
+            ? `Your request to remove ${leavingPartner?.name || "a partner"} was rejected.`
+            : `Your request to leave the business was rejected by a partner.`,
+          type: isRemoval ? "removal_request" : "leave_request",
         });
       }
-      toast.info("You rejected the leave request");
+      toast.info(`You rejected the ${label} request`);
     } else {
       // Check if all voted approved
       const { data: allVotes } = await (supabase
