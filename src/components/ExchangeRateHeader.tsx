@@ -13,16 +13,13 @@ const MobilePageHeader = ({ title, exchangeRate, onRateClick }: { title: string;
   return (
     <div className="flex items-center justify-between h-11 px-4">
       <h2 className="text-sm font-bold text-foreground truncate">{title}</h2>
-      <div className="flex items-center gap-1.5">
-        <NotificationBell />
-        <button
-          onClick={onRateClick}
-          className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1.5 text-xs font-bold text-foreground"
-        >
-          <span className="material-symbols-outlined text-[14px] text-muted-foreground">currency_exchange</span>
-          ¥1 = ৳{exchangeRate}
-        </button>
-      </div>
+      <button
+        onClick={onRateClick}
+        className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1.5 text-xs font-bold text-foreground"
+      >
+        <span className="material-symbols-outlined text-[14px] text-muted-foreground">currency_exchange</span>
+        ¥1 = ৳{exchangeRate}
+      </button>
     </div>
   );
 };

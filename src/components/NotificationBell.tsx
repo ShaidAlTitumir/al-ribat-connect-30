@@ -12,7 +12,7 @@ interface Notification {
   created_at: string;
 }
 
-const NotificationBell = () => {
+const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
@@ -95,55 +95,85 @@ const NotificationBell = () => {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden animate-slide-up">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <h4 className="font-bold text-sm text-foreground">Notifications</h4>
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllRead}
-                  className="text-xs font-bold text-primary hover:underline"
-                >
-                  Mark all read
-                </button>
-              )}
-            </div>
-            <div className="max-h-72 overflow-y-auto">
-              {notifications.length === 0 ? (
-                <div className="p-6 text-center">
-                  <span className="material-symbols-outlined text-3xl text-muted-foreground/40 mb-1 block">
-                    notifications_off
-                  </span>
-                  <p className="text-sm text-muted-foreground">No notifications yet</p>
+          {mobile ? (
+            /* Mobile: full-width bottom sheet style */
+            <div className="fixed inset-x-0 top-16 bottom-0 z-50 flex flex-col">
+              <div className="mx-3 mt-1 bg-card border border-border rounded-xl shadow-xl overflow-hidden animate-fade-in flex flex-col max-h-[70vh]">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                  <h4 className="font-bold text-sm text-foreground">Notifications</h4>
+                  {unreadCount > 0 && (
+                    <button onClick={markAllRead} className="text-xs font-bold text-primary hover:underline">
+                      Mark all read
+                    </button>
+                  )}
                 </div>
-              ) : (
-                notifications.map((n) => (
-                  <button
-                    key={n.id}
-                    onClick={() => { if (!n.is_read) markAsRead(n.id); }}
-                    className={`w-full text-left px-4 py-3 flex gap-3 border-b border-border/50 last:border-0 transition-colors hover:bg-muted/50 ${
-                      !n.is_read ? "bg-primary/5" : ""
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-primary text-[20px] mt-0.5 shrink-0">
-                      {typeIcon[n.type] || "notifications"}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-sm ${!n.is_read ? "font-bold" : "font-medium"} text-foreground truncate`}>
-                        {n.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground line-clamp-2">{n.message}</p>
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        {format(new Date(n.created_at), "MMM d, h:mm a")}
-                      </p>
+                <div className="flex-1 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="p-8 text-center">
+                      <span className="material-symbols-outlined text-3xl text-muted-foreground/40 mb-1 block">notifications_off</span>
+                      <p className="text-sm text-muted-foreground">No notifications yet</p>
                     </div>
-                    {!n.is_read && (
-                      <span className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                    )}
-                  </button>
-                ))
-              )}
+                  ) : (
+                    notifications.map((n) => (
+                      <button
+                        key={n.id}
+                        onClick={() => { if (!n.is_read) markAsRead(n.id); }}
+                        className={`w-full text-left px-4 py-3 flex gap-3 border-b border-border/50 last:border-0 transition-colors hover:bg-muted/50 ${!n.is_read ? "bg-primary/5" : ""}`}
+                      >
+                        <span className="material-symbols-outlined text-primary text-[20px] mt-0.5 shrink-0">
+                          {typeIcon[n.type] || "notifications"}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-sm ${!n.is_read ? "font-bold" : "font-medium"} text-foreground truncate`}>{n.title}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-2">{n.message}</p>
+                          <p className="text-[10px] text-muted-foreground mt-1">{format(new Date(n.created_at), "MMM d, h:mm a")}</p>
+                        </div>
+                        {!n.is_read && <span className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            /* Desktop: dropdown */
+            <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden animate-slide-up">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                <h4 className="font-bold text-sm text-foreground">Notifications</h4>
+                {unreadCount > 0 && (
+                  <button onClick={markAllRead} className="text-xs font-bold text-primary hover:underline">
+                    Mark all read
+                  </button>
+                )}
+              </div>
+              <div className="max-h-72 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="p-6 text-center">
+                    <span className="material-symbols-outlined text-3xl text-muted-foreground/40 mb-1 block">notifications_off</span>
+                    <p className="text-sm text-muted-foreground">No notifications yet</p>
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <button
+                      key={n.id}
+                      onClick={() => { if (!n.is_read) markAsRead(n.id); }}
+                      className={`w-full text-left px-4 py-3 flex gap-3 border-b border-border/50 last:border-0 transition-colors hover:bg-muted/50 ${!n.is_read ? "bg-primary/5" : ""}`}
+                    >
+                      <span className="material-symbols-outlined text-primary text-[20px] mt-0.5 shrink-0">
+                        {typeIcon[n.type] || "notifications"}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-sm ${!n.is_read ? "font-bold" : "font-medium"} text-foreground truncate`}>{n.title}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{n.message}</p>
+                        <p className="text-[10px] text-muted-foreground mt-1">{format(new Date(n.created_at), "MMM d, h:mm a")}</p>
+                      </div>
+                      {!n.is_read && <span className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
