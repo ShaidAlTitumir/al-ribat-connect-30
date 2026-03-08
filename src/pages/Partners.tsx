@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, Phone, Mail, MapPin, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Phone, Mail, MapPin, Pencil, Trash2, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { useAuth } from "@/contexts/AuthContext";
