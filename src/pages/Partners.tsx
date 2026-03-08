@@ -54,10 +54,10 @@ const Partners = () => {
     if (!searchUsername.trim()) { toast.error("Enter a username"); return; }
     setSearchingUser(true);
     setFoundUser(null);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase
       .from("profiles")
-      .select("user_id, full_name, username")
-      .eq("username" as any, searchUsername.trim().toLowerCase())
+      .select("user_id, full_name, username") as any)
+      .eq("username", searchUsername.trim().toLowerCase())
       .maybeSingle();
     setSearchingUser(false);
     if (error || !data) {
