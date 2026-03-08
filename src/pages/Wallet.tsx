@@ -67,9 +67,10 @@ const Wallet = () => {
     setRmbBalance(rmb);
   };
 
+  const activeRate = useManualRate && parseFloat(manualRate) > 0 ? parseFloat(manualRate) : exchangeRate;
   const toCurrency = fromCurrency === "BDT" ? "RMB" : "BDT";
   const amt = parseFloat(fromAmount) || 0;
-  const toAmount = fromCurrency === "BDT" ? amt / exchangeRate : amt * exchangeRate;
+  const toAmount = fromCurrency === "BDT" ? amt / activeRate : amt * activeRate;
 
   const handleExchange = async () => {
     if (!businessId || !user || amt <= 0) { toast.error("Enter a valid amount"); return; }
