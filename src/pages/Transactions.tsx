@@ -41,6 +41,8 @@ const TransactionList = ({ onSend }: { onSend: () => void }) => {
   const [search, setSearch] = useState("");
   const [filterMethod, setFilterMethod] = useState("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ amount: 0, method: "", notes: "", transaction_id: "" });
 
   useEffect(() => {
     if (!businessId) return;
