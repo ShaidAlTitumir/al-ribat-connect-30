@@ -43,7 +43,7 @@ const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+          className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:bg-primary/90 transition-all duration-200 active:scale-95 disabled:opacity-50"
         >
           {saving ? "..." : "Save"}
         </button>
