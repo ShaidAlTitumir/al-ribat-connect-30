@@ -9,15 +9,24 @@ import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 const Settings = () => {
   const { user } = useAuth();
   const { businessId } = useBusiness();
-  const [business, setBusiness] = useState({ name: "", default_currency: "BDT" });
+  const [business, setBusiness] = useState({
+    name: "", default_currency: "BDT", phone: "", address: "",
+    business_type: "", description: "",
+  });
   const [saving, setSaving] = useState("");
   const [showCleanConfirm, setShowCleanConfirm] = useState(false);
   const [cleanConfirmText, setCleanConfirmText] = useState("");
 
   useEffect(() => {
     if (!businessId) return;
-    supabase.from("businesses").select("name, default_currency").eq("id", businessId).maybeSingle()
-      .then(({ data }) => { if (data) setBusiness({ name: data.name || "", default_currency: data.default_currency || "BDT" }); });
+    supabase.from("businesses").select("name, default_currency, phone, address, business_type, description").eq("id", businessId).maybeSingle()
+      .then(({ data }) => {
+        if (data) setBusiness({
+          name: data.name || "", default_currency: data.default_currency || "BDT",
+          phone: data.phone || "", address: data.address || "",
+          business_type: data.business_type || "", description: data.description || "",
+        });
+      });
   }, [businessId]);
 
   const saveBusiness = async () => {
