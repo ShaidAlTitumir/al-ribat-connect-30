@@ -53,9 +53,14 @@ const Wallet = () => {
       else rmb -= e.amount;
     });
 
-    // Purchase costs (deduct from BDT)
-    const { data: purchases } = await supabase.from("purchase_transactions").select("total_landed_cost_bdt").eq("business_id", businessId!);
-    (purchases || []).forEach((p) => { bdt -= p.total_landed_cost_bdt; });
+    // Purchase costs: buying cost from RMB, shipping+additional from BDT
+    const { data: purchases } = await supabase.from("purchase_transactions").select("total_landed_cost_bdt, buying_cost_per_unit_rmb, quantity, exchange_rate_used").eq("business_id", businessId!);
+    (purchases || []).forEach((p) => {
+      const buyingRmb = (p.buying_cost_per_unit_rmb || 0) * (p.quantity || 0);
+      rmb -= buyingRmb;
+      const bdtPortion = (p.total_landed_cost_bdt || 0) - (buyingRmb * (p.exchange_rate_used || 0));
+      bdt -= bdtPortion;
+    });
 
     // Exchanges
     const { data: exch } = await supabase.from("exchanges").select("*").eq("business_id", businessId!).order("created_at", { ascending: false });

@@ -77,7 +77,12 @@ const Index = () => {
     sales.forEach((s) => { bdt += s.received_now_bdt; });
     payments.forEach((p) => { bdt += p.amount; });
     exps.forEach((e) => { if (e.currency === "BDT") bdt -= e.amount; else rmb -= e.amount; });
-    purchases.forEach((p) => { bdt -= p.total_landed_cost_bdt; });
+    purchases.forEach((p) => {
+      const buyingRmb = (p.buying_cost_per_unit_rmb || 0) * (p.quantity || 0);
+      rmb -= buyingRmb;
+      const bdtPortion = (p.total_landed_cost_bdt || 0) - (buyingRmb * (p.exchange_rate_used || 0));
+      bdt -= bdtPortion;
+    });
     exchanges.forEach((e) => {
       if (e.from_currency === "BDT") { bdt -= e.amount_from; rmb += e.amount_to; }
       else { rmb -= e.amount_from; bdt += e.amount_to; }
