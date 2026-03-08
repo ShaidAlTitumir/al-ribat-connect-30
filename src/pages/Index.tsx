@@ -269,7 +269,7 @@ const Index = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground pl-3">− Cost of Goods Sold</span>
-                <span className="font-medium text-destructive">৳{kpis.totalCOGS.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                <span className="font-medium text-destructive">৳{(kpis.totalCOGS ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
               </div>
               <div className="border-t border-border my-1.5" />
               <div className="flex justify-between">
