@@ -45,17 +45,20 @@ const Index = () => {
 
   const fetchDashboard = async () => {
     // Fetch all data in parallel
-    const [capsRes, salesRes, paymentsRes, expsRes, purchasesRes, invRes, custsRes, exchRes, partnersRes, actsRes] = await Promise.all([
+    const sevenDaysAgo = startOfDay(subDays(new Date(), 6)).toISOString();
+    const [capsRes, salesRes, paymentsRes, expsRes, purchasesRes, invRes, custsRes, exchRes, partnersRes, actsRes, recentSalesRes] = await Promise.all([
       supabase.from("capital_contributions").select("amount, currency, partner_id").eq("business_id", businessId!),
       supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity").eq("business_id", businessId!),
       supabase.from("customer_ledger").select("amount").eq("business_id", businessId!).eq("transaction_type", "payment"),
       supabase.from("expenses").select("amount, currency").eq("business_id", businessId!),
       supabase.from("purchase_transactions").select("total_landed_cost_bdt").eq("business_id", businessId!),
-      supabase.from("inventory_items").select("id, current_stock").eq("business_id", businessId!),
+      supabase.from("inventory_items").select("id, name, current_stock, low_stock_threshold").eq("business_id", businessId!),
       supabase.from("customers").select("total_due").eq("business_id", businessId!),
       supabase.from("exchanges").select("*").eq("business_id", businessId!),
       supabase.from("partners").select("id, name, status").eq("business_id", businessId!),
       supabase.from("activity_log").select("*").eq("business_id", businessId!).order("created_at", { ascending: false }).limit(15),
+      supabase.from("sales").select("unit_price_bdt, quantity, expected_profit, created_at, item_id, inventory_items(name)")
+        .eq("business_id", businessId!).gte("created_at", sevenDaysAgo),
     ]);
 
     const caps = capsRes.data || [];
