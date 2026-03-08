@@ -39,13 +39,13 @@ const AppLayout = () => {
 
       <main ref={mainRef} className="flex-1 lg:ml-64 flex flex-col overflow-y-auto min-w-0">
         {/* Mobile top bar */}
-        <div className="sticky top-0 z-30 lg:hidden flex items-center justify-between h-14 px-4 bg-card border-b border-border">
+        <div className="sticky top-0 z-30 lg:hidden flex items-center justify-between h-16 px-4 bg-card border-b border-border shadow-sm">
           <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted transition-all duration-200 active:scale-95 shrink-0"
+              className="flex items-center justify-center w-11 h-11 rounded-xl hover:bg-muted transition-all duration-200 active:scale-95 shrink-0"
             >
-              <span className="material-symbols-outlined text-[24px]">menu</span>
+              <span className="material-symbols-outlined text-[26px]">menu</span>
             </button>
             <div className="min-w-0">
               <h1 className="text-base font-bold tracking-tight text-foreground leading-tight">Al-Ribat Manager</h1>
