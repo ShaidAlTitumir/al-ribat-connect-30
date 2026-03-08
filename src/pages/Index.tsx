@@ -29,7 +29,7 @@ const fmt = (n: number) => "৳" + Math.round(n).toLocaleString("en-IN");
 
 const Index = () => {
   const navigate = useNavigate();
-  const { businessId, exchangeRate } = useBusiness();
+  const { businessId, exchangeRate, isSolo } = useBusiness();
   const [kpis, setKpis] = useState({
     bdtBalance: 0, rmbBalance: 0, totalValueBdt: 0,
     inventory: 0, dues: 0, revenue: 0, netProfit: 0,
@@ -390,7 +390,7 @@ const Index = () => {
           </div>
 
           {/* Partners */}
-          {partners.length > 0 && (
+          {!isSolo && partners.length > 0 && (
             <div className="bg-card rounded-xl border border-border overflow-hidden animate-fade-in">
               <div className="p-3 lg:p-4 border-b border-border">
                 <h3 className="text-xs lg:text-sm font-bold text-foreground flex items-center gap-2">

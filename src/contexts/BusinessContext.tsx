@@ -7,12 +7,14 @@ interface BusinessContextType {
   businessName: string;
   businessPhone: string;
   businessAddress: string;
+  businessType: string;
   exchangeRate: number;
   setExchangeRate: (rate: number) => void;
   saveExchangeRate: () => Promise<void>;
   loading: boolean;
   userRole: string;
   switchBusiness: (id: string) => void;
+  isSolo: boolean;
 }
 
 const BusinessContext = createContext<BusinessContextType>({
@@ -20,12 +22,14 @@ const BusinessContext = createContext<BusinessContextType>({
   businessName: "",
   businessPhone: "",
   businessAddress: "",
+  businessType: "",
   exchangeRate: 18,
   setExchangeRate: () => {},
   saveExchangeRate: async () => {},
   loading: true,
   userRole: "admin",
   switchBusiness: () => {},
+  isSolo: false,
 });
 
 export const useBusiness = () => useContext(BusinessContext);
@@ -36,9 +40,12 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
   const [businessName, setBusinessName] = useState("");
   const [businessPhone, setBusinessPhone] = useState("");
   const [businessAddress, setBusinessAddress] = useState("");
+  const [businessType, setBusinessType] = useState("");
   const [exchangeRate, setExchangeRate] = useState(18);
   const [userRole, setUserRole] = useState("admin");
   const [loading, setLoading] = useState(true);
+
+  const isSolo = businessType.toLowerCase() === "solo";
 
   useEffect(() => {
     if (!user) {
@@ -81,7 +88,7 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
 
         const { data: biz } = await supabase
           .from("businesses")
-          .select("exchange_rate, name, phone, address")
+          .select("exchange_rate, name, phone, address, business_type")
           .eq("id", activeBizId)
           .maybeSingle();
 
@@ -90,6 +97,7 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
           setBusinessName(biz.name || "");
           setBusinessPhone(biz.phone || "");
           setBusinessAddress(biz.address || "");
+          setBusinessType(biz.business_type || "");
         }
       }
       setLoading(false);
@@ -102,7 +110,7 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
     setBusinessId(id);
     const { data: biz } = await supabase
       .from("businesses")
-      .select("exchange_rate, name, phone, address")
+      .select("exchange_rate, name, phone, address, business_type")
       .eq("id", id)
       .maybeSingle();
     if (biz) {
@@ -110,6 +118,7 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
       setBusinessName(biz.name || "");
       setBusinessPhone(biz.phone || "");
       setBusinessAddress(biz.address || "");
+      setBusinessType(biz.business_type || "");
     }
   };
 
@@ -122,7 +131,7 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <BusinessContext.Provider value={{ businessId, businessName, businessPhone, businessAddress, exchangeRate, setExchangeRate, saveExchangeRate, loading, userRole, switchBusiness }}>
+    <BusinessContext.Provider value={{ businessId, businessName, businessPhone, businessAddress, businessType, exchangeRate, setExchangeRate, saveExchangeRate, loading, userRole, switchBusiness, isSolo }}>
       {children}
     </BusinessContext.Provider>
   );

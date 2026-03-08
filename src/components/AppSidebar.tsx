@@ -9,24 +9,24 @@ interface AppSidebarProps {
 }
 
 const navItems = [
-  { icon: "home", label: "Home", path: "/" },
-  { icon: "storefront", label: "Business", path: "/business" },
-  { icon: "receipt_long", label: "Sales", path: "/sales" },
-  { icon: "person_search", label: "Customers", path: "/customers" },
-  { icon: "group", label: "Partners", path: "/partners" },
-  { icon: "inventory_2", label: "Inventory", path: "/inventory" },
-  { icon: "currency_exchange", label: "Exchange", path: "/wallet" },
-  { icon: "swap_horiz", label: "Send to Partners", path: "/transactions" },
-  { icon: "account_balance_wallet", label: "Expenses", path: "/expenses" },
-  { icon: "assignment_return", label: "Returns", path: "/returns" },
-  { icon: "description", label: "Reports", path: "/reports" },
+  { icon: "home", label: "Home", path: "/", soloHidden: false },
+  { icon: "storefront", label: "Business", path: "/business", soloHidden: false },
+  { icon: "receipt_long", label: "Sales", path: "/sales", soloHidden: false },
+  { icon: "person_search", label: "Customers", path: "/customers", soloHidden: false },
+  { icon: "group", label: "Partners", path: "/partners", soloHidden: true },
+  { icon: "inventory_2", label: "Inventory", path: "/inventory", soloHidden: false },
+  { icon: "currency_exchange", label: "Exchange", path: "/wallet", soloHidden: true },
+  { icon: "swap_horiz", label: "Send to Partners", path: "/transactions", soloHidden: true },
+  { icon: "account_balance_wallet", label: "Expenses", path: "/expenses", soloHidden: false },
+  { icon: "assignment_return", label: "Returns", path: "/returns", soloHidden: false },
+  { icon: "description", label: "Reports", path: "/reports", soloHidden: false },
 ];
 
 const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
-  const { userRole, businessName } = useBusiness();
+  const { userRole, businessName, isSolo } = useBusiness();
   const { theme, toggleTheme } = useTheme();
 
   const displayName = user?.user_metadata?.full_name || user?.email || "User";
@@ -71,7 +71,7 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 sm:px-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
+        {navItems.filter(item => !isSolo || !item.soloHidden).map((item) => (
           <NavLink key={item.path} to={item.path} className={linkClass(item.path)}>
             <span className="material-symbols-outlined text-[22px]" style={iconStyle(item.path)}>
               {item.icon}

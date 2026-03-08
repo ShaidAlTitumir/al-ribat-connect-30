@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const Sales = () => {
-  const { businessId, exchangeRate, businessName, businessPhone, businessAddress } = useBusiness();
+  const { businessId, exchangeRate, businessName, businessPhone, businessAddress, isSolo } = useBusiness();
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
 
@@ -26,6 +26,7 @@ const Sales = () => {
   const [newCustomerName, setNewCustomerName] = useState("");
   const [newCustomerPhone, setNewCustomerPhone] = useState("");
   const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [showCustomerSection, setShowCustomerSection] = useState(false);
 
   const [editingSale, setEditingSale] = useState<any>(null);
   const [editForm, setEditForm] = useState({ quantity: 0, unit_price_bdt: 0, received_now_bdt: 0 });
@@ -198,7 +199,7 @@ const Sales = () => {
 
       toast.success("Sale recorded!");
       setSelectedItemId(""); setQuantity(1); setUnitPrice(""); setReceivedAmount("");
-      setSelectedCustomerId(""); setNewCustomerName(""); setNewCustomerPhone(""); setShowNewCustomer(false);
+      setSelectedCustomerId(""); setNewCustomerName(""); setNewCustomerPhone(""); setShowNewCustomer(false); setShowCustomerSection(false);
       setMobileTab("history");
       await refreshData();
     } catch (err: any) {
@@ -437,56 +438,70 @@ const Sales = () => {
               </div>
             </div>
 
-            {/* Customer Selection */}
-            <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-              <div className="px-4 pt-4 pb-2 lg:px-6 lg:pt-5 lg:pb-3 border-b border-border bg-muted/30">
-                <h3 className="text-xs lg:text-sm font-bold text-foreground flex items-center gap-2">
-                  <span className="w-6 h-6 lg:w-7 lg:h-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-primary text-[16px] lg:text-[18px]">person</span>
-                  </span>
-                  Customer
-                  <span className="text-[10px] font-normal text-muted-foreground ml-1 bg-muted px-1.5 py-0.5 rounded">optional</span>
-                </h3>
-              </div>
-              <div className="p-4 lg:p-6">
-                {!showNewCustomer ? (
-                  <div className="space-y-2.5">
-                    <select className="w-full h-11 lg:h-12 bg-muted/50 border border-border rounded-xl px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/30 focus:border-primary/40 outline-none transition-all"
-                      value={selectedCustomerId} onChange={(e) => setSelectedCustomerId(e.target.value)}>
-                      <option value="">Walk-in customer</option>
-                      {customers.map((c) => (
-                        <option key={c.id} value={c.id}>{c.name} {c.total_due > 0 ? `(Due: ৳${c.total_due})` : ""}</option>
-                      ))}
-                    </select>
-                    <button onClick={() => setShowNewCustomer(true)}
-                      className="text-primary text-[11px] font-semibold hover:underline flex items-center gap-1 px-1">
-                      <span className="material-symbols-outlined text-[14px]">person_add</span> Add new customer
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Name</label>
-                        <input type="text" placeholder="Full name" value={newCustomerName}
-                          onChange={(e) => setNewCustomerName(e.target.value)}
-                          className="w-full h-11 bg-muted/50 border border-border rounded-xl px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all" />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Phone</label>
-                        <input type="tel" placeholder="Phone" value={newCustomerPhone}
-                          onChange={(e) => setNewCustomerPhone(e.target.value)}
-                          className="w-full h-11 bg-muted/50 border border-border rounded-xl px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all" />
-                      </div>
+            {/* Customer Selection — collapsed by default in solo mode */}
+            {(!isSolo || showCustomerSection || selectedCustomerId) ? (
+              <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+                <div className="px-4 pt-4 pb-2 lg:px-6 lg:pt-5 lg:pb-3 border-b border-border bg-muted/30">
+                  <h3 className="text-xs lg:text-sm font-bold text-foreground flex items-center gap-2">
+                    <span className="w-6 h-6 lg:w-7 lg:h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-primary text-[16px] lg:text-[18px]">person</span>
+                    </span>
+                    Customer
+                    <span className="text-[10px] font-normal text-muted-foreground ml-1 bg-muted px-1.5 py-0.5 rounded">optional</span>
+                    {isSolo && (
+                      <button onClick={() => { setSelectedCustomerId(""); setShowNewCustomer(false); setShowCustomerSection(false); }}
+                        className="ml-auto text-muted-foreground hover:text-foreground">
+                        <span className="material-symbols-outlined text-[16px]">close</span>
+                      </button>
+                    )}
+                  </h3>
+                </div>
+                <div className="p-4 lg:p-6">
+                  {!showNewCustomer ? (
+                    <div className="space-y-2.5">
+                      <select className="w-full h-11 lg:h-12 bg-muted/50 border border-border rounded-xl px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/30 focus:border-primary/40 outline-none transition-all"
+                        value={selectedCustomerId} onChange={(e) => setSelectedCustomerId(e.target.value)}>
+                        <option value="">Walk-in customer</option>
+                        {customers.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name} {c.total_due > 0 ? `(Due: ৳${c.total_due})` : ""}</option>
+                        ))}
+                      </select>
+                      <button onClick={() => setShowNewCustomer(true)}
+                        className="text-primary text-[11px] font-semibold hover:underline flex items-center gap-1 px-1">
+                        <span className="material-symbols-outlined text-[14px]">person_add</span> Add new customer
+                      </button>
                     </div>
-                    <button onClick={() => { setShowNewCustomer(false); setNewCustomerName(""); setNewCustomerPhone(""); }}
-                      className="text-muted-foreground text-[11px] hover:text-foreground transition-colors flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px]">arrow_back</span> Back to customer list
-                    </button>
-                  </div>
-                )}
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Name</label>
+                          <input type="text" placeholder="Full name" value={newCustomerName}
+                            onChange={(e) => setNewCustomerName(e.target.value)}
+                            className="w-full h-11 bg-muted/50 border border-border rounded-xl px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all" />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Phone</label>
+                          <input type="tel" placeholder="Phone" value={newCustomerPhone}
+                            onChange={(e) => setNewCustomerPhone(e.target.value)}
+                            className="w-full h-11 bg-muted/50 border border-border rounded-xl px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all" />
+                        </div>
+                      </div>
+                      <button onClick={() => { setShowNewCustomer(false); setNewCustomerName(""); setNewCustomerPhone(""); }}
+                        className="text-muted-foreground text-[11px] hover:text-foreground transition-colors flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">arrow_back</span> Back to customer list
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            ) : (
+              <button onClick={() => setShowCustomerSection(true)}
+                className="w-full bg-card rounded-xl border border-dashed border-border p-3 text-xs font-medium text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[16px]">person_add</span> Add Customer (optional)
+              </button>
+            )}
 
             {/* Mobile: Summary + Save */}
             <div className="lg:hidden rounded-xl overflow-hidden">
