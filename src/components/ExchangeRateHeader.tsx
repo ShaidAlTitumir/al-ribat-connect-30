@@ -18,7 +18,7 @@ const MobilePageHeader = ({ title, exchangeRate, onRateClick }: { title: string;
         className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1.5 text-xs font-bold text-foreground"
       >
         <span className="material-symbols-outlined text-[14px] text-muted-foreground">currency_exchange</span>
-        ¥1 = ৳{exchangeRate}
+        ¥1 = ৳{exchangeRate.toFixed(2)}
       </button>
     </div>
   );
@@ -66,10 +66,10 @@ const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
             <span className="text-xs text-muted-foreground">1¥ =</span>
             <input
               type="number"
-              value={exchangeRate}
+              value={exchangeRate.toFixed(2)}
               onChange={(e) => setExchangeRate(parseFloat(e.target.value) || 0)}
-              className="w-12 text-center text-sm font-bold bg-transparent border-none outline-none text-foreground"
-              step="0.5"
+              className="w-14 text-center text-sm font-bold bg-transparent border-none outline-none text-foreground"
+              step="0.01"
             />
             <span className="text-xs text-muted-foreground">৳</span>
             <button
@@ -94,10 +94,10 @@ const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
               <span className="text-sm font-medium text-muted-foreground">1¥ =</span>
               <input
                 type="number"
-                value={exchangeRate}
+                value={exchangeRate.toFixed(2)}
                 onChange={(e) => setExchangeRate(parseFloat(e.target.value) || 0)}
                 className="flex-1 text-center text-lg font-bold bg-card border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-foreground"
-                step="0.5"
+                step="0.01"
                 autoFocus
               />
               <span className="text-sm font-medium text-muted-foreground">৳</span>
