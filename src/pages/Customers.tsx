@@ -29,6 +29,7 @@ const Customers = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", phone: "", address: "", shop_name: "" });
+  const [invoiceData, setInvoiceData] = useState<any>(null);
 
   useEffect(() => {
     if (!businessId) return;
