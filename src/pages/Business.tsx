@@ -35,6 +35,17 @@ interface DeletionVote {
   voted_at: string | null;
 }
 
+interface BusinessStats {
+  totalSalesRevenue: number;
+  totalExpenses: number;
+  totalProfit: number;
+  inventoryItems: number;
+  totalStock: number;
+  totalDue: number;
+  customerCount: number;
+  totalCapital: number;
+}
+
 const Business = () => {
   const { user } = useAuth();
   const { businessId, switchBusiness } = useBusiness();
@@ -47,6 +58,8 @@ const Business = () => {
   const [deletionVotes, setDeletionVotes] = useState<Record<string, DeletionVote[]>>({});
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [businessStats, setBusinessStats] = useState<Record<string, BusinessStats>>({});
 
   // Form state
   const [formName, setFormName] = useState("");
