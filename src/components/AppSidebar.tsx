@@ -16,6 +16,7 @@ const navItems = [
   { icon: "currency_exchange", label: "Wallet", path: "/wallet" },
   { icon: "swap_horiz", label: "Transactions", path: "/transactions" },
   { icon: "account_balance_wallet", label: "Expenses", path: "/expenses" },
+  { icon: "assignment_return", label: "Returns", path: "/returns" },
   { icon: "description", label: "Reports", path: "/reports" },
 ];
 

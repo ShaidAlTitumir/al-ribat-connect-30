@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusiness } from "@/contexts/BusinessContext";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
-import { format } from "date-fns";
+import { format, subDays, startOfDay } from "date-fns";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, PieChart, Pie, Cell,
+} from "recharts";
 
 const quickActions = [
   { icon: "point_of_sale", label: "Record Sale", path: "/sales" },
@@ -30,6 +34,9 @@ const Index = () => {
   const [partners, setPartners] = useState<PartnerEquity[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
+  const [dailySales, setDailySales] = useState<{ day: string; revenue: number; profit: number }[]>([]);
+  const [topItems, setTopItems] = useState<{ name: string; quantity: number; revenue: number }[]>([]);
+  const [lowStockItems, setLowStockItems] = useState<{ name: string; stock: number; threshold: number }[]>([]);
 
   useEffect(() => {
     if (!businessId) return;
@@ -38,17 +45,20 @@ const Index = () => {
 
   const fetchDashboard = async () => {
     // Fetch all data in parallel
-    const [capsRes, salesRes, paymentsRes, expsRes, purchasesRes, invRes, custsRes, exchRes, partnersRes, actsRes] = await Promise.all([
+    const sevenDaysAgo = startOfDay(subDays(new Date(), 6)).toISOString();
+    const [capsRes, salesRes, paymentsRes, expsRes, purchasesRes, invRes, custsRes, exchRes, partnersRes, actsRes, recentSalesRes] = await Promise.all([
       supabase.from("capital_contributions").select("amount, currency, partner_id").eq("business_id", businessId!),
       supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity").eq("business_id", businessId!),
       supabase.from("customer_ledger").select("amount").eq("business_id", businessId!).eq("transaction_type", "payment"),
       supabase.from("expenses").select("amount, currency").eq("business_id", businessId!),
       supabase.from("purchase_transactions").select("total_landed_cost_bdt").eq("business_id", businessId!),
-      supabase.from("inventory_items").select("id, current_stock").eq("business_id", businessId!),
+      supabase.from("inventory_items").select("id, name, current_stock, low_stock_threshold").eq("business_id", businessId!),
       supabase.from("customers").select("total_due").eq("business_id", businessId!),
       supabase.from("exchanges").select("*").eq("business_id", businessId!),
       supabase.from("partners").select("id, name, status").eq("business_id", businessId!),
       supabase.from("activity_log").select("*").eq("business_id", businessId!).order("created_at", { ascending: false }).limit(15),
+      supabase.from("sales").select("unit_price_bdt, quantity, expected_profit, created_at, item_id, inventory_items(name)")
+        .eq("business_id", businessId!).gte("created_at", sevenDaysAgo),
     ]);
 
     const caps = capsRes.data || [];
@@ -118,6 +128,40 @@ const Index = () => {
     setPartners(partnerEquities);
 
     setActivities(actsRes.data || []);
+
+    // Daily sales chart (last 7 days)
+    const recentSales = recentSalesRes.data || [];
+    const dayMap: Record<string, { revenue: number; profit: number }> = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = subDays(new Date(), i);
+      const key = format(d, "dd MMM");
+      dayMap[key] = { revenue: 0, profit: 0 };
+    }
+    recentSales.forEach((s: any) => {
+      const key = format(new Date(s.created_at), "dd MMM");
+      if (dayMap[key]) {
+        dayMap[key].revenue += s.unit_price_bdt * s.quantity;
+        dayMap[key].profit += s.expected_profit;
+      }
+    });
+    setDailySales(Object.entries(dayMap).map(([day, v]) => ({ day, ...v })));
+
+    // Top selling items (from recent sales)
+    const itemMap: Record<string, { name: string; quantity: number; revenue: number }> = {};
+    recentSales.forEach((s: any) => {
+      const name = s.inventory_items?.name || "Unknown";
+      if (!itemMap[name]) itemMap[name] = { name, quantity: 0, revenue: 0 };
+      itemMap[name].quantity += s.quantity;
+      itemMap[name].revenue += s.unit_price_bdt * s.quantity;
+    });
+    setTopItems(Object.values(itemMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5));
+
+    // Low stock alerts
+    const lowStock = invItems
+      .filter(i => (i as any).current_stock <= (i as any).low_stock_threshold)
+      .map(i => ({ name: (i as any).name, stock: (i as any).current_stock, threshold: (i as any).low_stock_threshold }))
+      .sort((a, b) => a.stock - b.stock);
+    setLowStockItems(lowStock);
   };
 
   const colors = ["bg-primary", "bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-purple-500"];
@@ -186,7 +230,96 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Partner Equity */}
+        {/* Analytics Row: Daily Sales + Top Items + Low Stock */}
+        <section>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Daily Sales Chart */}
+            <div className="lg:col-span-2 bg-card rounded-xl border border-border p-4 lg:p-5">
+              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[20px]">bar_chart</span>
+                Last 7 Days Sales
+              </h3>
+              {dailySales.some(d => d.revenue > 0) ? (
+                <div className="h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={dailySales} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={45}
+                        tickFormatter={(v: number) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)} />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
+                        formatter={(value: number) => [`৳${value.toLocaleString("en-IN")}`, undefined]}
+                      />
+                      <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--primary))" radius={[4,4,0,0]} barSize={20} />
+                      <Bar dataKey="profit" name="Profit" fill="hsl(142, 71%, 45%)" radius={[4,4,0,0]} barSize={20} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-48 flex items-center justify-center text-center">
+                  <div>
+                    <span className="material-symbols-outlined text-3xl text-muted-foreground/30 block mb-1">show_chart</span>
+                    <p className="text-xs text-muted-foreground">No sales in the last 7 days</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Top Items + Low Stock */}
+            <div className="space-y-4">
+              {/* Top Selling Items */}
+              <div className="bg-card rounded-xl border border-border p-4">
+                <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-amber-600 text-[20px]">emoji_events</span>
+                  Top Items (7d)
+                </h3>
+                {topItems.length > 0 ? (
+                  <div className="space-y-2">
+                    {topItems.map((item, i) => (
+                      <div key={item.name} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-muted-foreground font-bold w-4">#{i + 1}</span>
+                          <span className="font-medium truncate">{item.name}</span>
+                        </div>
+                        <div className="text-right shrink-0 ml-2">
+                          <span className="font-bold">৳{item.revenue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                          <span className="text-muted-foreground ml-1">({item.quantity})</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground text-center py-3">No sales data</p>
+                )}
+              </div>
+
+              {/* Low Stock Alerts */}
+              <div className="bg-card rounded-xl border border-border p-4">
+                <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-destructive text-[20px]">warning</span>
+                  Low Stock Alerts
+                </h3>
+                {lowStockItems.length > 0 ? (
+                  <div className="space-y-2">
+                    {lowStockItems.map(item => (
+                      <div key={item.name} className="flex items-center justify-between text-xs">
+                        <span className="font-medium truncate">{item.name}</span>
+                        <span className={`font-bold px-1.5 py-0.5 rounded ${item.stock === 0 ? "bg-destructive/10 text-destructive" : "bg-amber-50 text-amber-700"}`}>
+                          {item.stock === 0 ? "Out of stock" : `${item.stock} left`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground text-center py-3">All items well stocked ✓</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+
         <section>
           <h3 className="text-base lg:text-lg font-bold mb-3">Partner Equity</h3>
           {partners.length === 0 ? (
