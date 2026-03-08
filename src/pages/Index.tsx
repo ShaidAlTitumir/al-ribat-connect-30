@@ -1,27 +1,21 @@
+import { useNavigate } from "react-router-dom";
 import KPICard from "@/components/KPICard";
 import RecentTransactions from "@/components/RecentTransactions";
+import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 
 const quickActions = [
-  { icon: "point_of_sale", label: "Record Sale" },
-  { icon: "add_box", label: "Add Stock" },
-  { icon: "payments", label: "Exchange Money" },
-  { icon: "assignment_return", label: "Collect Due" },
+  { icon: "point_of_sale", label: "Record Sale", path: "/sales" },
+  { icon: "add_box", label: "Add Stock", path: "/inventory" },
+  { icon: "payments", label: "Exchange Money", path: "/wallet" },
+  { icon: "assignment_return", label: "Collect Due", path: "/customers" },
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
     <>
-      {/* Header - hidden on mobile since we have the top bar */}
-      <header className="h-14 lg:h-16 border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-10 px-4 lg:px-8 flex items-center justify-between">
-        <h2 className="text-lg lg:text-xl font-bold">Dashboard</h2>
-        <div className="flex items-center gap-2 lg:gap-3">
-          <button className="flex items-center gap-1.5 lg:gap-2 px-3 lg:px-4 py-2 bg-muted rounded-lg text-xs lg:text-sm font-semibold hover:bg-muted/80 transition-colors">
-            <span className="material-symbols-outlined text-[16px] lg:text-[18px]">currency_exchange</span>
-            <span className="hidden sm:inline">Exchange rate</span>
-            <span>16</span>
-          </button>
-        </div>
-      </header>
+      <ExchangeRateHeader title="Dashboard" />
 
       <div className="p-4 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto w-full">
         {/* Business Snapshot */}
