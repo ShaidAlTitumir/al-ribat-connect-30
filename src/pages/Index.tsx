@@ -185,33 +185,55 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Partner Shares */}
-        {partners.length > 0 && (
-          <section>
-            <h3 className="text-base lg:text-lg font-bold mb-3">Partner Shares</h3>
-            <div className="bg-card rounded-xl border border-border p-4 lg:p-5 shadow-sm">
+        {/* Partner Equity */}
+        <section>
+          <h3 className="text-base lg:text-lg font-bold mb-3">Partner Equity</h3>
+          {partners.length === 0 ? (
+            <div className="bg-card rounded-xl border border-border p-8 text-center">
+              <span className="material-symbols-outlined text-3xl text-muted-foreground/40 mb-2">group</span>
+              <p className="font-bold">No partners yet</p>
+              <p className="text-sm text-muted-foreground mt-1">Add partners and contribute capital to see equity here.</p>
+            </div>
+          ) : (
+            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
               {/* Equity bar */}
-              <div className="flex h-3 w-full overflow-hidden rounded-full mb-4">
+              {partners.some(p => p.percentage > 0) && (
+                <div className="px-4 pt-4">
+                  <div className="flex h-3 w-full overflow-hidden rounded-full">
+                    {partners.filter(p => p.percentage > 0).map((p, i) => (
+                      <div key={p.name} className={`${colors[i % colors.length]} transition-all duration-500`}
+                        style={{ width: `${p.percentage}%` }} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="divide-y divide-border">
                 {partners.map((p, i) => (
-                  <div key={p.name} className={`${colors[i % colors.length]} transition-all duration-500`}
-                    style={{ width: `${p.percentage}%` }} />
-                ))}
-              </div>
-              <div className="space-y-2.5">
-                {partners.map((p, i) => (
-                  <div key={p.name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className={`h-2.5 w-2.5 rounded-full ${colors[i % colors.length]}`} />
-                      <span className="text-sm font-semibold text-foreground">{p.name}</span>
-                      <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{p.percentage.toFixed(1)}%</span>
+                  <div key={p.name} className="px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`h-8 w-8 rounded-full ${colors[i % colors.length]} flex items-center justify-center text-white text-xs font-bold`}>
+                        {p.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{p.name}</p>
+                        <p className="text-[10px] text-muted-foreground capitalize">{p.role} Partner</p>
+                      </div>
                     </div>
-                    <span className="text-sm font-bold text-foreground">৳{p.totalBdt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-foreground">৳{p.totalBdt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+                      <div className="flex items-center gap-2 justify-end">
+                        <span className="text-[10px] text-muted-foreground">{p.percentage.toFixed(1)}% equity</span>
+                        {p.profitShare > 0 && (
+                          <span className="text-[10px] font-medium text-emerald-600">+৳{p.profitShare.toLocaleString("en-IN", { maximumFractionDigits: 0 })} profit</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
-          </section>
-        )}
+          )}
+        </section>
 
         {/* Quick Actions */}
         <section>
