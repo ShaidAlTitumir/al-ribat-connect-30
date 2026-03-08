@@ -24,10 +24,10 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
 
   const linkClass = (path: string) => {
     const isActive = location.pathname === path;
-    return `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+    return `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 active:scale-[0.97] ${
       isActive
-        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-        : "text-sidebar-foreground hover:bg-muted"
+        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+        : "text-sidebar-foreground hover:bg-muted hover:translate-x-0.5"
     }`;
   };
 
