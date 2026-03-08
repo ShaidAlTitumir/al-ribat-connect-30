@@ -322,9 +322,18 @@ const Business = () => {
     await supabase.from("activity_log").delete().eq("business_id", b.id);
     await supabase.from("customers").delete().eq("business_id", b.id);
     await supabase.from("inventory_items").delete().eq("business_id", b.id);
-    await supabase.from("partners").delete().eq("business_id", b.id);
+    await supabase.from("sample_orders").delete().eq("business_id", b.id);
     await supabase.from("notifications").delete().eq("business_id", b.id);
-    // Delete votes before requests (FK constraint: votes -> requests)
+    // Delete partner leave votes before leave requests (FK constraint)
+    const { data: leaveReqs } = await supabase.from("partner_leave_requests").select("id").eq("business_id", b.id);
+    if (leaveReqs && leaveReqs.length > 0) {
+      for (const lr of leaveReqs) {
+        await supabase.from("partner_leave_votes").delete().eq("request_id", lr.id);
+      }
+    }
+    await supabase.from("partner_leave_requests").delete().eq("business_id", b.id);
+    await supabase.from("partners").delete().eq("business_id", b.id);
+    // Delete deletion votes before deletion requests (FK constraint)
     const { data: delReqs } = await supabase.from("business_deletion_requests").select("id").eq("business_id", b.id);
     if (delReqs && delReqs.length > 0) {
       for (const dr of delReqs) {
