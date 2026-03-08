@@ -8,9 +8,8 @@ interface ExchangeRateHeaderProps {
 }
 
 const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
-  const { exchangeRate, setExchangeRate, saveExchangeRate, businessName } = useBusiness();
+  const { exchangeRate, setExchangeRate, saveExchangeRate } = useBusiness();
   const [saving, setSaving] = useState(false);
-  const displayTitle = businessName || title;
 
   const handleSave = async () => {
     setSaving(true);
