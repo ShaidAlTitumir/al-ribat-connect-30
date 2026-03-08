@@ -77,6 +77,13 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
           <span>Settings</span>
         </NavLink>
         <button
+          onClick={toggleTheme}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-muted transition-all duration-200 active:scale-[0.97] w-full"
+        >
+          <span className="material-symbols-outlined text-[22px]">{theme === "dark" ? "light_mode" : "dark_mode"}</span>
+          <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+        </button>
+        <button
           onClick={signOut}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-muted transition-all duration-200 active:scale-[0.97] w-full mt-1"
         >
