@@ -8,6 +8,7 @@ interface AppSidebarProps {
 
 const navItems = [
   { icon: "home", label: "Home", path: "/" },
+  { icon: "storefront", label: "Business", path: "/business" },
   { icon: "receipt_long", label: "Sales", path: "/sales" },
   { icon: "person_search", label: "Customers", path: "/customers" },
   { icon: "group", label: "Partners", path: "/partners" },

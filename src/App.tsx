@@ -17,6 +17,7 @@ import Reports from "./pages/Reports";
 import Wallet from "./pages/Wallet";
 import Customers from "./pages/Customers";
 import Settings from "./pages/Settings";
+import Business from "./pages/Business";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -47,6 +48,7 @@ const App = () => (
             {/* Protected app routes */}
             <Route element={<AppLayout />}>
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+              <Route path="/business" element={<ProtectedRoute><Business /></ProtectedRoute>} />
               <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
               <Route path="/sales" element={<ProtectedRoute><Sales /></ProtectedRoute>} />
               <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
