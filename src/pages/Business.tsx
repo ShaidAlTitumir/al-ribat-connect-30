@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { toast } from "sonner";
+import { format } from "date-fns";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 
 interface BusinessData {
