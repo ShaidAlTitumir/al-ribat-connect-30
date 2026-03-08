@@ -501,54 +501,54 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
 
   if (isSolo) {
     return (
-      <div className="p-4 lg:p-8 max-w-2xl mx-auto">
-        <header className="mb-6 flex items-center gap-3">
-          <button onClick={onBack} className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground">
-            <span className="material-symbols-outlined text-[20px]">arrow_back</span> Back
+      <div className="p-4 lg:p-8 max-w-2xl mx-auto w-full">
+        <header className="mb-5 flex items-center gap-3">
+          <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground active:scale-95 transition-all">
+            <span className="material-symbols-outlined text-[18px]">arrow_back</span> Back
           </button>
-          <h2 className="text-xl lg:text-2xl font-black text-foreground">Add Product</h2>
+          <h2 className="text-lg lg:text-2xl font-black text-foreground">Add Product</h2>
         </header>
 
-        <div className="space-y-4">
-          <section className="bg-card rounded-xl p-4 lg:p-6 border border-border">
-            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">info</span> Product Details
+        <div className="space-y-3">
+          <section className="bg-card rounded-xl p-4 border border-border">
+            <h3 className="text-base font-bold mb-3.5 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-[20px]">info</span> Product Details
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-foreground">Product Name *</label>
-                <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            <div className="space-y-3.5">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-foreground">Product Name *</label>
+                <input className="h-10 rounded-lg border border-border bg-muted px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   placeholder="e.g. T-Shirt, Shoes" value={soloForm.name} onChange={(e) => setSoloForm(f => ({ ...f, name: e.target.value }))} />
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-foreground">Category</label>
-                <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-foreground">Category</label>
+                <input className="h-10 rounded-lg border border-border bg-muted px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   placeholder="e.g. Clothing, Electronics" list="category-list" value={soloForm.category} onChange={(e) => setSoloForm(f => ({ ...f, category: e.target.value }))} />
                 <datalist id="category-list">
                   {savedCategories.map((c) => <option key={c} value={c} />)}
                 </datalist>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-foreground">Quantity *</label>
-                <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" placeholder="0"
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-foreground">Quantity *</label>
+                <input className="h-10 rounded-lg border border-border bg-muted px-3 text-sm text-foreground" type="number" placeholder="0"
                   value={soloForm.quantity} onChange={(e) => setSoloForm(f => ({ ...f, quantity: e.target.value }))} />
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-foreground">Total Cost (৳)</label>
-                <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" placeholder="Total purchase cost in BDT"
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-foreground">Total Cost (৳)</label>
+                <input className="h-10 rounded-lg border border-border bg-muted px-3 text-sm text-foreground" type="number" placeholder="Total purchase cost in BDT"
                   value={soloForm.totalCost} onChange={(e) => setSoloForm(f => ({ ...f, totalCost: e.target.value }))} />
                 {soloQty > 0 && soloCost > 0 && (
-                  <span className="text-xs text-muted-foreground">= ৳{soloCostPerUnit.toFixed(2)} per unit</span>
+                  <span className="text-[11px] text-muted-foreground">= ৳{soloCostPerUnit.toFixed(2)} per unit</span>
                 )}
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-foreground">Selling Price (৳/unit)</label>
-                <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" placeholder="Price per piece"
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-foreground">Selling Price (৳/unit)</label>
+                <input className="h-10 rounded-lg border border-border bg-muted px-3 text-sm text-foreground" type="number" placeholder="Price per piece"
                   value={soloForm.sellingPrice} onChange={(e) => setSoloForm(f => ({ ...f, sellingPrice: e.target.value }))} />
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-foreground">Low Stock Alert</label>
-                <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" placeholder="5"
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-foreground">Low Stock Alert</label>
+                <input className="h-10 rounded-lg border border-border bg-muted px-3 text-sm text-foreground" type="number" placeholder="5"
                   value={soloForm.lowStockThreshold} onChange={(e) => setSoloForm(f => ({ ...f, lowStockThreshold: e.target.value }))} />
               </div>
             </div>
@@ -556,21 +556,21 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
 
           {/* Profit Preview */}
           {soloQty > 0 && soloSellPrice > 0 && (
-            <section className="bg-primary text-primary-foreground rounded-xl p-5 shadow-lg">
-              <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px]">calculate</span> Profit Preview
+            <section className="bg-primary text-primary-foreground rounded-xl p-4 shadow-md">
+              <h3 className="text-xs font-bold mb-2.5 flex items-center gap-1.5 opacity-90">
+                <span className="material-symbols-outlined text-[16px]">calculate</span> Profit Preview
               </h3>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-white/80">Cost/Unit</span>
+              <div className="space-y-1.5 text-[13px]">
+                <div className="flex justify-between">
+                  <span className="opacity-80">Cost/Unit</span>
                   <span className="font-bold">৳{soloCostPerUnit.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-white/80">Sell Price</span>
+                <div className="flex justify-between">
+                  <span className="opacity-80">Sell Price</span>
                   <span className="font-bold">৳{soloSellPrice}</span>
                 </div>
-                <div className="flex justify-between text-sm pt-2 border-t border-white/20">
-                  <span className="text-white/80">Total Profit</span>
+                <div className="flex justify-between pt-1.5 border-t border-primary-foreground/20">
+                  <span className="opacity-80">Total Profit</span>
                   <span className={`font-bold ${soloProfit >= 0 ? "text-emerald-300" : "text-red-300"}`}>
                     {soloProfit >= 0 ? "+" : ""}৳{soloProfit.toFixed(0)}
                   </span>
@@ -579,13 +579,13 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
             </section>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3 pt-1 pb-2">
             <button onClick={handleSoloSave} disabled={saving}
-              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-              <span className="material-symbols-outlined">save</span>
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] text-sm">
+              <span className="material-symbols-outlined text-[18px]">save</span>
               {saving ? "Saving..." : "Add Product"}
             </button>
-            <button onClick={onBack} className="px-6 bg-muted hover:bg-muted/80 text-foreground font-semibold py-3 rounded-xl transition-all">
+            <button onClick={onBack} className="px-5 text-sm text-muted-foreground hover:text-foreground font-semibold py-2.5 transition-all active:scale-95">
               Cancel
             </button>
           </div>
