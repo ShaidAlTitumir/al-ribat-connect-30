@@ -445,7 +445,14 @@ const Partners = () => {
           .update({ status: "approved" })
           .eq("id", requestId);
 
+        // Delete capital contributions for the leaving partner
+        await supabase.from("capital_contributions").delete().eq("partner_id", leavingPartner.id);
+
         await supabase.from("partners").delete().eq("id", leavingPartner.id);
+
+        const settlementInfo = request?.settlement_amount > 0
+          ? ` Settlement: ${request.settlement_currency === "RMB" ? "¥" : "৳"}${request.settlement_amount}`
+          : "";
 
         if (leavingPartner.user_id) {
           try {
@@ -460,16 +467,20 @@ const Partners = () => {
             user_id: leavingPartner.user_id,
             business_id: businessId,
             title: isRemoval ? "You have been removed from the business" : "You have left the business",
-            message: isRemoval
-              ? `All partners approved your removal from the business.`
-              : `All partners approved your request to leave.`,
+            message: (isRemoval
+              ? `All partners approved your removal.`
+              : `All partners approved your request to leave.`) + settlementInfo,
             type: isRemoval ? "removal_request" : "leave_request",
           });
         }
 
         await supabase.from("activity_log").insert({
           action: isRemoval ? "Partner removed (approved)" : "Partner left business (approved)",
-          details: { partner_name: leavingPartner.name },
+          details: {
+            partner_name: leavingPartner.name,
+            settlement_amount: request?.settlement_amount || 0,
+            settlement_currency: request?.settlement_currency || "BDT",
+          },
           business_id: businessId, user_id: user.id,
         });
 
