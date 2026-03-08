@@ -125,6 +125,29 @@ const Settings = () => {
           </div>
         </section>
 
+        {/* Delete Account */}
+        <section className="bg-card rounded-xl border border-destructive/40 overflow-hidden">
+          <div className="px-4 py-3 sm:p-5 flex items-center gap-2.5 border-b border-destructive/20 bg-destructive/5">
+            <span className="material-symbols-outlined text-destructive text-xl">person_remove</span>
+            <h3 className="font-bold text-base sm:text-lg text-destructive">Delete Account</h3>
+          </div>
+          <div className="p-4 sm:p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground text-sm">Permanently delete your account</p>
+                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">This will delete your account, profile, and all businesses you own (if no other partners). This cannot be undone.</p>
+              </div>
+              <button
+                onClick={() => setShowDeleteAccount(true)}
+                disabled={saving === "delete-account"}
+                className="w-full sm:w-auto shrink-0 bg-destructive text-destructive-foreground font-bold px-5 py-2.5 rounded-lg hover:bg-destructive/90 disabled:opacity-50 active:scale-[0.98] transition-all text-sm"
+              >
+                {saving === "delete-account" ? "Deleting..." : "Delete My Account"}
+              </button>
+            </div>
+          </div>
+        </section>
+
         {/* Danger Zone */}
         <section className="bg-card rounded-xl border border-destructive/40 overflow-hidden">
           <div className="px-4 py-3 sm:p-5 flex items-center gap-2.5 border-b border-destructive/20 bg-destructive/5">
