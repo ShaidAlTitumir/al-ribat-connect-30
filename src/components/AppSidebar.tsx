@@ -83,7 +83,10 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
 
       {/* User info */}
       <div className="p-3 sm:p-4 border-t border-sidebar-border space-y-2">
-        <div className="flex items-center gap-3 px-3 py-2">
+        <button
+          onClick={() => { navigate("/profile"); onClose(); }}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted transition-all duration-200 active:scale-[0.97] w-full text-left"
+        >
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
             {initials}
           </div>
@@ -91,7 +94,8 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
             <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
             <p className="text-[10px] text-muted-foreground capitalize">{userRole || "member"}</p>
           </div>
-        </div>
+          <span className="material-symbols-outlined text-[16px] text-muted-foreground">chevron_right</span>
+        </button>
         <NavLink to="/settings" className={linkClass("/settings")}>
           <span className="material-symbols-outlined text-[22px]" style={iconStyle("/settings")}>settings</span>
           <span>Settings</span>
