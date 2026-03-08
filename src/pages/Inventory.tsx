@@ -277,9 +277,16 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
     if (qty <= 0) { toast.error("Quantity must be greater than 0"); return; }
 
     // Wallet balance check — only for new purchases (not existing items)
-    if (itemMode === "new" && totalLanded > 0) {
-      if (walletBdt < totalLanded) {
-        toast.error(`Insufficient wallet balance. Need ৳${totalLanded.toFixed(0)} but only ৳${Math.max(0, walletBdt).toFixed(0)} available.`);
+    // Buying cost (RMB) deducted from RMB wallet, shipping + additional cost from BDT wallet
+    if (itemMode === "new") {
+      const neededRmb = buyRmb * qty; // buying cost in RMB
+      const neededBdt = totalShipping + addCostBdt; // shipping (always BDT) + additional cost converted to BDT
+      if (neededRmb > 0 && walletRmb < neededRmb) {
+        toast.error(`Insufficient RMB balance. Need ¥${neededRmb.toFixed(0)} but only ¥${Math.max(0, walletRmb).toFixed(0)} available.`);
+        return;
+      }
+      if (neededBdt > 0 && walletBdt < neededBdt) {
+        toast.error(`Insufficient BDT balance. Need ৳${neededBdt.toFixed(0)} but only ৳${Math.max(0, walletBdt).toFixed(0)} available.`);
         return;
       }
     }
