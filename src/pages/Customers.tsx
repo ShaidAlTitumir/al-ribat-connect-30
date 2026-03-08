@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 import InvoiceModal from "@/components/InvoiceModal";
+import BulkInvoiceModal from "@/components/BulkInvoiceModal";
 import { format } from "date-fns";
 import { ChevronDown, ChevronUp, Phone, MapPin, Store, Edit2, Trash2, X, Check } from "lucide-react";
 
@@ -31,6 +32,7 @@ const Customers = () => {
   const [editForm, setEditForm] = useState({ name: "", phone: "", address: "", shop_name: "" });
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
+  const [showBulkInvoice, setShowBulkInvoice] = useState(false);
 
   useEffect(() => {
     if (!businessId) return;
@@ -310,6 +312,11 @@ const Customers = () => {
                       <span className={`text-xs font-bold ${(selectedCustomer.total_due || 0) > 0 ? "text-destructive" : "text-emerald-600"}`}>
                         Due: ৳{(selectedCustomer.total_due || 0).toFixed(0)}
                       </span>
+                      <button onClick={() => setShowBulkInvoice(true)} disabled={purchaseHistory.length === 0}
+                        title="Bulk Invoice"
+                        className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-primary/10 text-primary active:scale-95 disabled:opacity-40">
+                        <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+                      </button>
                       <button onClick={() => handleStartEdit(selectedCustomer)}
                         className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground active:scale-95">
                         <Edit2 className="w-3.5 h-3.5" />
@@ -423,6 +430,13 @@ const Customers = () => {
         </div>
       </div>
       <InvoiceModal data={invoiceData} onClose={() => setInvoiceData(null)} />
+      <BulkInvoiceModal
+        open={showBulkInvoice}
+        onClose={() => setShowBulkInvoice(false)}
+        customerName={selectedCustomer?.name || "Customer"}
+        business={{ name: businessName, phone: businessPhone, address: businessAddress }}
+        sales={purchaseHistory}
+      />
     </div>
   );
 };
