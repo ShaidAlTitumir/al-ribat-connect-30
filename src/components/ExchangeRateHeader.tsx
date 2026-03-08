@@ -9,23 +9,25 @@ interface ExchangeRateHeaderProps {
   title: string;
 }
 
-const MobilePageHeader = ({ title, exchangeRate, onRateClick }: { title: string; exchangeRate: number; onRateClick: () => void }) => {
+const MobilePageHeader = ({ title, exchangeRate, onRateClick, isSolo }: { title: string; exchangeRate: number; onRateClick: () => void; isSolo: boolean }) => {
   return (
     <div className="flex items-center justify-between h-11 px-4">
       <h2 className="text-sm font-bold text-foreground truncate">{title}</h2>
-      <button
-        onClick={onRateClick}
-        className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1.5 text-xs font-bold text-foreground"
-      >
-        <span className="material-symbols-outlined text-[14px] text-muted-foreground">currency_exchange</span>
-        ¥1 = ৳{exchangeRate.toFixed(2)}
-      </button>
+      {!isSolo && (
+        <button
+          onClick={onRateClick}
+          className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1.5 text-xs font-bold text-foreground"
+        >
+          <span className="material-symbols-outlined text-[14px] text-muted-foreground">currency_exchange</span>
+          ¥1 = ৳{exchangeRate.toFixed(2)}
+        </button>
+      )}
     </div>
   );
 };
 
 const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
-  const { exchangeRate, setExchangeRate, saveExchangeRate } = useBusiness();
+  const { exchangeRate, setExchangeRate, saveExchangeRate, isSolo } = useBusiness();
   const [saving, setSaving] = useState(false);
   const [rateOpen, setRateOpen] = useState(false);
   const { setPageHeader } = useMobileHeader();
@@ -49,10 +51,10 @@ const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
 
   useEffect(() => {
     setPageHeader(
-      <MobilePageHeader title={title} exchangeRate={exchangeRate} onRateClick={handleRateClick} />
+      <MobilePageHeader title={title} exchangeRate={exchangeRate} onRateClick={handleRateClick} isSolo={isSolo} />
     );
     return () => setPageHeader(null);
-  }, [title, exchangeRate, setPageHeader, handleRateClick]);
+  }, [title, exchangeRate, setPageHeader, handleRateClick, isSolo]);
 
   return (
     <>
@@ -61,6 +63,7 @@ const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
         <h2 className="text-lg font-bold text-foreground truncate">{title}</h2>
         <div className="flex items-center gap-2">
           <NotificationBell />
+          {!isSolo && (
           <div className="flex items-center gap-1.5 bg-muted rounded-lg px-2.5 py-1.5">
             <span className="material-symbols-outlined text-[16px] text-muted-foreground">currency_exchange</span>
             <span className="text-xs text-muted-foreground">1¥ =</span>
@@ -80,6 +83,7 @@ const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
               {saving ? "..." : "Save"}
             </button>
           </div>
+          )}
         </div>
       </header>
 
