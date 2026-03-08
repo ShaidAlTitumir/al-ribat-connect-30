@@ -133,7 +133,7 @@ const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
                     notifications.map((n) => (
                       <button
                         key={n.id}
-                        onClick={() => { if (!n.is_read) markAsRead(n.id); }}
+                        onClick={() => handleNotificationClick(n)}
                         className={`w-full text-left px-4 py-3 flex gap-3 border-b border-border/50 last:border-0 transition-colors hover:bg-muted/50 ${!n.is_read ? "bg-primary/5" : ""}`}
                       >
                         <span className="material-symbols-outlined text-primary text-[20px] mt-0.5 shrink-0">
