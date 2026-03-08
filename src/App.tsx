@@ -15,6 +15,7 @@ import Expenses from "./pages/Expenses";
 import Partners from "./pages/Partners";
 import Reports from "./pages/Reports";
 import Wallet from "./pages/Wallet";
+import Transactions from "./pages/Transactions";
 import Customers from "./pages/Customers";
 import Settings from "./pages/Settings";
 import Business from "./pages/Business";
