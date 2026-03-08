@@ -127,7 +127,7 @@
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -143,7 +143,7 @@
 @keyframes slide-up {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -159,12 +159,12 @@
     box-shadow: 0 4px 12px 0 rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
   }
   .animate-page-enter {
-    animation: page-enter 0.3s ease-out both;
+    animation: page-enter 0.4s cubic-bezier(0.25, 0.1, 0.25, 1) both;
   }
   .animate-fade-in {
-    animation: fade-in 0.2s ease-out both;
+    animation: fade-in 0.35s cubic-bezier(0.25, 0.1, 0.25, 1) both;
   }
   .animate-slide-up {
-    animation: slide-up 0.35s ease-out both;
+    animation: slide-up 0.45s cubic-bezier(0.25, 0.1, 0.25, 1) both;
   }
 }
