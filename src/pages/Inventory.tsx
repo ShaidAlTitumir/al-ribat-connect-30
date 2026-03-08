@@ -459,7 +459,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                 <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" step="0.01" placeholder="0.00"
                   value={form.weightPerUnit} onChange={(e) => updateForm("weightPerUnit", e.target.value)} />
               </div>
-              {itemMode === "new" && (
+              {(
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-foreground">Low Stock Alert Threshold</label>
                   <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" placeholder="5"
