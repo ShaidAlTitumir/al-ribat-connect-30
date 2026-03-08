@@ -15,6 +15,8 @@ const Wallet = () => {
   const [fromAmount, setFromAmount] = useState("");
   const [exchanges, setExchanges] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [useManualRate, setUseManualRate] = useState(false);
+  const [manualRate, setManualRate] = useState("");
 
   // Balances from capital contributions + exchanges
   const [bdtBalance, setBdtBalance] = useState(0);
@@ -65,9 +67,10 @@ const Wallet = () => {
     setRmbBalance(rmb);
   };
 
+  const activeRate = useManualRate && parseFloat(manualRate) > 0 ? parseFloat(manualRate) : exchangeRate;
   const toCurrency = fromCurrency === "BDT" ? "RMB" : "BDT";
   const amt = parseFloat(fromAmount) || 0;
-  const toAmount = fromCurrency === "BDT" ? amt / exchangeRate : amt * exchangeRate;
+  const toAmount = fromCurrency === "BDT" ? amt / activeRate : amt * activeRate;
 
   const handleExchange = async () => {
     if (!businessId || !user || amt <= 0) { toast.error("Enter a valid amount"); return; }
@@ -75,7 +78,7 @@ const Wallet = () => {
     try {
       await supabase.from("exchanges").insert({
         from_currency: fromCurrency, to_currency: toCurrency,
-        amount_from: amt, amount_to: toAmount, rate: exchangeRate,
+        amount_from: amt, amount_to: toAmount, rate: activeRate,
         business_id: businessId, user_id: user.id,
       });
       await supabase.from("activity_log").insert({
@@ -124,12 +127,41 @@ const Wallet = () => {
           {/* Exchange */}
           <section className="lg:col-span-2">
             <div className="bg-card rounded-2xl border border-border p-4 lg:p-6">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold">Currency Exchange</h3>
                 <div className="bg-primary/5 px-3 py-1.5 rounded-lg border border-primary/10">
-                  <p className="text-xs font-black text-primary">1 RMB = {exchangeRate} BDT</p>
+                  <p className="text-xs font-black text-primary">1 RMB = {activeRate} BDT</p>
                 </div>
               </div>
+
+              {/* Manual Rate Toggle */}
+              <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-muted border border-border">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-muted-foreground text-[18px]">tune</span>
+                  <span className="text-xs font-semibold text-muted-foreground">Use custom rate for this exchange</span>
+                </div>
+                <button
+                  onClick={() => { setUseManualRate(!useManualRate); if (!useManualRate) setManualRate(String(exchangeRate)); }}
+                  className={`relative w-10 h-5 rounded-full transition-colors ${useManualRate ? "bg-primary" : "bg-border"}`}
+                >
+                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${useManualRate ? "translate-x-5" : "translate-x-0.5"}`} />
+                </button>
+              </div>
+
+              {useManualRate && (
+                <div className="mb-4 p-3 rounded-lg bg-muted border border-border">
+                  <label className="text-xs font-bold text-muted-foreground uppercase mb-1.5 block">Custom Rate (1 RMB = ? BDT)</label>
+                  <input
+                    className="w-full bg-card border border-border rounded-lg px-4 py-2.5 text-sm font-bold text-foreground focus:ring-2 focus:ring-primary/20"
+                    type="number"
+                    step="0.01"
+                    placeholder={String(exchangeRate)}
+                    value={manualRate}
+                    onChange={(e) => setManualRate(e.target.value)}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">Default global rate: 1 RMB = {exchangeRate} BDT</p>
+                </div>
+              )}
               <div className="space-y-4">
                 {/* From */}
                 <div className="rounded-xl bg-muted p-4 border border-border">
@@ -197,9 +229,10 @@ const Wallet = () => {
                         <span className="text-sm font-bold">{ex.from_currency} → {ex.to_currency}</span>
                         <span className="text-xs text-muted-foreground">{format(new Date(ex.created_at), "MMM d")}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {ex.from_currency === "BDT" ? "৳" : "¥"}{ex.amount_from} → {ex.to_currency === "BDT" ? "৳" : "¥"}{ex.amount_to}
-                      </p>
+                        <span className="text-xs text-muted-foreground mt-1">
+                          {ex.from_currency === "BDT" ? "৳" : "¥"}{ex.amount_from} → {ex.to_currency === "BDT" ? "৳" : "¥"}{ex.amount_to}
+                          <span className="ml-1 opacity-70">@ {ex.rate}</span>
+                        </span>
                     </div>
                   ))}
                 </div>
