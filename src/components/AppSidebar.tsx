@@ -24,6 +24,7 @@ const navItems = [
 
 const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { userRole, businessName } = useBusiness();
   const { theme, toggleTheme } = useTheme();
