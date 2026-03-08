@@ -717,6 +717,7 @@ const Sales = () => {
               </p>
             )}
           </div>
+          </div>{/* End left column wrapper */}
 
           {/* Desktop Summary Sidebar */}
           <div className="hidden lg:block">
