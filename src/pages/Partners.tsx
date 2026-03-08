@@ -113,20 +113,24 @@ const Partners = () => {
 
       // If partner has a linked user, reset their profile's business_id
       if (partner.user_id) {
-        await supabase.rpc("add_partner_to_business" as any, {
-          _target_user_id: partner.user_id,
-          _business_id: null as any,
-          _role: "admin",
-        }).catch(() => {});
+        try {
+          await supabase.rpc("add_partner_to_business" as any, {
+            _target_user_id: partner.user_id,
+            _business_id: null as any,
+            _role: "admin",
+          });
+        } catch {}
 
         // Notify removed partner
-        await (supabase.from("notifications") as any).insert({
-          user_id: partner.user_id,
-          title: "You've been removed from a business",
-          message: `You have been removed as a partner.`,
-          type: "partner_removed",
-          business_id: businessId,
-        }).catch(() => {});
+        try {
+          await (supabase.from("notifications") as any).insert({
+            user_id: partner.user_id,
+            title: "You've been removed from a business",
+            message: `You have been removed as a partner.`,
+            type: "partner_removed",
+            business_id: businessId,
+          });
+        } catch {}
       }
 
       toast.success(`${partner.name} removed`);
