@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const Sales = () => {
-  const { businessId, exchangeRate, businessName, businessPhone, businessAddress } = useBusiness();
+  const { businessId, exchangeRate, businessName, businessPhone, businessAddress, isSolo } = useBusiness();
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
 
