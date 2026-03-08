@@ -118,6 +118,9 @@ const InventoryList = ({ onAdd, onSamples }: { onAdd: () => void; onSamples: () 
 
       {/* Filter & Actions — horizontal scroll on mobile */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-4 px-4 lg:mx-0 lg:px-0 scrollbar-hide">
+        <button onClick={onAdd} className="flex items-center gap-1 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs lg:text-sm font-bold whitespace-nowrap shrink-0">
+          <span className="material-symbols-outlined text-[16px]">add</span> Add
+        </button>
         {[{ key: "all", label: "All Items" }, { key: "low", label: "Low Stock" }, { key: "out", label: "Out of Stock" }].map((f) => (
           <button
             key={f.key}
@@ -131,9 +134,6 @@ const InventoryList = ({ onAdd, onSamples }: { onAdd: () => void; onSamples: () 
         ))}
         <button onClick={onSamples} className="flex items-center gap-1 bg-accent text-foreground px-3 py-1.5 rounded-full text-xs lg:text-sm font-bold border border-border whitespace-nowrap shrink-0">
           <span className="material-symbols-outlined text-[16px]">science</span> Samples
-        </button>
-        <button onClick={onAdd} className="flex items-center gap-1 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs lg:text-sm font-bold whitespace-nowrap shrink-0">
-          <span className="material-symbols-outlined text-[16px]">add</span> Add
         </button>
       </div>
 
