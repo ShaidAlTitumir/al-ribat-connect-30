@@ -18,7 +18,7 @@ const MobilePageHeader = ({ title, exchangeRate, onRateClick }: { title: string;
         className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1.5 text-xs font-bold text-foreground"
       >
         <span className="material-symbols-outlined text-[14px] text-muted-foreground">currency_exchange</span>
-        ¥1 = ৳{exchangeRate}
+        ¥1 = ৳{exchangeRate.toFixed(2)}
       </button>
     </div>
   );
