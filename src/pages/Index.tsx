@@ -108,7 +108,8 @@ const Index = () => {
     // Net Profit = Revenue - COGS - Operating Expenses
     const netProfit = totalRevenue - totalCOGS - totalExpenses;
 
-    setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, revenue: totalRevenue, netProfit });
+    const totalProfit = sales.reduce((s, r) => s + r.expected_profit, 0);
+    setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, revenue: totalRevenue, netProfit, totalProfit, totalExpenses, totalCOGS });
 
     const partnerCapMap: Record<string, number> = {};
     caps.forEach((c) => {
