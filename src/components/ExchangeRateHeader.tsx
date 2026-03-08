@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { toast } from "sonner";
+import NotificationBell from "@/components/NotificationBell";
 
 interface ExchangeRateHeaderProps {
   title: string;
