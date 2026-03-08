@@ -27,6 +27,7 @@ import ResetPassword from "./pages/ResetPassword";
 import JoinBusiness from "./pages/JoinBusiness";
 import NotFound from "./pages/NotFound";
 import Returns from "./pages/Returns";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
