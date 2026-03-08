@@ -115,6 +115,8 @@ const Index = () => {
 
     const totalProfit = sales.reduce((s, r) => s + r.expected_profit, 0);
     setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, revenue: totalRevenue, netProfit, totalProfit, totalExpenses, totalCOGS });
+    setCalculatedCash(bdt);
+    setCashBalance(bizRes.data?.cash_balance ?? null);
 
     const partnerCapMap: Record<string, number> = {};
     caps.forEach((c) => {
