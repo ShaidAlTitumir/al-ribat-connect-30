@@ -279,19 +279,50 @@ const Customers = () => {
 
             {/* Collect Due */}
             {selectedCustomer && selectedCustomer.total_due > 0 && (
-              <div className="bg-card rounded-xl border border-border p-3">
-                <h3 className="text-xs font-bold mb-2 flex items-center gap-1.5">
+              <div className="bg-card rounded-xl border border-border p-3 space-y-2">
+                <h3 className="text-xs font-bold flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-primary text-[16px]">payments</span>
                   Collect from {selectedCustomer.name}
                 </h3>
-                <p className="text-[10px] text-muted-foreground mb-2">Due: <span className="font-bold text-destructive">৳{selectedCustomer.total_due}</span></p>
+                <p className="text-[10px] text-muted-foreground">Due: <span className="font-bold text-destructive">৳{selectedCustomer.total_due}</span></p>
                 <div className="flex gap-2">
                   <Input type="number" placeholder="Amount" value={amount}
                     onChange={(e) => setAmount(e.target.value)} className="bg-muted flex-1 h-9 text-sm" />
-                  <Button onClick={handleCollect} disabled={saving} className="bg-primary text-primary-foreground font-bold h-9 text-sm">
-                    {saving ? "..." : "Collect"}
-                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setAmount(String(selectedCustomer.total_due))}
+                    className={`h-9 px-2.5 rounded-lg text-[10px] font-bold border transition-all active:scale-95 whitespace-nowrap ${
+                      parseFloat(amount) === selectedCustomer.total_due
+                        ? "bg-emerald-500 text-white border-emerald-500"
+                        : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800"
+                    }`}
+                  >
+                    Full
+                  </button>
                 </div>
+                <div>
+                  <label className="block text-[10px] font-semibold text-muted-foreground mb-1">Payment Date</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className={cn("w-full h-9 justify-start text-left text-xs font-medium", !paymentDate && "text-muted-foreground")}>
+                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                        {paymentDate ? format(paymentDate, "dd MMM yyyy") : "Pick a date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={paymentDate}
+                        onSelect={(d) => d && setPaymentDate(d)}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <Button onClick={handleCollect} disabled={saving} className="w-full bg-primary text-primary-foreground font-bold h-9 text-sm">
+                  {saving ? "..." : "Collect"}
+                </Button>
               </div>
             )}
           </div>
