@@ -120,7 +120,7 @@ const Index = () => {
     if (invItems.length > 0) {
       for (const item of invItems) {
         const { data: lastPurchase } = await supabase.from("purchase_transactions").select("landed_cost_per_unit_bdt")
-          .eq("item_id", item.id).order("created_at", { ascending: false }).limit(1);
+          .eq("item_id", item.id).eq("business_id", businessId!).order("created_at", { ascending: false }).limit(1);
         if (lastPurchase?.[0]) inventoryCost += item.current_stock * lastPurchase[0].landed_cost_per_unit_bdt;
       }
     }
