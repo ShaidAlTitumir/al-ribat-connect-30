@@ -40,9 +40,12 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
   const [businessName, setBusinessName] = useState("");
   const [businessPhone, setBusinessPhone] = useState("");
   const [businessAddress, setBusinessAddress] = useState("");
+  const [businessType, setBusinessType] = useState("");
   const [exchangeRate, setExchangeRate] = useState(18);
   const [userRole, setUserRole] = useState("admin");
   const [loading, setLoading] = useState(true);
+
+  const isSolo = businessType.toLowerCase() === "solo";
 
   useEffect(() => {
     if (!user) {
