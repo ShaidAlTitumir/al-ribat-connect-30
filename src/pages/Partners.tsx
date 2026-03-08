@@ -60,7 +60,8 @@ const Partners = () => {
   };
 
   const handleAddByUsername = async () => {
-    if (!businessId || !user || !foundUser) return;
+    if (!businessId) { toast.error("No business found. Please log out and log back in."); return; }
+    if (!user || !foundUser) { toast.error("Please search for a user first"); return; }
     try {
       const code = Math.random().toString(36).substring(2, 10).toUpperCase();
       const { error } = await supabase.from("partners").insert({
@@ -98,6 +99,40 @@ const Partners = () => {
       fetchData();
     } catch (err: any) {
       toast.error(err.message || "Failed to add partner");
+    }
+  };
+
+  const handleRemovePartner = async (partner: any) => {
+    if (!businessId || !user) return;
+    const confirmed = window.confirm(`Remove ${partner.name} from the business?`);
+    if (!confirmed) return;
+    try {
+      // Delete partner record
+      const { error } = await supabase.from("partners").delete().eq("id", partner.id);
+      if (error) { toast.error(error.message); return; }
+
+      // If partner has a linked user, reset their profile's business_id
+      if (partner.user_id) {
+        await supabase.rpc("add_partner_to_business" as any, {
+          _target_user_id: partner.user_id,
+          _business_id: null as any,
+          _role: "admin",
+        }).catch(() => {});
+
+        // Notify removed partner
+        await (supabase.from("notifications") as any).insert({
+          user_id: partner.user_id,
+          title: "You've been removed from a business",
+          message: `You have been removed as a partner.`,
+          type: "partner_removed",
+          business_id: businessId,
+        }).catch(() => {});
+      }
+
+      toast.success(`${partner.name} removed`);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to remove partner");
     }
   };
 
