@@ -265,20 +265,20 @@ const Index = () => {
             <div className="space-y-1.5 text-[11px] lg:text-xs">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Total Revenue (Sales)</span>
-                <span className="font-bold text-foreground">৳{kpis.revenue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                <span className="font-bold text-foreground">৳{(kpis.revenue ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground pl-3">− Cost of Goods Sold</span>
-                <span className="font-medium text-destructive">৳{kpis.totalCOGS.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                <span className="font-medium text-destructive">৳{(kpis.totalCOGS ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
               </div>
               <div className="border-t border-border my-1.5" />
               <div className="flex justify-between">
                 <span className="font-semibold text-foreground">Gross Profit (Expected)</span>
-                <span className={`font-bold ${kpis.totalProfit >= 0 ? "text-emerald-600" : "text-destructive"}`}>৳{kpis.totalProfit.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                <span className={`font-bold ${(kpis.totalProfit ?? 0) >= 0 ? "text-emerald-600" : "text-destructive"}`}>৳{(kpis.totalProfit ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground pl-3">− Operating Expenses</span>
-                <span className="font-medium text-destructive">৳{kpis.totalExpenses.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                <span className="font-medium text-destructive">৳{(kpis.totalExpenses ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
               </div>
               <div className="border-t border-border my-1.5" />
               <div className="flex justify-between">
