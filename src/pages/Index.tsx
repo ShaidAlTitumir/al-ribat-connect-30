@@ -261,7 +261,7 @@ const Index = () => {
               <p className="text-sm text-muted-foreground mt-1">Actions you perform will appear here.</p>
             </div>
           ) : (
-            <div className="bg-card rounded-xl border border-border divide-y divide-border">
+             <div className="bg-card rounded-xl border border-border divide-y divide-border max-h-[400px] overflow-y-auto scrollbar-thin">
               {activities.map((act) => {
                 const iconMap: Record<string, { icon: string; color: string }> = {
                   "Recorded sale": { icon: "point_of_sale", color: "text-emerald-600 bg-emerald-50" },
@@ -289,7 +289,7 @@ const Index = () => {
                 if (details.total) subtitle += ` • ৳${details.total}`;
                 return (
                   <div key={act.id} className="p-3 flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${match.color}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${match.color}`}>
                       <span className="material-symbols-outlined text-[18px]">{match.icon}</span>
                     </div>
                     <div className="flex-1 min-w-0">
