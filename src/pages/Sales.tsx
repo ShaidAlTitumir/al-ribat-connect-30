@@ -98,7 +98,7 @@ const Sales = () => {
       const { data: sale, error: saleError } = await supabase.from("sales").insert({
         item_id: selectedItemId, quantity, unit_price_bdt: parseFloat(unitPrice),
         received_now_bdt: parseFloat(receivedAmount) || 0, due: dueAmount,
-        expected_profit: profit, customer_id: custId, cost_rate: exchangeRate,
+        expected_profit: profit, customer_id: custId, cost_rate: landedCost,
         business_id: businessId, user_id: user.id,
       }).select().single();
       if (saleError) throw saleError;
