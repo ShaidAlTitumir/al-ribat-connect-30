@@ -416,9 +416,12 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                   value={form.quantity} onChange={(e) => updateForm("quantity", e.target.value)} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-foreground">Weight per unit (kg)</label>
+                <label className="text-sm font-semibold text-foreground">Total Weight (kg)</label>
                 <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" step="0.01" placeholder="0.00"
-                  value={form.weightPerUnit} onChange={(e) => updateForm("weightPerUnit", e.target.value)} />
+                  value={form.totalWeight} onChange={(e) => updateForm("totalWeight", e.target.value)} />
+                {qty > 0 && totalWeight > 0 && (
+                  <span className="text-xs text-muted-foreground">= {weightPerUnit.toFixed(3)} kg per unit</span>
+                )}
               </div>
               {(
                 <div className="flex flex-col gap-1.5">
