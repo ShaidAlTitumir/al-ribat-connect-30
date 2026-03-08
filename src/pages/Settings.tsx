@@ -229,6 +229,13 @@ const Settings = () => {
             </div>
           </div>
         </section>
+
+        {/* Builder Credit */}
+        <div className="text-center py-6 border-t border-border mt-4">
+          <p className="text-xs text-muted-foreground">
+            Built & maintained by <span className="font-bold text-foreground">Al-Ribat International</span>
+          </p>
+        </div>
       </div>
     </div>
   );
