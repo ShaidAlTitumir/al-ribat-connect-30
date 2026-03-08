@@ -41,7 +41,25 @@ const Reports = () => {
   const [partnerShares, setPartnerShares] = useState<any[]>([]);
   const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
   const [trendMonths, setTrendMonths] = useState(6);
-  const [plStatement, setPlStatement] = useState<PLStatement>({
+  const [pdfFrom, setPdfFrom] = useState<Date>(startOfMonth(new Date()));
+  const [pdfTo, setPdfTo] = useState<Date>(new Date());
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  const handleGeneratePDF = async () => {
+    if (!businessId) return;
+    setGeneratingPdf(true);
+    try {
+      const data = await fetchReportData(businessId, exchangeRate, pdfFrom, pdfTo);
+      const html = generatePDFHTML(data);
+      downloadPDF(html, `report-${format(pdfFrom, "yyyyMMdd")}-${format(pdfTo, "yyyyMMdd")}`);
+      toast.success("PDF report generated!");
+    } catch (err: any) {
+      toast.error("Failed to generate PDF");
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
     totalRevenue: 0, costOfGoods: 0, grossProfit: 0,
     totalExpenses: 0, netProfit: 0, margin: 0, expenseBreakdown: [],
   });
