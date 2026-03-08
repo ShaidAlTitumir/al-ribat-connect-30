@@ -229,7 +229,7 @@ const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamp
                     <div className="grid grid-cols-3 gap-2 text-xs">
                       <div>
                         <span className="text-muted-foreground text-[10px]">Weight</span>
-                        <p className="font-semibold text-foreground">{item.weight_per_unit} kg</p>
+                        <p className="font-semibold text-foreground">{Number(item.weight_per_unit).toFixed(3)} kg</p>
                       </div>
                       <div>
                         <span className="text-muted-foreground text-[10px]">Sell Price</span>
