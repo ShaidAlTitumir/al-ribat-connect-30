@@ -304,10 +304,27 @@ const Business = () => {
 
   // Delete business (no partners — immediate delete)
   const handleDeleteDirect = async (b: BusinessData) => {
-    if (deleteConfirmText !== b.name) {
-      toast.error("Please type the business name to confirm");
+    if (deleteConfirmText !== b.name.toUpperCase()) {
+      toast.error("Please type the business name in UPPERCASE to confirm");
       return;
     }
+    // Delete related data first to avoid foreign key constraint violations
+    await supabase.from("profiles").update({ business_id: null }).eq("business_id", b.id);
+    await supabase.from("business_members").delete().eq("business_id", b.id);
+    await supabase.from("customer_ledger").delete().eq("business_id", b.id);
+    await supabase.from("returns").delete().eq("business_id", b.id);
+    await supabase.from("sales").delete().eq("business_id", b.id);
+    await supabase.from("purchase_transactions").delete().eq("business_id", b.id);
+    await supabase.from("exchanges").delete().eq("business_id", b.id);
+    await supabase.from("partner_transfers").delete().eq("business_id", b.id);
+    await supabase.from("capital_contributions").delete().eq("business_id", b.id);
+    await supabase.from("expenses").delete().eq("business_id", b.id);
+    await supabase.from("activity_log").delete().eq("business_id", b.id);
+    await supabase.from("customers").delete().eq("business_id", b.id);
+    await supabase.from("inventory_items").delete().eq("business_id", b.id);
+    await supabase.from("partners").delete().eq("business_id", b.id);
+    await supabase.from("notifications").delete().eq("business_id", b.id);
+    await supabase.from("business_deletion_requests").delete().eq("business_id", b.id);
     const { error } = await supabase.from("businesses").delete().eq("id", b.id);
     if (error) { toast.error(error.message); return; }
     
@@ -450,11 +467,25 @@ const Business = () => {
             await (supabase.from("notifications") as any).insert(memberNotifs);
           }
 
-          // Delete the business
-          await supabase.from("businesses").delete().eq("id", req.business_id);
-          await (supabase.from("business_deletion_requests") as any)
-            .update({ status: "completed" })
-            .eq("id", requestId);
+          // Clean up related data then delete the business
+          const bid = req.business_id;
+          await supabase.from("profiles").update({ business_id: null }).eq("business_id", bid);
+          await supabase.from("business_members").delete().eq("business_id", bid);
+          await supabase.from("customer_ledger").delete().eq("business_id", bid);
+          await supabase.from("returns").delete().eq("business_id", bid);
+          await supabase.from("sales").delete().eq("business_id", bid);
+          await supabase.from("purchase_transactions").delete().eq("business_id", bid);
+          await supabase.from("exchanges").delete().eq("business_id", bid);
+          await supabase.from("partner_transfers").delete().eq("business_id", bid);
+          await supabase.from("capital_contributions").delete().eq("business_id", bid);
+          await supabase.from("expenses").delete().eq("business_id", bid);
+          await supabase.from("activity_log").delete().eq("business_id", bid);
+          await supabase.from("customers").delete().eq("business_id", bid);
+          await supabase.from("inventory_items").delete().eq("business_id", bid);
+          await supabase.from("partners").delete().eq("business_id", bid);
+          await supabase.from("notifications").delete().eq("business_id", bid);
+          await supabase.from("business_deletion_requests").delete().eq("business_id", bid);
+          await supabase.from("businesses").delete().eq("id", bid);
 
           if (req.business_id === businessId && user) {
             await supabase.from("profiles").update({ business_id: null }).eq("user_id", user.id);
@@ -945,13 +976,13 @@ const Business = () => {
                       {!hasPartners && (
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                            Type "{b.name}" to confirm
+                            Type "<span className="text-destructive">{b.name.toUpperCase()}</span>" to confirm
                           </label>
                           <input
-                            className="w-full bg-background rounded-lg px-3 py-2 text-sm border border-destructive/30 text-foreground"
-                            placeholder={b.name}
+                            className="w-full bg-background rounded-lg px-3 py-2 text-sm border border-destructive/30 text-foreground uppercase"
+                            placeholder={b.name.toUpperCase()}
                             value={deleteConfirmText}
-                            onChange={(e) => setDeleteConfirmText(e.target.value)}
+                            onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
                           />
                         </div>
                       )}
@@ -965,7 +996,7 @@ const Business = () => {
                           </button>
                         ) : (
                           <button onClick={() => handleDeleteDirect(b)}
-                            disabled={deleteConfirmText !== b.name}
+                            disabled={deleteConfirmText !== b.name.toUpperCase()}
                             className="flex-1 bg-destructive text-destructive-foreground py-2 rounded-lg text-xs font-bold hover:bg-destructive/90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5">
                             <span className="material-symbols-outlined text-sm">delete_forever</span>
                             Delete Permanently
