@@ -224,14 +224,19 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
       supabase.from("sales").select("received_now_bdt").eq("business_id", businessId),
       supabase.from("customer_ledger").select("amount").eq("business_id", businessId).eq("transaction_type", "payment"),
       supabase.from("expenses").select("amount, currency").eq("business_id", businessId),
-      supabase.from("purchase_transactions").select("total_landed_cost_bdt").eq("business_id", businessId),
+      supabase.from("purchase_transactions").select("total_landed_cost_bdt, buying_cost_per_unit_rmb, quantity, exchange_rate_used").eq("business_id", businessId),
       supabase.from("exchanges").select("from_currency, amount_from, amount_to").eq("business_id", businessId),
     ]);
     (caps.data || []).forEach((c) => { if (c.currency === "BDT") bdt += c.amount; else rmb += c.amount; });
     (sales.data || []).forEach((s) => { bdt += s.received_now_bdt; });
     (payments.data || []).forEach((p) => { bdt += p.amount; });
     (exps.data || []).forEach((e) => { if (e.currency === "BDT") bdt -= e.amount; else rmb -= e.amount; });
-    (purchases.data || []).forEach((p) => { bdt -= p.total_landed_cost_bdt; });
+    (purchases.data || []).forEach((p) => {
+      const buyingRmb = (p.buying_cost_per_unit_rmb || 0) * (p.quantity || 0);
+      rmb -= buyingRmb;
+      const bdtPortion = (p.total_landed_cost_bdt || 0) - (buyingRmb * (p.exchange_rate_used || 0));
+      bdt -= bdtPortion;
+    });
     (exch.data || []).forEach((e) => {
       if (e.from_currency === "BDT") { bdt -= e.amount_from; rmb += e.amount_to; }
       else { rmb -= e.amount_from; bdt += e.amount_to; }
