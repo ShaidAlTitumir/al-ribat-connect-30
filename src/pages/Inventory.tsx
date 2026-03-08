@@ -50,18 +50,20 @@ const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamp
   };
 
   useEffect(() => {
-    if (!businessId) return;
-    const fetchItems = async () => {
-      const { data } = await supabase
-        .from("inventory_items")
-        .select("*")
-        .eq("business_id", businessId)
-        .order("created_at", { ascending: false });
-      setItems(data || []);
-      setLoading(false);
-    };
     fetchItems();
   }, [businessId]);
+
+  const handleDelete = async (itemId: string) => {
+    if (!confirm("Are you sure you want to delete this item? Related purchase records will also be removed.")) return;
+    try {
+      await supabase.from("purchase_transactions").delete().eq("item_id", itemId);
+      await supabase.from("inventory_items").delete().eq("id", itemId);
+      setItems(prev => prev.filter(i => i.id !== itemId));
+      toast.success("Item deleted!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete");
+    }
+  };
 
   const filtered = items.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
