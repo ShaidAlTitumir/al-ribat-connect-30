@@ -55,9 +55,10 @@ const Sales = () => {
   useEffect(() => { refreshData(); }, [businessId]);
 
   useEffect(() => {
-    if (!selectedItemId) { setLandedCost(0); return; }
+    if (!selectedItemId || !businessId) { setLandedCost(0); return; }
     supabase.from("purchase_transactions").select("landed_cost_per_unit_bdt")
-      .eq("item_id", selectedItemId).order("created_at", { ascending: false }).limit(1)
+      .eq("item_id", selectedItemId).eq("business_id", businessId)
+      .order("created_at", { ascending: false }).limit(1)
       .then(({ data }) => {
         setLandedCost(data?.[0]?.landed_cost_per_unit_bdt || 0);
       });
