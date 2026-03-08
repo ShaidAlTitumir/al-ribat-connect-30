@@ -5,11 +5,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 import InvoiceModal from "@/components/InvoiceModal";
 import BulkInvoiceModal from "@/components/BulkInvoiceModal";
 import { format } from "date-fns";
-import { ChevronDown, ChevronUp, Phone, MapPin, Store, Edit2, Trash2, X, Check } from "lucide-react";
+import { ChevronDown, ChevronUp, Phone, MapPin, Store, Edit2, Trash2, X, Check, CalendarIcon } from "lucide-react";
 
 const Customers = () => {
   const { businessId, businessName, businessPhone, businessAddress } = useBusiness();
