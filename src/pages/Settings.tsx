@@ -311,7 +311,7 @@ const Settings = () => {
               </div>
             </div>
           </div>
-        )}
+        , document.body)}
 
         {/* Builder Credit */}
         <div className="text-center py-6 border-t border-border mt-4">
