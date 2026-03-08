@@ -449,7 +449,7 @@ const Sales = () => {
                     Customer
                     <span className="text-[10px] font-normal text-muted-foreground ml-1 bg-muted px-1.5 py-0.5 rounded">optional</span>
                     {isSolo && (
-                      <button onClick={() => { setSelectedCustomerId(""); setShowNewCustomer(false); }}
+                      <button onClick={() => { setSelectedCustomerId(""); setShowNewCustomer(false); setShowCustomerSection(false); }}
                         className="ml-auto text-muted-foreground hover:text-foreground">
                         <span className="material-symbols-outlined text-[16px]">close</span>
                       </button>
