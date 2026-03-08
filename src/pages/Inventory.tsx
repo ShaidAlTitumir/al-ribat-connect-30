@@ -415,6 +415,13 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                 <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" placeholder="0.00"
                   value={form.additionalCost} onChange={(e) => updateForm("additionalCost", e.target.value)} />
               </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-foreground">Cost Per Unit (BDT)</label>
+                <div className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground font-bold">
+                  ৳{landedPerUnit.toFixed(2)}
+                </div>
+                <span className="text-xs text-muted-foreground">Auto-calculated landed cost per unit</span>
+              </div>
               <div className="flex flex-col gap-1.5 md:col-span-2">
                 <label className="text-sm font-semibold text-foreground">Selling Price (BDT/unit)</label>
                 <div className="relative">
