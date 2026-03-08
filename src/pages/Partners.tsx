@@ -161,41 +161,76 @@ const Partners = () => {
 
   const handleRemovePartner = async (partner: any) => {
     if (!businessId || !user) return;
-    const confirmed = window.confirm(`Remove ${partner.name} from the business?`);
-    if (!confirmed) return;
-    try {
-      const { error } = await supabase.from("partners").delete().eq("id", partner.id);
-      if (error) { toast.error(error.message); return; }
 
-      if (partner.user_id) {
-        try {
-          await supabase.rpc("add_partner_to_business" as any, {
-            _target_user_id: partner.user_id,
-            _business_id: null as any,
-            _role: "admin",
-          });
-        } catch {}
-        try {
-          await (supabase.from("notifications") as any).insert({
-            user_id: partner.user_id,
-            title: "You've been removed from a business",
-            message: `You have been removed as a partner.`,
-            type: "partner_removed",
-            business_id: businessId,
-          });
-        } catch {}
-      }
-
-      await supabase.from("activity_log").insert({
-        action: "Removed partner",
-        details: { partner_name: partner.name },
-        business_id: businessId, user_id: user.id,
-      });
-      toast.success(`${partner.name} removed`);
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to remove partner");
+    // If only 2 partners (self + target), remove immediately
+    const otherPartners = acceptedPartners.filter(p => p.user_id && p.user_id !== user.id && p.id !== partner.id);
+    if (otherPartners.length === 0) {
+      const confirmed = window.confirm(`Remove ${partner.name} from the business?`);
+      if (!confirmed) return;
+      try {
+        const { error } = await supabase.from("partners").delete().eq("id", partner.id);
+        if (error) { toast.error(error.message); return; }
+        if (partner.user_id) {
+          try {
+            await supabase.rpc("add_partner_to_business" as any, {
+              _target_user_id: partner.user_id, _business_id: null as any, _role: "admin",
+            });
+          } catch {}
+          try {
+            await (supabase.from("notifications") as any).insert({
+              user_id: partner.user_id, title: "You've been removed from a business",
+              message: `You have been removed as a partner.`, type: "partner_removed", business_id: businessId,
+            });
+          } catch {}
+        }
+        await supabase.from("activity_log").insert({
+          action: "Removed partner", details: { partner_name: partner.name },
+          business_id: businessId, user_id: user.id,
+        });
+        toast.success(`${partner.name} removed`);
+        fetchData();
+      } catch (err: any) { toast.error(err.message || "Failed to remove partner"); }
+      return;
     }
+
+    // Multiple partners: create removal request needing approval
+    const existingRemoval = leaveRequests.find(r => r.partner_id === partner.id && r.type === "removal");
+    if (existingRemoval) { toast.error("A removal request is already pending for this partner"); return; }
+
+    const confirmed = window.confirm(`Request to remove ${partner.name}? Other partners will need to approve.`);
+    if (!confirmed) return;
+
+    const { data: req, error } = await (supabase
+      .from("partner_leave_requests")
+      .insert({ business_id: businessId, partner_id: partner.id, requested_by: user.id, type: "removal" }) as any)
+      .select().single();
+    if (error) { toast.error(error.message); return; }
+
+    // Create votes for all other partners (excluding the one being removed and the requester)
+    const voterPartners = acceptedPartners.filter(p => p.user_id && p.user_id !== user.id && p.id !== partner.id);
+    if (voterPartners.length > 0) {
+      const voteInserts = voterPartners.map(p => ({ request_id: req.id, user_id: p.user_id, vote: "pending" }));
+      await (supabase.from("partner_leave_votes") as any).insert(voteInserts);
+      const notifInserts = voterPartners.map(p => ({
+        user_id: p.user_id, business_id: businessId,
+        title: "Partner Removal Request",
+        message: `A request to remove ${partner.name} from the business has been submitted. Your approval is required.`,
+        type: "removal_request",
+      }));
+      await (supabase.from("notifications") as any).insert(notifInserts);
+    }
+
+    // Auto-approve for requester
+    await (supabase.from("partner_leave_votes") as any).insert({
+      request_id: req.id, user_id: user.id, vote: "approved", voted_at: new Date().toISOString(),
+    });
+
+    await supabase.from("activity_log").insert({
+      action: "Requested partner removal", details: { partner_name: partner.name },
+      business_id: businessId, user_id: user.id,
+    });
+    toast.success("Removal request sent to partners for approval");
+    fetchData();
   };
 
   const handleEditPartner = (partner: any) => {
@@ -363,6 +398,9 @@ const Partners = () => {
     const request = leaveRequests.find(r => r.id === requestId);
     const leavingPartner = request ? acceptedPartners.find(p => p.id === request.partner_id) : null;
 
+    const isRemoval = request?.type === "removal";
+    const label = isRemoval ? "removal" : "leave";
+
     if (vote === "rejected") {
       await (supabase.from("partner_leave_requests") as any)
         .update({ status: "rejected" })
@@ -372,12 +410,14 @@ const Partners = () => {
         await (supabase.from("notifications") as any).insert({
           user_id: request.requested_by,
           business_id: businessId,
-          title: "Leave Request Rejected",
-          message: `Your request to leave the business was rejected by a partner.`,
-          type: "leave_request",
+          title: isRemoval ? "Removal Request Rejected" : "Leave Request Rejected",
+          message: isRemoval
+            ? `Your request to remove ${leavingPartner?.name || "a partner"} was rejected.`
+            : `Your request to leave the business was rejected by a partner.`,
+          type: isRemoval ? "removal_request" : "leave_request",
         });
       }
-      toast.info("You rejected the leave request");
+      toast.info(`You rejected the ${label} request`);
     } else {
       // Check if all voted approved
       const { data: allVotes } = await (supabase
@@ -406,14 +446,16 @@ const Partners = () => {
           await (supabase.from("notifications") as any).insert({
             user_id: leavingPartner.user_id,
             business_id: businessId,
-            title: "You have left the business",
-            message: `All partners approved your request to leave.`,
-            type: "leave_request",
+            title: isRemoval ? "You have been removed from the business" : "You have left the business",
+            message: isRemoval
+              ? `All partners approved your removal from the business.`
+              : `All partners approved your request to leave.`,
+            type: isRemoval ? "removal_request" : "leave_request",
           });
         }
 
         await supabase.from("activity_log").insert({
-          action: "Partner left business (approved)",
+          action: isRemoval ? "Partner removed (approved)" : "Partner left business (approved)",
           details: { partner_name: leavingPartner.name },
           business_id: businessId, user_id: user.id,
         });
@@ -639,7 +681,14 @@ const Partners = () => {
                               {p.name?.charAt(0).toUpperCase() || "?"}
                             </div>
                             <div className="text-left">
-                              <p className="font-bold text-sm">{p.name}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-bold text-sm">{p.name}</p>
+                                {leaveRequests.find(r => r.partner_id === p.id) && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 font-bold">
+                                    {leaveRequests.find(r => r.partner_id === p.id)?.type === "removal" ? "Removal pending" : "Leaving"}
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-xs text-muted-foreground capitalize">{p.role}</p>
                             </div>
                           </div>
@@ -742,20 +791,28 @@ const Partners = () => {
               </>
             )}
 
-            {/* Show other partners' pending leave requests for voting */}
+            {/* Show pending requests needing my vote (leave + removal) */}
             {leaveRequests.filter(r => r.requested_by !== user?.id).length > 0 && (
               <div className="space-y-2 pt-2 border-t border-border">
-                <p className="text-xs font-bold uppercase text-muted-foreground">Pending Leave Requests</p>
+                <p className="text-xs font-bold uppercase text-muted-foreground">Pending Requests</p>
                 {leaveRequests
                   .filter(r => r.requested_by !== user?.id)
                   .map(r => {
-                    const leavingPartner = acceptedPartners.find(p => p.id === r.partner_id);
+                    const targetPartner = acceptedPartners.find(p => p.id === r.partner_id);
                     const myVote = (leaveVotes[r.id] || []).find((v: any) => v.user_id === user?.id);
+                    const isRemoval = r.type === "removal";
                     return (
                       <div key={r.id} className="p-3 rounded-lg bg-muted border border-border">
-                        <p className="text-sm font-bold mb-1">
-                          {leavingPartner?.name || "Partner"} wants to leave
-                        </p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`material-symbols-outlined text-[16px] ${isRemoval ? "text-destructive" : "text-amber-500"}`}>
+                            {isRemoval ? "person_remove" : "exit_to_app"}
+                          </span>
+                          <p className="text-sm font-bold">
+                            {isRemoval
+                              ? `Remove ${targetPartner?.name || "Partner"}`
+                              : `${targetPartner?.name || "Partner"} wants to leave`}
+                          </p>
+                        </div>
                         <p className="text-xs text-muted-foreground mb-2">
                           Requested {format(new Date(r.created_at), "MMM d, yyyy")}
                         </p>
@@ -773,6 +830,42 @@ const Partners = () => {
                               className="flex-1 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-bold hover:bg-destructive/20 transition-colors">
                               Reject
                             </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+
+            {/* Show my removal requests (initiated by me to remove others) */}
+            {leaveRequests.filter(r => r.requested_by === user?.id && r.type === "removal").length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-border">
+                <p className="text-xs font-bold uppercase text-muted-foreground">Your Removal Requests</p>
+                {leaveRequests
+                  .filter(r => r.requested_by === user?.id && r.type === "removal")
+                  .map(r => {
+                    const targetPartner = acceptedPartners.find(p => p.id === r.partner_id);
+                    return (
+                      <div key={r.id} className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="material-symbols-outlined text-amber-500 text-[18px]">hourglass_top</span>
+                          <p className="text-sm font-bold">Removing {targetPartner?.name || "Partner"}</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Waiting for other partners to approve.</p>
+                        {leaveVotes[r.id] && (
+                          <div className="mt-2 space-y-1">
+                            {leaveVotes[r.id].map((v: any) => {
+                              const voter = acceptedPartners.find(p => p.user_id === v.user_id);
+                              return (
+                                <div key={v.id} className="flex items-center justify-between text-xs">
+                                  <span className="text-muted-foreground">{voter?.name || "Partner"}</span>
+                                  <span className={`font-bold capitalize ${v.vote === "approved" ? "text-green-500" : v.vote === "rejected" ? "text-destructive" : "text-amber-500"}`}>
+                                    {v.vote}
+                                  </span>
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>

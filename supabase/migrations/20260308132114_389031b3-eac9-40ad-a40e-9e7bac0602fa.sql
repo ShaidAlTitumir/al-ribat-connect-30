@@ -1,0 +1,1 @@
+ALTER TABLE public.partner_leave_requests ADD COLUMN type text NOT NULL DEFAULT 'leave';

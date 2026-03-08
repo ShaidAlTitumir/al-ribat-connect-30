@@ -520,6 +520,7 @@ export type Database = {
           partner_id: string
           requested_by: string
           status: string
+          type: string
         }
         Insert: {
           business_id: string
@@ -528,6 +529,7 @@ export type Database = {
           partner_id: string
           requested_by: string
           status?: string
+          type?: string
         }
         Update: {
           business_id?: string
@@ -536,6 +538,7 @@ export type Database = {
           partner_id?: string
           requested_by?: string
           status?: string
+          type?: string
         }
         Relationships: [
           {
