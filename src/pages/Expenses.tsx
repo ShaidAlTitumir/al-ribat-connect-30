@@ -90,6 +90,30 @@ const Expenses = () => {
     }
   };
 
+  const startEdit = (exp: any) => {
+    setEditingExp(exp);
+    setEditForm({ title: exp.title, amount: exp.amount, category: exp.category || "Other" });
+  };
+
+  const handleEditSave = async () => {
+    if (!editingExp || !businessId || !user) return;
+    setSaving(true);
+    try {
+      await supabase.from("expenses").update({
+        title: editForm.title, amount: editForm.amount, category: editForm.category,
+      }).eq("id", editingExp.id);
+      await supabase.from("activity_log").insert({
+        action: "Edited expense",
+        details: { title: editForm.title, old_amount: editingExp.amount, new_amount: editForm.amount },
+        business_id: businessId, user_id: user.id,
+      });
+      toast.success("Expense updated!");
+      setEditingExp(null);
+      fetchExpenses();
+    } catch (err: any) { toast.error(err.message); }
+    finally { setSaving(false); }
+  };
+
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <ExchangeRateHeader title="Expenses" />
