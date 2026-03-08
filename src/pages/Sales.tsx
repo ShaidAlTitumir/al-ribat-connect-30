@@ -32,16 +32,15 @@ const Sales = () => {
 
   useEffect(() => {
     if (!businessId) return;
-    // Fetch inventory items
     supabase.from("inventory_items").select("*").eq("business_id", businessId).gt("current_stock", 0)
       .then(({ data }) => setItems(data || []));
-    // Fetch customers
     supabase.from("customers").select("*").eq("business_id", businessId)
       .then(({ data }) => setCustomers(data || []));
-    // Fetch recent sales
     supabase.from("sales").select("*, inventory_items(name), customers(name)")
       .eq("business_id", businessId).order("created_at", { ascending: false }).limit(10)
       .then(({ data }) => setRecentSales(data || []));
+    supabase.from("businesses").select("name, phone, address").eq("id", businessId).single()
+      .then(({ data }) => setBusinessInfo(data || {}));
   }, [businessId]);
 
   // Get landed cost for selected item
