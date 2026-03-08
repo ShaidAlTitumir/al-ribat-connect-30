@@ -111,7 +111,7 @@ const Reports = () => {
       .map(([category, amount]) => ({ category, amount }))
       .sort((a, b) => b.amount - a.amount);
 
-    const netProfit = totalProfit - totalExpenses;
+    const netProfit = totalSales - costOfGoods;
     const grossProfit = totalSales - costOfGoods;
     const margin = totalSales > 0 ? (netProfit / totalSales) * 100 : 0;
 
