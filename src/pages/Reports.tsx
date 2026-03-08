@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBusiness } from "@/contexts/BusinessContext";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { exportToCSV } from "@/lib/exportUtils";
 import {
   BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, ComposedChart, Line,
