@@ -1,0 +1,1 @@
+ALTER TABLE public.inventory_items ADD COLUMN low_stock_threshold integer NOT NULL DEFAULT 5;

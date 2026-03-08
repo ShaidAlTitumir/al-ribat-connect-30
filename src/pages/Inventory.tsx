@@ -46,13 +46,16 @@ const InventoryList = ({ onAdd }: { onAdd: () => void }) => {
 
   const filtered = items.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
-    if (filter === "low") return matchesSearch && item.current_stock > 0 && item.current_stock <= 5;
+    const threshold = item.low_stock_threshold ?? 5;
+    if (filter === "low") return matchesSearch && item.current_stock > 0 && item.current_stock <= threshold;
+    if (filter === "out") return matchesSearch && item.current_stock === 0;
     return matchesSearch;
   });
 
   const totalItems = items.length;
-  const lowStock = items.filter((i) => i.current_stock > 0 && i.current_stock <= 5).length;
+  const lowStock = items.filter((i) => i.current_stock > 0 && i.current_stock <= (i.low_stock_threshold ?? 5)).length;
   const outOfStock = items.filter((i) => i.current_stock === 0).length;
+  const lowStockItems = items.filter((i) => i.current_stock > 0 && i.current_stock <= (i.low_stock_threshold ?? 5));
 
   return (
     <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
@@ -73,6 +76,31 @@ const InventoryList = ({ onAdd }: { onAdd: () => void }) => {
         ))}
       </section>
 
+      {/* Low Stock Alert Banner */}
+      {lowStockItems.length > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
+          <span className="material-symbols-outlined text-amber-600 text-[24px] mt-0.5">warning</span>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-amber-800 dark:text-amber-300 text-sm">Low Stock Alert</p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+              {lowStockItems.map(i => `${i.name} (${i.current_stock} left)`).join(", ")}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {outOfStock > 0 && (
+        <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-4 flex items-start gap-3">
+          <span className="material-symbols-outlined text-destructive text-[24px] mt-0.5">error</span>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-destructive text-sm">Out of Stock</p>
+            <p className="text-xs text-destructive/80 mt-0.5">
+              {items.filter(i => i.current_stock === 0).map(i => i.name).join(", ")} — need restocking
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">
@@ -85,15 +113,15 @@ const InventoryList = ({ onAdd }: { onAdd: () => void }) => {
           />
         </div>
         <div className="flex items-center gap-2">
-          {["all", "low"].map((f) => (
+          {[{ key: "all", label: "All Items" }, { key: "low", label: "Low Stock" }, { key: "out", label: "Out of Stock" }].map((f) => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
+              key={f.key}
+              onClick={() => setFilter(f.key)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium ${
-                filter === f ? "bg-primary text-primary-foreground" : "bg-card border border-border text-muted-foreground"
+                filter === f.key ? "bg-primary text-primary-foreground" : "bg-card border border-border text-muted-foreground"
               }`}
             >
-              {f === "all" ? "All Items" : "Low Stock"}
+              {f.label}
             </button>
           ))}
           <button onClick={onAdd} className="flex items-center gap-1 bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-bold">
@@ -118,7 +146,9 @@ const InventoryList = ({ onAdd }: { onAdd: () => void }) => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((item) => (
+          {filtered.map((item) => {
+            const threshold = item.low_stock_threshold ?? 5;
+            return (
             <div key={item.id} className="bg-card p-4 rounded-xl border border-border">
               <div className="flex justify-between items-start mb-3">
                 <div>
@@ -127,24 +157,29 @@ const InventoryList = ({ onAdd }: { onAdd: () => void }) => {
                 </div>
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                   item.current_stock === 0 ? "bg-destructive/10 text-destructive" :
-                  item.current_stock <= 5 ? "bg-amber-100 text-amber-700" :
-                  "bg-emerald-100 text-emerald-700"
+                  item.current_stock <= threshold ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                  "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                 }`}>
                   {item.current_stock} in stock
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-3 gap-2 text-sm">
                 <div>
                   <span className="text-muted-foreground text-xs">Weight</span>
-                  <p className="font-semibold">{item.weight_per_unit} kg</p>
+                  <p className="font-semibold text-foreground">{item.weight_per_unit} kg</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-xs">Sell Price</span>
-                  <p className="font-semibold">৳{item.default_selling_price || 0}</p>
+                  <p className="font-semibold text-foreground">৳{item.default_selling_price || 0}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-xs">Alert at</span>
+                  <p className="font-semibold text-foreground">≤ {threshold}</p>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -171,6 +206,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const [form, setForm] = useState({
     name: "", category: "", quantity: "", weightPerUnit: "",
     buyingCostRmb: "", shippingRate: "", additionalCost: "", sellingPrice: "",
+    lowStockThreshold: "5",
   });
 
   useEffect(() => {
@@ -255,8 +291,9 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
         const { data: newItem, error } = await supabase.from("inventory_items").insert({
           name: form.name.trim(), category: form.category, weight_per_unit: weight,
           current_stock: qty, default_selling_price: sellPrice,
+          low_stock_threshold: parseInt(form.lowStockThreshold) || 5,
           business_id: businessId, user_id: user.id,
-        }).select().single();
+        } as any).select().single();
         if (error) throw error;
         itemId = newItem.id;
       } else {
@@ -389,6 +426,14 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                 <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" step="0.01" placeholder="0.00"
                   value={form.weightPerUnit} onChange={(e) => updateForm("weightPerUnit", e.target.value)} />
               </div>
+              {itemMode === "new" && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-foreground">Low Stock Alert Threshold</label>
+                  <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" placeholder="5"
+                    value={form.lowStockThreshold} onChange={(e) => updateForm("lowStockThreshold", e.target.value)} />
+                  <span className="text-xs text-muted-foreground">Get notified when stock drops to this level</span>
+                </div>
+              )}
             </div>
           </section>
 

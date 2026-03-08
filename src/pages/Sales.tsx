@@ -95,9 +95,30 @@ const Sales = () => {
       if (saleError) throw saleError;
 
       // Deduct stock
+      const newStock = (item?.current_stock || 0) - quantity;
       await supabase.from("inventory_items")
-        .update({ current_stock: (item?.current_stock || 0) - quantity })
+        .update({ current_stock: newStock })
         .eq("id", selectedItemId);
+
+      // Low stock notification
+      const threshold = item?.low_stock_threshold ?? 5;
+      if (newStock > 0 && newStock <= threshold) {
+        await supabase.from("notifications").insert({
+          user_id: user.id,
+          business_id: businessId,
+          title: "Low Stock Alert",
+          message: `${item?.name} is running low — only ${newStock} left (threshold: ${threshold})`,
+          type: "low_stock",
+        } as any);
+      } else if (newStock === 0) {
+        await supabase.from("notifications").insert({
+          user_id: user.id,
+          business_id: businessId,
+          title: "Out of Stock",
+          message: `${item?.name} is now out of stock. Consider restocking.`,
+          type: "low_stock",
+        } as any);
+      }
 
       // Update customer due
       if (custId && dueAmount > 0) {
