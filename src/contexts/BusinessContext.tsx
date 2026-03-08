@@ -4,6 +4,9 @@ import { useAuth } from "./AuthContext";
 
 interface BusinessContextType {
   businessId: string | null;
+  businessName: string;
+  businessPhone: string;
+  businessAddress: string;
   exchangeRate: number;
   setExchangeRate: (rate: number) => void;
   saveExchangeRate: () => Promise<void>;
