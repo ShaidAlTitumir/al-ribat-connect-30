@@ -13,6 +13,8 @@ import Sales from "./pages/Sales";
 import Expenses from "./pages/Expenses";
 import Partners from "./pages/Partners";
 import Reports from "./pages/Reports";
+import Wallet from "./pages/Wallet";
+import Customers from "./pages/Customers";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -47,6 +49,8 @@ const App = () => (
               <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
               <Route path="/partners" element={<ProtectedRoute><Partners /></ProtectedRoute>} />
               <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+              <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
+              <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
