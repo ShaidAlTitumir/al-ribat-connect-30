@@ -122,7 +122,7 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <BusinessContext.Provider value={{ businessId, exchangeRate, setExchangeRate, saveExchangeRate, loading, userRole, switchBusiness }}>
+    <BusinessContext.Provider value={{ businessId, businessName, businessPhone, businessAddress, exchangeRate, setExchangeRate, saveExchangeRate, loading, userRole, switchBusiness }}>
       {children}
     </BusinessContext.Provider>
   );
