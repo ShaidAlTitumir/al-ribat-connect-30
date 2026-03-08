@@ -114,6 +114,11 @@ const Partners = () => {
         business_id: businessId,
       });
 
+      await supabase.from("activity_log").insert({
+        action: "Added new partner",
+        details: { partner_name: foundUser.full_name || foundUser.username, role: partnerRole },
+        business_id: businessId, user_id: user.id,
+      });
       toast.success(`${foundUser.full_name || foundUser.username} added as partner!`);
       setSearchUsername(""); setFoundUser(null);
       fetchData();
@@ -149,6 +154,11 @@ const Partners = () => {
         } catch {}
       }
 
+      await supabase.from("activity_log").insert({
+        action: "Removed partner",
+        details: { partner_name: partner.name },
+        business_id: businessId, user_id: user.id,
+      });
       toast.success(`${partner.name} removed`);
       fetchData();
     } catch (err: any) {

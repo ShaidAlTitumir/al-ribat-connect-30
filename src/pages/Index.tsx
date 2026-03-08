@@ -47,7 +47,7 @@ const Index = () => {
       supabase.from("customers").select("total_due").eq("business_id", businessId!),
       supabase.from("exchanges").select("*").eq("business_id", businessId!),
       supabase.from("partners").select("id, name, status").eq("business_id", businessId!),
-      supabase.from("activity_log").select("*").eq("business_id", businessId!).order("created_at", { ascending: false }).limit(5),
+      supabase.from("activity_log").select("*").eq("business_id", businessId!).order("created_at", { ascending: false }).limit(15),
     ]);
 
     const caps = capsRes.data || [];
@@ -262,17 +262,44 @@ const Index = () => {
             </div>
           ) : (
             <div className="bg-card rounded-xl border border-border divide-y divide-border">
-              {activities.map((act) => (
-                <div key={act.id} className="p-3 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-primary text-[18px]">bolt</span>
+              {activities.map((act) => {
+                const iconMap: Record<string, { icon: string; color: string }> = {
+                  "Recorded sale": { icon: "point_of_sale", color: "text-emerald-600 bg-emerald-50" },
+                  "Added expense": { icon: "payments", color: "text-red-600 bg-red-50" },
+                  "Deleted expense": { icon: "delete", color: "text-red-600 bg-red-50" },
+                  "Currency exchange": { icon: "currency_exchange", color: "text-blue-600 bg-blue-50" },
+                  "Added new inventory item": { icon: "add_box", color: "text-purple-600 bg-purple-50" },
+                  "Restocked inventory item": { icon: "inventory", color: "text-purple-600 bg-purple-50" },
+                  "Added capital contribution": { icon: "account_balance", color: "text-amber-600 bg-amber-50" },
+                  "Collected due payment": { icon: "receipt", color: "text-emerald-600 bg-emerald-50" },
+                  "Added new customer": { icon: "person_add", color: "text-blue-600 bg-blue-50" },
+                  "Deleted customer": { icon: "person_remove", color: "text-red-600 bg-red-50" },
+                  "Added new partner": { icon: "group_add", color: "text-primary bg-primary/10" },
+                  "Removed partner": { icon: "group_remove", color: "text-red-600 bg-red-50" },
+                };
+                const match = iconMap[act.action] || { icon: "bolt", color: "text-primary bg-primary/10" };
+                const details = act.details || {};
+                let subtitle = "";
+                if (details.item_name) subtitle += details.item_name;
+                if (details.quantity) subtitle += ` × ${details.quantity}`;
+                if (details.customer_name) subtitle += details.customer_name;
+                if (details.partner_name) subtitle += details.partner_name;
+                if (details.title) subtitle += details.title;
+                if (details.amount) subtitle += ` • ${details.currency === "RMB" ? "¥" : "৳"}${details.amount}`;
+                if (details.total) subtitle += ` • ৳${details.total}`;
+                return (
+                  <div key={act.id} className="p-3 flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${match.color}`}>
+                      <span className="material-symbols-outlined text-[18px]">{match.icon}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{act.action}</p>
+                      {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
+                      <p className="text-[10px] text-muted-foreground">{format(new Date(act.created_at), "MMM d, h:mm a")}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">{act.action}</p>
-                    <p className="text-xs text-muted-foreground">{format(new Date(act.created_at), "MMM d, h:mm a")}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
