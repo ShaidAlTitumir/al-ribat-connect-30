@@ -16,6 +16,7 @@ const Profile = () => {
   const [saving, setSaving] = useState("");
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleteAccountText, setDeleteAccountText] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
 
   useEffect(() => {
     if (!user) return;
