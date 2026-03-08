@@ -35,7 +35,7 @@ interface PLStatement {
 }
 
 const Reports = () => {
-  const { businessId, exchangeRate } = useBusiness();
+  const { businessId, exchangeRate, businessName, businessPhone, businessAddress } = useBusiness();
   const [period, setPeriod] = useState("month");
   const [metrics, setMetrics] = useState({ sales: 0, profit: 0, dues: 0, netProfit: 0 });
   const [partnerShares, setPartnerShares] = useState<any[]>([]);
