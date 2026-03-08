@@ -78,7 +78,7 @@ const Wallet = () => {
     try {
       await supabase.from("exchanges").insert({
         from_currency: fromCurrency, to_currency: toCurrency,
-        amount_from: amt, amount_to: toAmount, rate: exchangeRate,
+        amount_from: amt, amount_to: toAmount, rate: activeRate,
         business_id: businessId, user_id: user.id,
       });
       await supabase.from("activity_log").insert({
