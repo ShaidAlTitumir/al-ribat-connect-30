@@ -7,7 +7,7 @@ const AppLayout = () => {
   const location = useLocation();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
-  const { businessName } = useBusiness();
+  
 
   // Close sidebar on route change (mobile) & smooth fade transition
   useEffect(() => {
