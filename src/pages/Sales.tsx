@@ -424,8 +424,10 @@ const Sales = () => {
               </div>
             </div>
 
-            {/* Recent Sales — desktop & mobile history tab */}
-            <div className={`${mobileTab !== "history" ? "hidden lg:block" : ""}`}>
+          </div>
+
+          {/* Recent Sales — desktop: inside grid; mobile: history tab */}
+          <div className={`lg:col-span-2 ${mobileTab !== "history" ? "hidden lg:block" : ""}`}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs lg:text-sm font-bold text-foreground">Recent Sales</h3>
                 {recentSales.length > 0 && (
@@ -484,7 +486,6 @@ const Sales = () => {
                         </div>
                       ) : (
                         <div className="p-3 lg:p-4 flex items-center gap-3">
-                          {/* Item info */}
                           <div className="min-w-0 flex-1">
                             <p className="font-bold text-xs lg:text-sm text-foreground truncate">{(sale as any).inventory_items?.name || "Item"}</p>
                             <div className="flex items-center gap-1.5 mt-0.5">
@@ -500,16 +501,12 @@ const Sales = () => {
                               {format(new Date(sale.created_at), "MMM d, h:mm a")}
                             </p>
                           </div>
-
-                          {/* Amount */}
                           <div className="text-right shrink-0">
                             <p className="font-black text-sm lg:text-base text-foreground">৳{(sale.quantity * sale.unit_price_bdt).toLocaleString()}</p>
                             {sale.due > 0 && (
                               <p className="text-[10px] font-semibold text-destructive">Due: ৳{sale.due}</p>
                             )}
                           </div>
-
-                          {/* Actions */}
                           <div className="flex items-center gap-0.5 shrink-0">
                             <button onClick={() => startEdit(sale)}
                               className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground active:scale-95 transition-all">
@@ -535,8 +532,6 @@ const Sales = () => {
                   ))}
                 </div>
               )}
-            </div>
-          </div>
 
           {/* Desktop Summary Sidebar */}
           <div className="hidden lg:block">
