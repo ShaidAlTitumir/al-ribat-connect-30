@@ -185,9 +185,9 @@ const Index = () => {
         {/* Business Snapshot */}
         <section>
           <h3 className="text-sm lg:text-lg font-bold mb-2 lg:mb-3">Business Snapshot</h3>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 lg:gap-4">
             {/* Total Business Value */}
-            <div className="bg-card p-3 lg:p-5 rounded-xl border border-border">
+            <div className="bg-card p-3 lg:p-5 rounded-xl border border-border col-span-2 lg:col-span-1">
               <div className="flex items-center justify-between mb-1 lg:mb-2">
                 <span className="p-1 lg:p-1.5 rounded-lg text-blue-600 bg-blue-50">
                   <span className="material-symbols-outlined text-[16px] lg:text-[20px]">account_balance</span>
@@ -205,6 +205,17 @@ const Index = () => {
                   <span className="font-bold">¥{kpis.rmbBalance.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
                 </div>
               </div>
+            </div>
+
+            {/* Revenue */}
+            <div className="bg-card p-3 lg:p-5 rounded-xl border border-border">
+              <div className="flex items-center justify-between mb-1 lg:mb-2">
+                <span className="p-1 lg:p-1.5 rounded-lg text-sky-600 bg-sky-50">
+                  <span className="material-symbols-outlined text-[16px] lg:text-[20px]">point_of_sale</span>
+                </span>
+              </div>
+              <p className="text-muted-foreground text-[10px] lg:text-xs font-medium">Revenue</p>
+              <p className="text-lg lg:text-2xl font-black mt-0.5 text-foreground">৳{kpis.revenue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
             </div>
 
             {/* Inventory */}
@@ -232,12 +243,14 @@ const Index = () => {
             {/* Net Profit */}
             <div className="bg-card p-3 lg:p-5 rounded-xl border border-border">
               <div className="flex items-center justify-between mb-1 lg:mb-2">
-                <span className="p-1 lg:p-1.5 rounded-lg text-emerald-600 bg-emerald-50">
-                  <span className="material-symbols-outlined text-[16px] lg:text-[20px]">trending_up</span>
+                <span className={`p-1 lg:p-1.5 rounded-lg ${kpis.netProfit >= 0 ? "text-emerald-600 bg-emerald-50" : "text-destructive bg-destructive/10"}`}>
+                  <span className="material-symbols-outlined text-[16px] lg:text-[20px]">{kpis.netProfit >= 0 ? "trending_up" : "trending_down"}</span>
                 </span>
               </div>
               <p className="text-muted-foreground text-[10px] lg:text-xs font-medium">Net Profit</p>
-              <p className="text-lg lg:text-2xl font-black mt-0.5 text-foreground">৳{kpis.netProfit.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+              <p className={`text-lg lg:text-2xl font-black mt-0.5 ${kpis.netProfit >= 0 ? "text-foreground" : "text-destructive"}`}>
+                ৳{kpis.netProfit.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+              </p>
             </div>
           </div>
         </section>
