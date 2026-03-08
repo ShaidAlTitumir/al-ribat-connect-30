@@ -21,6 +21,8 @@ const Partners = () => {
   const [searchingUser, setSearchingUser] = useState(false);
   const [editingPartner, setEditingPartner] = useState<any>(null);
   const [editForm, setEditForm] = useState({ name: "", phone: "", email: "", address: "", role: "" });
+  const [useManualRate, setUseManualRate] = useState(false);
+  const [manualRate, setManualRate] = useState("");
 
   useEffect(() => {
     if (!businessId) return;
