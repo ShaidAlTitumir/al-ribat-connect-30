@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, Phone, Mail, MapPin, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Phone, Mail, MapPin, Pencil, Trash2, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,6 +26,8 @@ const Partners = () => {
   const [manualRate, setManualRate] = useState("");
   const [editingContribution, setEditingContribution] = useState<any>(null);
   const [editContribForm, setEditContribForm] = useState({ amount: "", currency: "BDT" as "BDT" | "RMB" });
+  const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
+  const [leaveVotes, setLeaveVotes] = useState<Record<string, any[]>>({});
 
   useEffect(() => {
     if (!businessId) return;
@@ -62,6 +64,31 @@ const Partners = () => {
     setPartners(partnersList);
     const { data: c } = await supabase.from("capital_contributions").select("*, partners(name)").eq("business_id", businessId!);
     setContributions(c || []);
+
+    // Fetch pending leave requests
+    const { data: lr } = await (supabase
+      .from("partner_leave_requests")
+      .select("*") as any)
+      .eq("business_id", businessId!)
+      .eq("status", "pending");
+    setLeaveRequests(lr || []);
+
+    // Fetch votes for pending leave requests
+    const reqIds = (lr || []).map((r: any) => r.id);
+    if (reqIds.length > 0) {
+      const { data: votes } = await (supabase
+        .from("partner_leave_votes")
+        .select("*") as any)
+        .in("request_id", reqIds);
+      const voteMap: Record<string, any[]> = {};
+      (votes || []).forEach((v: any) => {
+        if (!voteMap[v.request_id]) voteMap[v.request_id] = [];
+        voteMap[v.request_id].push(v);
+      });
+      setLeaveVotes(voteMap);
+    } else {
+      setLeaveVotes({});
+    }
   };
 
   const handleSearchUser = async () => {
@@ -263,6 +290,147 @@ const Partners = () => {
     });
     toast.success("Contribution deleted!");
     fetchData();
+  };
+
+  // --- Leave Request Logic ---
+  const handleRequestLeave = async () => {
+    if (!businessId || !user) return;
+    const myPartner = acceptedPartners.find(p => p.user_id === user.id);
+    if (!myPartner) { toast.error("You are not a partner"); return; }
+    if (acceptedPartners.length <= 1) { toast.error("You are the only partner — delete the business instead"); return; }
+
+    // Check if there's already a pending request for this partner
+    const existing = leaveRequests.find(r => r.partner_id === myPartner.id);
+    if (existing) { toast.error("You already have a pending leave request"); return; }
+
+    const confirmed = window.confirm("Request to leave this business? Other partners will need to approve.");
+    if (!confirmed) return;
+
+    const { data: req, error } = await (supabase
+      .from("partner_leave_requests")
+      .insert({ business_id: businessId, partner_id: myPartner.id, requested_by: user.id }) as any)
+      .select()
+      .single();
+    if (error) { toast.error(error.message); return; }
+
+    // Create vote entries for all OTHER partners
+    const otherPartners = acceptedPartners.filter(p => p.user_id && p.user_id !== user.id);
+    if (otherPartners.length > 0) {
+      const voteInserts = otherPartners.map(p => ({
+        request_id: req.id,
+        user_id: p.user_id,
+        vote: "pending",
+      }));
+      await (supabase.from("partner_leave_votes") as any).insert(voteInserts);
+
+      // Notify other partners
+      const notifInserts = otherPartners.map(p => ({
+        user_id: p.user_id,
+        business_id: businessId,
+        title: "Partner Leave Request",
+        message: `${myPartner.name} has requested to leave the business. Your approval is required.`,
+        type: "leave_request",
+      }));
+      await (supabase.from("notifications") as any).insert(notifInserts);
+    }
+
+    // Auto-approve for the requester
+    await (supabase.from("partner_leave_votes") as any).insert({
+      request_id: req.id,
+      user_id: user.id,
+      vote: "approved",
+      voted_at: new Date().toISOString(),
+    });
+
+    await supabase.from("activity_log").insert({
+      action: "Requested to leave business",
+      details: { partner_name: myPartner.name },
+      business_id: businessId, user_id: user.id,
+    });
+
+    toast.success("Leave request sent to partners for approval");
+    fetchData();
+  };
+
+  const handleLeaveVote = async (requestId: string, vote: "approved" | "rejected") => {
+    if (!user || !businessId) return;
+
+    await (supabase.from("partner_leave_votes") as any)
+      .update({ vote, voted_at: new Date().toISOString() })
+      .eq("request_id", requestId)
+      .eq("user_id", user.id);
+
+    const request = leaveRequests.find(r => r.id === requestId);
+    const leavingPartner = request ? acceptedPartners.find(p => p.id === request.partner_id) : null;
+
+    if (vote === "rejected") {
+      await (supabase.from("partner_leave_requests") as any)
+        .update({ status: "rejected" })
+        .eq("id", requestId);
+
+      if (request && request.requested_by !== user.id) {
+        await (supabase.from("notifications") as any).insert({
+          user_id: request.requested_by,
+          business_id: businessId,
+          title: "Leave Request Rejected",
+          message: `Your request to leave the business was rejected by a partner.`,
+          type: "leave_request",
+        });
+      }
+      toast.info("You rejected the leave request");
+    } else {
+      // Check if all voted approved
+      const { data: allVotes } = await (supabase
+        .from("partner_leave_votes")
+        .select("*") as any)
+        .eq("request_id", requestId);
+
+      const allApproved = (allVotes || []).every((v: any) => v.vote === "approved");
+      if (allApproved && leavingPartner) {
+        // Execute leave: remove partner from business
+        await (supabase.from("partner_leave_requests") as any)
+          .update({ status: "approved" })
+          .eq("id", requestId);
+
+        await supabase.from("partners").delete().eq("id", leavingPartner.id);
+
+        if (leavingPartner.user_id) {
+          try {
+            await supabase.rpc("add_partner_to_business" as any, {
+              _target_user_id: leavingPartner.user_id,
+              _business_id: null as any,
+              _role: "admin",
+            });
+          } catch {}
+
+          await (supabase.from("notifications") as any).insert({
+            user_id: leavingPartner.user_id,
+            business_id: businessId,
+            title: "You have left the business",
+            message: `All partners approved your request to leave.`,
+            type: "leave_request",
+          });
+        }
+
+        await supabase.from("activity_log").insert({
+          action: "Partner left business (approved)",
+          details: { partner_name: leavingPartner.name },
+          business_id: businessId, user_id: user.id,
+        });
+
+        toast.success(`${leavingPartner.name} has been removed from the business`);
+      } else {
+        toast.success("Vote recorded. Waiting for other partners.");
+      }
+    }
+    fetchData();
+  };
+
+  const getMyLeaveRequest = () => {
+    if (!user) return null;
+    const myPartner = acceptedPartners.find(p => p.user_id === user.id);
+    if (!myPartner) return null;
+    return leaveRequests.find(r => r.partner_id === myPartner.id);
   };
 
   const acceptedPartners = partners.filter(p => p.status === "accepted");
@@ -526,6 +694,90 @@ const Partners = () => {
                     )}
                   </div>
                 ))}
+              </div>
+            )}
+          </section>
+
+          {/* Leave Business & Pending Leave Requests */}
+          <section className="bg-card p-4 lg:p-6 rounded-xl border border-border space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-destructive">exit_to_app</span>
+              <h3 className="font-bold text-lg">Leave Business</h3>
+            </div>
+
+            {acceptedPartners.length <= 1 ? (
+              <p className="text-sm text-muted-foreground">You are the only partner. To leave, delete the business from the Business page.</p>
+            ) : (
+              <>
+                {getMyLeaveRequest() ? (
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="material-symbols-outlined text-amber-500 text-[18px]">hourglass_top</span>
+                      <p className="text-sm font-bold text-foreground">Leave request pending</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Waiting for other partners to approve your request to leave.</p>
+                    {leaveVotes[getMyLeaveRequest()!.id] && (
+                      <div className="mt-2 space-y-1">
+                        {leaveVotes[getMyLeaveRequest()!.id].map((v: any) => {
+                          const voter = acceptedPartners.find(p => p.user_id === v.user_id);
+                          return (
+                            <div key={v.id} className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground">{voter?.name || "Partner"}</span>
+                              <span className={`font-bold capitalize ${v.vote === "approved" ? "text-green-500" : v.vote === "rejected" ? "text-destructive" : "text-amber-500"}`}>
+                                {v.vote}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button onClick={handleRequestLeave}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-destructive/10 text-destructive font-bold text-sm hover:bg-destructive/20 transition-colors">
+                    <LogOut className="w-4 h-4" />
+                    Request to Leave Business
+                  </button>
+                )}
+              </>
+            )}
+
+            {/* Show other partners' pending leave requests for voting */}
+            {leaveRequests.filter(r => r.requested_by !== user?.id).length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-border">
+                <p className="text-xs font-bold uppercase text-muted-foreground">Pending Leave Requests</p>
+                {leaveRequests
+                  .filter(r => r.requested_by !== user?.id)
+                  .map(r => {
+                    const leavingPartner = acceptedPartners.find(p => p.id === r.partner_id);
+                    const myVote = (leaveVotes[r.id] || []).find((v: any) => v.user_id === user?.id);
+                    return (
+                      <div key={r.id} className="p-3 rounded-lg bg-muted border border-border">
+                        <p className="text-sm font-bold mb-1">
+                          {leavingPartner?.name || "Partner"} wants to leave
+                        </p>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Requested {format(new Date(r.created_at), "MMM d, yyyy")}
+                        </p>
+                        {myVote && myVote.vote !== "pending" ? (
+                          <p className={`text-xs font-bold capitalize ${myVote.vote === "approved" ? "text-green-500" : "text-destructive"}`}>
+                            You {myVote.vote}
+                          </p>
+                        ) : (
+                          <div className="flex gap-2">
+                            <button onClick={() => handleLeaveVote(r.id, "approved")}
+                              className="flex-1 py-1.5 rounded-lg bg-green-500/10 text-green-600 text-xs font-bold hover:bg-green-500/20 transition-colors">
+                              Approve
+                            </button>
+                            <button onClick={() => handleLeaveVote(r.id, "rejected")}
+                              className="flex-1 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-bold hover:bg-destructive/20 transition-colors">
+                              Reject
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
               </div>
             )}
           </section>
