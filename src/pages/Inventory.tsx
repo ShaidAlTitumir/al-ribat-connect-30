@@ -192,6 +192,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const { user } = useAuth();
   const [itemMode, setItemMode] = useState<"new" | "existing">("new");
   const [shippingMethod, setShippingMethod] = useState("sea");
+  const [additionalCostCurrency, setAdditionalCostCurrency] = useState<"BDT" | "RMB">("BDT");
   const [saving, setSaving] = useState(false);
   const [existingItems, setExistingItems] = useState<any[]>([]);
   const [selectedItemId, setSelectedItemId] = useState("");
@@ -257,12 +258,13 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const buyRmb = parseFloat(form.buyingCostRmb) || 0;
   const shipRate = parseFloat(form.shippingRate) || 0;
   const addCost = parseFloat(form.additionalCost) || 0;
+  const addCostBdt = additionalCostCurrency === "RMB" ? addCost * activeRate : addCost;
   const sellPrice = parseFloat(form.sellingPrice) || 0;
 
   const buyingPerUnitBdt = buyRmb * activeRate;
   const totalBuyingBdt = buyRmb * qty * activeRate;
   const totalShipping = totalWeight * shipRate;
-  const totalLanded = totalBuyingBdt + totalShipping + addCost;
+  const totalLanded = totalBuyingBdt + totalShipping + addCostBdt;
   const landedPerUnit = qty > 0 ? totalLanded / qty : 0;
   const potentialProfit = qty > 0 ? (sellPrice - landedPerUnit) * qty : 0;
   const margin = sellPrice > 0 ? ((sellPrice - landedPerUnit) / sellPrice * 100) : 0;
@@ -312,7 +314,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
         await supabase.from("purchase_transactions").insert({
           item_id: itemId, quantity: qty, buying_cost_per_unit_rmb: buyRmb,
           shipping_method: shippingMethod, shipping_rate_bdt_per_kg: shipRate,
-          additional_cost_bdt: addCost, total_landed_cost_bdt: totalLanded,
+          additional_cost_bdt: addCostBdt, total_landed_cost_bdt: totalLanded,
           landed_cost_per_unit_bdt: landedPerUnit, exchange_rate_used: activeRate,
           business_id: businessId, user_id: user.id,
         });
@@ -508,9 +510,26 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                   value={form.shippingRate} onChange={(e) => updateForm("shippingRate", e.target.value)} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-foreground">Additional Cost (BDT)</label>
-                <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" placeholder="0.00"
-                  value={form.additionalCost} onChange={(e) => updateForm("additionalCost", e.target.value)} />
+                <label className="text-sm font-semibold text-foreground">Additional Cost</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">{additionalCostCurrency === "RMB" ? "¥" : "৳"}</span>
+                    <input className="pl-7 w-full rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" placeholder="0.00"
+                      value={form.additionalCost} onChange={(e) => updateForm("additionalCost", e.target.value)} />
+                  </div>
+                  <div className="flex p-1 bg-muted rounded-lg border border-border">
+                    {(["BDT", "RMB"] as const).map((c) => (
+                      <button key={c} onClick={() => setAdditionalCostCurrency(c)}
+                        className={`px-3 py-1.5 text-xs font-bold rounded transition-colors ${
+                          additionalCostCurrency === c ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
+                        }`}
+                      >{c}</button>
+                    ))}
+                  </div>
+                </div>
+                {additionalCostCurrency === "RMB" && addCost > 0 && (
+                  <span className="text-xs text-muted-foreground">= ৳{addCostBdt.toFixed(2)} BDT @ {activeRate} rate</span>
+                )}
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-foreground">Cost Per Unit (BDT)</label>
