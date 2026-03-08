@@ -60,6 +60,7 @@ const Reports = () => {
     }
   };
 
+  const [plStatement, setPlStatement] = useState<PLStatement>({
     totalRevenue: 0, costOfGoods: 0, grossProfit: 0,
     totalExpenses: 0, netProfit: 0, margin: 0, expenseBreakdown: [],
   });
