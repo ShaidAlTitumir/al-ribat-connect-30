@@ -23,26 +23,38 @@ const Sales = () => {
   const [newCustomerPhone, setNewCustomerPhone] = useState("");
   const [showNewCustomer, setShowNewCustomer] = useState(false);
 
+  // Edit/Delete state
+  const [editingSale, setEditingSale] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ quantity: 0, unit_price_bdt: 0, received_now_bdt: 0 });
+  const [deletingSaleId, setDeletingSaleId] = useState<string | null>(null);
+
   // Data
   const [items, setItems] = useState<any[]>([]);
+  const [allItems, setAllItems] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [recentSales, setRecentSales] = useState<any[]>([]);
   const [landedCost, setLandedCost] = useState(0);
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [businessInfo, setBusinessInfo] = useState<any>({});
 
-  useEffect(() => {
+  const refreshData = async () => {
     if (!businessId) return;
-    supabase.from("inventory_items").select("*").eq("business_id", businessId).gt("current_stock", 0)
-      .then(({ data }) => setItems(data || []));
-    supabase.from("customers").select("*").eq("business_id", businessId)
-      .then(({ data }) => setCustomers(data || []));
-    supabase.from("sales").select("*, inventory_items(name), customers(name)")
-      .eq("business_id", businessId).order("created_at", { ascending: false }).limit(10)
-      .then(({ data }) => setRecentSales(data || []));
-    supabase.from("businesses").select("name, phone, address").eq("id", businessId).single()
-      .then(({ data }) => setBusinessInfo(data || {}));
-  }, [businessId]);
+    const [itemsRes, allItemsRes, custRes, salesRes, bizRes] = await Promise.all([
+      supabase.from("inventory_items").select("*").eq("business_id", businessId).gt("current_stock", 0),
+      supabase.from("inventory_items").select("*").eq("business_id", businessId),
+      supabase.from("customers").select("*").eq("business_id", businessId),
+      supabase.from("sales").select("*, inventory_items(name), customers(name)")
+        .eq("business_id", businessId).order("created_at", { ascending: false }).limit(10),
+      supabase.from("businesses").select("name, phone, address").eq("id", businessId).single(),
+    ]);
+    setItems(itemsRes.data || []);
+    setAllItems(allItemsRes.data || []);
+    setCustomers(custRes.data || []);
+    setRecentSales(salesRes.data || []);
+    setBusinessInfo(bizRes.data || {});
+  };
+
+  useEffect(() => { refreshData(); }, [businessId]);
 
   // Get landed cost for selected item
   useEffect(() => {
@@ -153,17 +165,127 @@ const Sales = () => {
       // Reset form
       setSelectedItemId(""); setQuantity(1); setUnitPrice(""); setReceivedAmount("");
       setSelectedCustomerId(""); setNewCustomerName(""); setNewCustomerPhone(""); setShowNewCustomer(false);
-
-      // Refresh data
-      const { data: updatedItems } = await supabase.from("inventory_items").select("*").eq("business_id", businessId).gt("current_stock", 0);
-      setItems(updatedItems || []);
-      const { data: updatedSales } = await supabase.from("sales").select("*, inventory_items(name), customers(name)")
-        .eq("business_id", businessId).order("created_at", { ascending: false }).limit(10);
-      setRecentSales(updatedSales || []);
-      const { data: updatedCustomers } = await supabase.from("customers").select("*").eq("business_id", businessId);
-      setCustomers(updatedCustomers || []);
+      await refreshData();
     } catch (err: any) {
       toast.error(err.message || "Failed to save sale");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (sale: any) => {
+    if (!businessId || !user) return;
+    setDeletingSaleId(sale.id);
+    try {
+      // Restore stock
+      const item = allItems.find((i) => i.id === sale.item_id);
+      if (item) {
+        await supabase.from("inventory_items")
+          .update({ current_stock: item.current_stock + sale.quantity })
+          .eq("id", sale.item_id);
+      }
+
+      // Reverse customer due
+      if (sale.customer_id && sale.due > 0) {
+        const cust = customers.find((c) => c.id === sale.customer_id);
+        if (cust) {
+          await supabase.from("customers")
+            .update({ total_due: Math.max(0, (cust.total_due || 0) - sale.due) })
+            .eq("id", sale.customer_id);
+        }
+        // Delete ledger entry
+        await supabase.from("customer_ledger").delete()
+          .eq("reference_id", sale.id).eq("business_id", businessId);
+      }
+
+      // Delete the sale
+      await supabase.from("sales").delete().eq("id", sale.id);
+
+      // Log activity
+      await supabase.from("activity_log").insert({
+        action: "Deleted sale", details: {
+          item_name: (sale as any).inventory_items?.name,
+          quantity: sale.quantity, total: sale.quantity * sale.unit_price_bdt,
+        },
+        business_id: businessId, user_id: user.id,
+      });
+
+      toast.success("Sale deleted and stock restored");
+      await refreshData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete");
+    } finally {
+      setDeletingSaleId(null);
+    }
+  };
+
+  const startEdit = (sale: any) => {
+    setEditingSale(sale);
+    setEditForm({
+      quantity: sale.quantity,
+      unit_price_bdt: sale.unit_price_bdt,
+      received_now_bdt: sale.received_now_bdt,
+    });
+  };
+
+  const handleEditSave = async () => {
+    if (!editingSale || !businessId || !user) return;
+    setSaving(true);
+    try {
+      const sale = editingSale;
+      const oldQty = sale.quantity;
+      const oldDue = sale.due;
+      const newTotal = editForm.quantity * editForm.unit_price_bdt;
+      const newDue = Math.max(0, newTotal - editForm.received_now_bdt);
+      const qtyDiff = editForm.quantity - oldQty;
+      const dueDiff = newDue - oldDue;
+
+      // Update stock (if quantity changed)
+      if (qtyDiff !== 0) {
+        const item = allItems.find((i) => i.id === sale.item_id);
+        if (item) {
+          const newStock = item.current_stock - qtyDiff;
+          if (newStock < 0) { toast.error("Not enough stock"); setSaving(false); return; }
+          await supabase.from("inventory_items")
+            .update({ current_stock: newStock })
+            .eq("id", sale.item_id);
+        }
+      }
+
+      // Update customer due
+      if (sale.customer_id && dueDiff !== 0) {
+        const cust = customers.find((c) => c.id === sale.customer_id);
+        if (cust) {
+          await supabase.from("customers")
+            .update({ total_due: Math.max(0, (cust.total_due || 0) + dueDiff) })
+            .eq("id", sale.customer_id);
+        }
+      }
+
+      // Update the sale record
+      await supabase.from("sales").update({
+        quantity: editForm.quantity,
+        unit_price_bdt: editForm.unit_price_bdt,
+        received_now_bdt: editForm.received_now_bdt,
+        due: newDue,
+        expected_profit: (editForm.unit_price_bdt - (sale.cost_rate || 0)) * editForm.quantity,
+      }).eq("id", sale.id);
+
+      // Log activity
+      await supabase.from("activity_log").insert({
+        action: "Edited sale", details: {
+          item_name: (sale as any).inventory_items?.name,
+          old_quantity: oldQty, new_quantity: editForm.quantity,
+          old_due: oldDue, new_due: newDue,
+        },
+        business_id: businessId, user_id: user.id,
+      });
+
+      toast.success("Sale updated!");
+      setEditingSale(null);
+      await refreshData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update");
     } finally {
       setSaving(false);
     }
@@ -284,31 +406,84 @@ const Sales = () => {
               ) : (
                 <div className="space-y-2">
                   {recentSales.map((sale) => (
-                    <div key={sale.id} className="bg-card p-3 rounded-lg border border-border flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-sm">{(sale as any).inventory_items?.name || "Item"}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {sale.quantity} × ৳{sale.unit_price_bdt} • {(sale as any).customers?.name || "Walk-in"}
-                          {" • "}{format(new Date(sale.created_at), "MMM d, h:mm a")}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="font-bold text-sm">৳{(sale.quantity * sale.unit_price_bdt).toFixed(0)}</p>
-                          {sale.due > 0 && <p className="text-xs text-destructive">Due: ৳{sale.due}</p>}
+                    <div key={sale.id} className="bg-card rounded-lg border border-border overflow-hidden">
+                      {editingSale?.id === sale.id ? (
+                        /* Inline Edit Form */
+                        <div className="p-3 space-y-3">
+                          <p className="font-semibold text-sm">{(sale as any).inventory_items?.name || "Item"}</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="text-[10px] font-semibold text-muted-foreground">Qty</label>
+                              <input type="number" min={1} value={editForm.quantity}
+                                onChange={(e) => setEditForm({ ...editForm, quantity: parseInt(e.target.value) || 0 })}
+                                className="w-full h-9 bg-muted border border-border rounded-lg px-3 text-sm text-foreground" />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-semibold text-muted-foreground">Unit Price</label>
+                              <input type="number" value={editForm.unit_price_bdt}
+                                onChange={(e) => setEditForm({ ...editForm, unit_price_bdt: parseFloat(e.target.value) || 0 })}
+                                className="w-full h-9 bg-muted border border-border rounded-lg px-3 text-sm text-foreground" />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-semibold text-muted-foreground">Received</label>
+                              <input type="number" value={editForm.received_now_bdt}
+                                onChange={(e) => setEditForm({ ...editForm, received_now_bdt: parseFloat(e.target.value) || 0 })}
+                                className="w-full h-9 bg-muted border border-border rounded-lg px-3 text-sm text-foreground" />
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <button onClick={() => setEditingSale(null)}
+                              className="px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted">
+                              Cancel
+                            </button>
+                            <button onClick={handleEditSave} disabled={saving}
+                              className="px-3 py-1.5 text-xs font-bold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50">
+                              {saving ? "Saving..." : "Save"}
+                            </button>
+                          </div>
                         </div>
-                        <button
-                          onClick={() => setInvoiceData({
-                            sale,
-                            itemName: (sale as any).inventory_items?.name || "Item",
-                            customerName: (sale as any).customers?.name || "Walk-in",
-                            business: businessInfo,
-                          })}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
-                          title="View Invoice">
-                          <span className="material-symbols-outlined text-[18px]">receipt_long</span>
-                        </button>
-                      </div>
+                      ) : (
+                        /* Normal Row */
+                        <div className="p-3 flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold text-sm">{(sale as any).inventory_items?.name || "Item"}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {sale.quantity} × ৳{sale.unit_price_bdt} • {(sale as any).customers?.name || "Walk-in"}
+                              {" • "}{format(new Date(sale.created_at), "MMM d, h:mm a")}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-right mr-1">
+                              <p className="font-bold text-sm">৳{(sale.quantity * sale.unit_price_bdt).toFixed(0)}</p>
+                              {sale.due > 0 && <p className="text-xs text-destructive">Due: ৳{sale.due}</p>}
+                            </div>
+                            <button onClick={() => startEdit(sale)}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                              title="Edit Sale">
+                              <span className="material-symbols-outlined text-[18px]">edit</span>
+                            </button>
+                            <button
+                              onClick={() => setInvoiceData({
+                                sale,
+                                itemName: (sale as any).inventory_items?.name || "Item",
+                                customerName: (sale as any).customers?.name || "Walk-in",
+                                business: businessInfo,
+                              })}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                              title="View Invoice">
+                              <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+                            </button>
+                            <button onClick={() => handleDelete(sale)}
+                              disabled={deletingSaleId === sale.id}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+                              title="Delete Sale">
+                              <span className="material-symbols-outlined text-[18px]">
+                                {deletingSaleId === sale.id ? "hourglass_empty" : "delete"}
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
