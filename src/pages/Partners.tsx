@@ -18,6 +18,10 @@ const Partners = () => {
   const [capitalAmount, setCapitalAmount] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
   const [pendingInvites, setPendingInvites] = useState<any[]>([]);
+  const [addMethod, setAddMethod] = useState<"name" | "username">("name");
+  const [searchUsername, setSearchUsername] = useState("");
+  const [foundUser, setFoundUser] = useState<any>(null);
+  const [searchingUser, setSearchingUser] = useState(false);
 
   useEffect(() => {
     if (!businessId) return;
@@ -35,39 +39,75 @@ const Partners = () => {
 
   const handleAddPartner = async () => {
     if (!businessId || !user || !partnerName.trim()) { toast.error("Enter partner name"); return; }
-    try {
-      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-      await supabase.from("partners").insert({
-        name: partnerName.trim(), role: partnerRole, invitation_code: code,
-        status: "accepted", business_id: businessId, user_id: null, invited_by: user.id,
-      });
-      toast.success("Partner added!");
-      setPartnerName(""); setPartnerRole("working");
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message);
+    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const { error } = await supabase.from("partners").insert({
+      name: partnerName.trim(), role: partnerRole, invitation_code: code,
+      status: "accepted", business_id: businessId, user_id: null, invited_by: user.id,
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Partner added!");
+    setPartnerName(""); setPartnerRole("working");
+    fetchData();
+  };
+
+  const handleSearchUser = async () => {
+    if (!searchUsername.trim()) { toast.error("Enter a username"); return; }
+    setSearchingUser(true);
+    setFoundUser(null);
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("user_id, full_name, username")
+      .eq("username" as any, searchUsername.trim().toLowerCase())
+      .maybeSingle();
+    setSearchingUser(false);
+    if (error || !data) {
+      toast.error("No user found with that username");
+      return;
     }
+    // Check if already a partner
+    const existing = partners.find(p => p.user_id === (data as any).user_id);
+    if (existing) {
+      toast.error("This user is already a partner");
+      return;
+    }
+    setFoundUser(data);
+  };
+
+  const handleAddByUsername = async () => {
+    if (!businessId || !user || !foundUser) return;
+    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const { error } = await supabase.from("partners").insert({
+      name: foundUser.full_name || foundUser.username || "Partner",
+      role: partnerRole, invitation_code: code,
+      status: "accepted", business_id: businessId,
+      user_id: foundUser.user_id, invited_by: user.id,
+    });
+    if (error) { toast.error(error.message); return; }
+    // Update the found user's profile to link to this business
+    await supabase.from("profiles")
+      .update({ business_id: businessId, role: partnerRole })
+      .eq("user_id", foundUser.user_id);
+    toast.success(`${foundUser.full_name || foundUser.username} added as partner!`);
+    setSearchUsername(""); setFoundUser(null);
+    fetchData();
   };
 
   const handleAddCapital = async () => {
     if (!businessId || !user || !selectedPartnerId || !capitalAmount) { toast.error("Fill all fields"); return; }
     const amt = parseFloat(capitalAmount);
     if (amt <= 0) { toast.error("Enter a valid amount"); return; }
-    try {
-      await supabase.from("capital_contributions").insert({
-        partner_id: selectedPartnerId, amount: amt, currency,
-        business_id: businessId, user_id: user.id,
-      });
-      await supabase.from("activity_log").insert({
-        action: "Added capital contribution", details: { amount: amt, currency },
-        business_id: businessId, user_id: user.id,
-      });
-      toast.success("Capital added!");
-      setCapitalAmount(""); setSelectedPartnerId("");
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message);
-    }
+    const { error } = await supabase.from("capital_contributions").insert({
+      partner_id: selectedPartnerId, amount: amt, currency,
+      business_id: businessId, user_id: user.id,
+    });
+    if (error) { toast.error(error.message); return; }
+    await supabase.from("activity_log").insert({
+      action: "Added capital contribution", details: { amount: amt, currency },
+      business_id: businessId, user_id: user.id,
+    });
+    toast.success("Capital added!");
+    setCapitalAmount(""); setSelectedPartnerId("");
+    fetchData();
   };
 
   const handleGenerateCode = async () => {
@@ -75,18 +115,15 @@ const Partners = () => {
     const code = Math.random().toString(36).substring(2, 10).toUpperCase();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
-    try {
-      await supabase.from("partners").insert({
-        name: "Pending Partner", role: "working", invitation_code: code,
-        status: "pending", business_id: businessId, invited_by: user.id,
-        expires_at: expiresAt.toISOString(),
-      });
-      setGeneratedCode(code);
-      toast.success("Invitation code generated!");
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message);
-    }
+    const { error } = await supabase.from("partners").insert({
+      name: "Pending Partner", role: "working", invitation_code: code,
+      status: "pending", business_id: businessId, invited_by: user.id,
+      expires_at: expiresAt.toISOString(),
+    });
+    if (error) { toast.error(error.message); return; }
+    setGeneratedCode(code);
+    toast.success("Invitation code generated!");
+    fetchData();
   };
 
   const copyCode = () => {
@@ -97,9 +134,7 @@ const Partners = () => {
   // Calculate equity
   const partnerEquity = partners.filter(p => p.status === "accepted").map((p) => {
     const caps = contributions.filter((c) => c.partner_id === p.id);
-    const totalBdt = caps.reduce((sum, c) => {
-      return sum + (c.currency === "RMB" ? c.amount * exchangeRate : c.amount);
-    }, 0);
+    const totalBdt = caps.reduce((sum, c) => sum + (c.currency === "RMB" ? c.amount * exchangeRate : c.amount), 0);
     return { ...p, totalCapital: totalBdt };
   });
   const totalCapital = partnerEquity.reduce((sum, p) => sum + p.totalCapital, 0);
@@ -115,28 +150,85 @@ const Partners = () => {
               <span className="material-symbols-outlined text-emerald-500">person_add</span>
               <h3 className="font-bold text-lg">Add Partner</h3>
             </div>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase text-muted-foreground">Name</label>
-                  <input className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border-none text-foreground"
-                    placeholder="Partner name" value={partnerName} onChange={(e) => setPartnerName(e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase text-muted-foreground">Role</label>
-                  <select className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border-none text-foreground"
-                    value={partnerRole} onChange={(e) => setPartnerRole(e.target.value)}>
-                    <option value="admin">Admin</option>
-                    <option value="working">Working</option>
-                    <option value="investor">Investor</option>
-                  </select>
-                </div>
-              </div>
-              <button onClick={handleAddPartner}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-lg flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-base">check_circle</span> Register Partner
+            {/* Method toggle */}
+            <div className="flex bg-muted rounded-lg p-1 mb-4">
+              <button onClick={() => { setAddMethod("name"); setFoundUser(null); }}
+                className={`flex-1 py-2 text-xs font-bold rounded-md transition-colors ${addMethod === "name" ? "bg-card shadow-sm text-primary" : "text-muted-foreground"}`}>
+                By Name
+              </button>
+              <button onClick={() => { setAddMethod("username"); setFoundUser(null); }}
+                className={`flex-1 py-2 text-xs font-bold rounded-md transition-colors ${addMethod === "username" ? "bg-card shadow-sm text-primary" : "text-muted-foreground"}`}>
+                By Username
               </button>
             </div>
+
+            {addMethod === "name" ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase text-muted-foreground">Name</label>
+                    <input className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border-none text-foreground"
+                      placeholder="Partner name" value={partnerName} onChange={(e) => setPartnerName(e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase text-muted-foreground">Role</label>
+                    <select className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border-none text-foreground"
+                      value={partnerRole} onChange={(e) => setPartnerRole(e.target.value)}>
+                      <option value="admin">Admin</option>
+                      <option value="working">Working</option>
+                      <option value="investor">Investor</option>
+                    </select>
+                  </div>
+                </div>
+                <button onClick={handleAddPartner}
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-lg flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined text-base">check_circle</span> Register Partner
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Username</label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+                      <input className="w-full bg-muted rounded-lg pl-8 pr-4 py-2.5 text-sm border-none text-foreground"
+                        placeholder="username" value={searchUsername}
+                        onChange={(e) => { setSearchUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "")); setFoundUser(null); }} />
+                    </div>
+                    <button onClick={handleSearchUser} disabled={searchingUser}
+                      className="bg-primary px-4 py-2 rounded-lg text-primary-foreground font-bold text-sm shrink-0">
+                      {searchingUser ? "..." : "Search"}
+                    </button>
+                  </div>
+                </div>
+                {foundUser && (
+                  <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold">
+                        {foundUser.full_name?.charAt(0).toUpperCase() || "?"}
+                      </div>
+                      <div>
+                        <p className="font-bold text-sm text-foreground">{foundUser.full_name || "Unknown"}</p>
+                        <p className="text-xs text-muted-foreground">@{foundUser.username}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <select className="w-full bg-card rounded-lg px-4 py-2 text-sm border border-border text-foreground"
+                        value={partnerRole} onChange={(e) => setPartnerRole(e.target.value)}>
+                        <option value="admin">Admin</option>
+                        <option value="working">Working</option>
+                        <option value="investor">Investor</option>
+                      </select>
+                      <button onClick={handleAddByUsername}
+                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-lg flex items-center justify-center gap-2">
+                        <span className="material-symbols-outlined text-base">person_add</span> Add as Partner
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
 
           {/* Add Capital */}
