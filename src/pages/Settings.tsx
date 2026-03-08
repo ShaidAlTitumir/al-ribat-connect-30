@@ -61,14 +61,36 @@ const Settings = () => {
   };
 
   const savePassword = async () => {
+    if (!user || !user.email) { toast.error("User not found"); return; }
+    if (!passwords.currentPassword) { toast.error("Enter your current password"); return; }
     if (passwords.newPassword.length < 6) { toast.error("Min 6 characters"); return; }
     if (passwords.newPassword !== passwords.confirmPassword) { toast.error("Passwords don't match"); return; }
     setSaving("password");
     try {
+      // Verify current password by re-authenticating
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: passwords.currentPassword,
+      });
+      if (signInError) { toast.error("Current password is incorrect"); setSaving(""); return; }
+      
       const { error } = await supabase.auth.updateUser({ password: passwords.newPassword });
       if (error) throw error;
       toast.success("Password updated!");
-      setPasswords({ newPassword: "", confirmPassword: "" });
+      setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    } catch (err: any) { toast.error(err.message); }
+    finally { setSaving(""); }
+  };
+
+  const handleForgotPasswordFromSettings = async () => {
+    if (!user?.email) return;
+    setSaving("forgot");
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Password reset link sent to your email!");
     } catch (err: any) { toast.error(err.message); }
     finally { setSaving(""); }
   };
