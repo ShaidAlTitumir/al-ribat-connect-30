@@ -214,7 +214,63 @@ const Reports = () => {
             ))}
           </div>
 
-          {/* Monthly Trends */}
+          {/* Profit & Loss Statement */}
+          <div className="bg-card rounded-xl border border-border overflow-hidden">
+            <div className="p-4 lg:p-6 border-b border-border">
+              <h5 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">account_balance</span>
+                Profit & Loss Statement
+              </h5>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {period === "week" ? "This Week" : period === "month" ? "This Month" : "This Year"}
+              </p>
+            </div>
+            <div className="p-4 lg:p-6 space-y-1">
+              {/* Revenue */}
+              <div className="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-muted/50">
+                <span className="text-sm font-semibold text-foreground">Total Revenue (Sales)</span>
+                <span className="text-sm font-bold text-foreground">৳{plStatement.totalRevenue.toLocaleString("en-IN")}</span>
+              </div>
+              <div className="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-muted/50">
+                <span className="text-sm text-muted-foreground pl-4">− Cost of Goods Sold</span>
+                <span className="text-sm font-medium text-destructive">৳{plStatement.costOfGoods.toLocaleString("en-IN")}</span>
+              </div>
+              <div className="flex justify-between items-center py-2.5 px-3 bg-muted/50 rounded-lg border-y border-border">
+                <span className="text-sm font-bold text-foreground">Gross Profit</span>
+                <span className={`text-sm font-bold ${plStatement.grossProfit >= 0 ? "text-emerald-600" : "text-destructive"}`}>
+                  ৳{plStatement.grossProfit.toLocaleString("en-IN")}
+                </span>
+              </div>
+
+              {/* Operating Expenses */}
+              <div className="pt-2">
+                <div className="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-muted/50">
+                  <span className="text-sm font-semibold text-foreground">Operating Expenses</span>
+                  <span className="text-sm font-bold text-destructive">৳{plStatement.totalExpenses.toLocaleString("en-IN")}</span>
+                </div>
+                {plStatement.expenseBreakdown.map((eb) => (
+                  <div key={eb.category} className="flex justify-between items-center py-1.5 px-3 pl-7">
+                    <span className="text-xs text-muted-foreground">{eb.category}</span>
+                    <span className="text-xs font-medium text-muted-foreground">৳{eb.amount.toLocaleString("en-IN")}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Net Profit */}
+              <div className="flex justify-between items-center py-3 px-4 mt-2 bg-primary/10 rounded-xl border border-primary/20">
+                <div>
+                  <span className="text-sm font-bold text-foreground">Net Profit</span>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    Margin: {plStatement.margin.toFixed(1)}%
+                  </span>
+                </div>
+                <span className={`text-lg font-black ${plStatement.netProfit >= 0 ? "text-emerald-600" : "text-destructive"}`}>
+                  {plStatement.netProfit >= 0 ? "+" : ""}৳{plStatement.netProfit.toLocaleString("en-IN")}
+                </span>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-card rounded-xl border border-border overflow-hidden">
             <div className="p-4 lg:p-6 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
