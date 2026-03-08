@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBusiness } from "@/contexts/BusinessContext";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { exportToCSV } from "@/lib/exportUtils";
 import {
   BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, ComposedChart, Line,
@@ -190,15 +191,23 @@ const Reports = () => {
       <ExchangeRateHeader title="Reports" />
       <div className="flex-1 overflow-y-auto p-4 lg:p-8">
         <div className="max-w-6xl mx-auto space-y-6">
-          {/* Period Tabs */}
-          <div className="border-b border-border flex gap-6 overflow-x-auto">
-            {["week", "month", "year"].map((p) => (
-              <button key={p} onClick={() => setPeriod(p)}
-                className={`pb-3 text-sm font-bold whitespace-nowrap ${
-                  period === p ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-primary"
-                }`}
-              >{p.charAt(0).toUpperCase() + p.slice(1)}</button>
-            ))}
+          {/* Period Tabs + Export */}
+          <div className="flex items-center justify-between border-b border-border">
+            <div className="flex gap-6 overflow-x-auto">
+              {["week", "month", "year"].map((p) => (
+                <button key={p} onClick={() => setPeriod(p)}
+                  className={`pb-3 text-sm font-bold whitespace-nowrap ${
+                    period === p ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-primary"
+                  }`}
+                >{p.charAt(0).toUpperCase() + p.slice(1)}</button>
+              ))}
+            </div>
+            <button onClick={() => exportToCSV(monthlyTrends.map(t => ({
+              Month: t.month, Sales: t.sales, Expenses: t.expenses, "Stock Cost": t.stockCost, Profit: t.profit
+            })), `report-${period}`)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground bg-muted rounded-lg border border-border mb-2">
+              <span className="material-symbols-outlined text-[16px]">download</span> Export CSV
+            </button>
           </div>
 
           {/* Metrics Grid */}
