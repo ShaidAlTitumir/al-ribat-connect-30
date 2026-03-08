@@ -2,12 +2,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -21,9 +21,10 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
 
     // Verify the user with their token
-    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!, {
+    const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
     const { data: { user }, error: userError } = await userClient.auth.getUser();
@@ -37,53 +38,60 @@ Deno.serve(async (req) => {
     const userId = user.id;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    // Get all businesses owned by this user
+    // Get user's profile to find their business
     const { data: profile } = await adminClient
       .from("profiles")
       .select("business_id")
       .eq("user_id", userId)
       .maybeSingle();
 
+    // Get all businesses owned by this user
     const { data: ownedBusinesses } = await adminClient
       .from("businesses")
       .select("id")
       .eq("owner_id", userId);
 
-    const businessIds = (ownedBusinesses || []).map((b: any) => b.id);
-    if (profile?.business_id && !businessIds.includes(profile.business_id)) {
-      businessIds.push(profile.business_id);
-    }
+    const businessIds = new Set<string>();
+    (ownedBusinesses || []).forEach((b: any) => businessIds.add(b.id));
+    if (profile?.business_id) businessIds.add(profile.business_id);
 
-    // For each owned business, delete all related data
+    // Also check business_members
+    const { data: memberships } = await adminClient
+      .from("business_members")
+      .select("business_id")
+      .eq("user_id", userId);
+    (memberships || []).forEach((m: any) => businessIds.add(m.business_id));
+
+    // For each business, check if user is sole member
     for (const bizId of businessIds) {
-      // Check if other partners exist — if so, skip deleting the business
-      const { data: otherMembers } = await adminClient
+      const { data: otherProfiles } = await adminClient
         .from("profiles")
         .select("user_id")
         .eq("business_id", bizId)
         .neq("user_id", userId);
 
-      const hasOtherMembers = (otherMembers || []).length > 0;
+      const { data: otherMembers } = await adminClient
+        .from("business_members")
+        .select("user_id")
+        .eq("business_id", bizId)
+        .neq("user_id", userId);
 
-      // Remove user's partner record
+      const hasOthers = (otherProfiles || []).length > 0 || (otherMembers || []).length > 0;
+
+      // Remove user's partner record from this business
       await adminClient.from("partners").delete().eq("business_id", bizId).eq("user_id", userId);
 
-      if (!hasOtherMembers) {
-        // No other members — delete entire business and all data
-        // Delete in order respecting foreign keys
+      if (!hasOthers) {
+        // Sole owner — delete entire business and all data
         const { data: delReqs } = await adminClient.from("business_deletion_requests").select("id").eq("business_id", bizId);
-        if (delReqs && delReqs.length > 0) {
-          for (const dr of delReqs) {
-            await adminClient.from("business_deletion_votes").delete().eq("request_id", dr.id);
-          }
+        for (const dr of (delReqs || [])) {
+          await adminClient.from("business_deletion_votes").delete().eq("request_id", dr.id);
         }
         await adminClient.from("business_deletion_requests").delete().eq("business_id", bizId);
 
         const { data: leaveReqs } = await adminClient.from("partner_leave_requests").select("id").eq("business_id", bizId);
-        if (leaveReqs && leaveReqs.length > 0) {
-          for (const lr of leaveReqs) {
-            await adminClient.from("partner_leave_votes").delete().eq("request_id", lr.id);
-          }
+        for (const lr of (leaveReqs || [])) {
+          await adminClient.from("partner_leave_votes").delete().eq("request_id", lr.id);
         }
         await adminClient.from("partner_leave_requests").delete().eq("business_id", bizId);
 
@@ -106,13 +114,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Delete user's notifications
+    // Delete remaining user data
     await adminClient.from("notifications").delete().eq("user_id", userId);
-
-    // Delete business_members entries
     await adminClient.from("business_members").delete().eq("user_id", userId);
-
-    // Delete profile
     await adminClient.from("profiles").delete().eq("user_id", userId);
 
     // Finally, delete the auth user
