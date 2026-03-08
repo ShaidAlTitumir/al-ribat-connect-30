@@ -17,6 +17,7 @@ import Reports from "./pages/Reports";
 import Wallet from "./pages/Wallet";
 import Customers from "./pages/Customers";
 import Settings from "./pages/Settings";
+import Business from "./pages/Business";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
