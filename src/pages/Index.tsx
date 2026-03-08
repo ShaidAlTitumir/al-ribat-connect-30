@@ -102,12 +102,17 @@ const Index = () => {
     });
     const totalCap = Object.values(partnerCapMap).reduce((s, v) => s + v, 0);
     const partnerEquities: PartnerEquity[] = partnersList
-      .filter(p => partnerCapMap[p.id] !== undefined)
-      .map((p) => ({
-        name: p.name,
-        totalBdt: partnerCapMap[p.id] || 0,
-        percentage: totalCap > 0 ? ((partnerCapMap[p.id] || 0) / totalCap) * 100 : 0,
-      }))
+      .map((p) => {
+        const invested = partnerCapMap[p.id] || 0;
+        const pct = totalCap > 0 ? (invested / totalCap) * 100 : 0;
+        return {
+          name: p.name,
+          role: (p as any).role || "working",
+          totalBdt: invested,
+          percentage: pct,
+          profitShare: netProfit > 0 ? (pct / 100) * netProfit : 0,
+        };
+      })
       .sort((a, b) => b.totalBdt - a.totalBdt);
     setPartners(partnerEquities);
 
