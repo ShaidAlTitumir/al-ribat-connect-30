@@ -292,6 +292,147 @@ const Partners = () => {
     fetchData();
   };
 
+  // --- Leave Request Logic ---
+  const handleRequestLeave = async () => {
+    if (!businessId || !user) return;
+    const myPartner = acceptedPartners.find(p => p.user_id === user.id);
+    if (!myPartner) { toast.error("You are not a partner"); return; }
+    if (acceptedPartners.length <= 1) { toast.error("You are the only partner — delete the business instead"); return; }
+
+    // Check if there's already a pending request for this partner
+    const existing = leaveRequests.find(r => r.partner_id === myPartner.id);
+    if (existing) { toast.error("You already have a pending leave request"); return; }
+
+    const confirmed = window.confirm("Request to leave this business? Other partners will need to approve.");
+    if (!confirmed) return;
+
+    const { data: req, error } = await (supabase
+      .from("partner_leave_requests")
+      .insert({ business_id: businessId, partner_id: myPartner.id, requested_by: user.id }) as any)
+      .select()
+      .single();
+    if (error) { toast.error(error.message); return; }
+
+    // Create vote entries for all OTHER partners
+    const otherPartners = acceptedPartners.filter(p => p.user_id && p.user_id !== user.id);
+    if (otherPartners.length > 0) {
+      const voteInserts = otherPartners.map(p => ({
+        request_id: req.id,
+        user_id: p.user_id,
+        vote: "pending",
+      }));
+      await (supabase.from("partner_leave_votes") as any).insert(voteInserts);
+
+      // Notify other partners
+      const notifInserts = otherPartners.map(p => ({
+        user_id: p.user_id,
+        business_id: businessId,
+        title: "Partner Leave Request",
+        message: `${myPartner.name} has requested to leave the business. Your approval is required.`,
+        type: "leave_request",
+      }));
+      await (supabase.from("notifications") as any).insert(notifInserts);
+    }
+
+    // Auto-approve for the requester
+    await (supabase.from("partner_leave_votes") as any).insert({
+      request_id: req.id,
+      user_id: user.id,
+      vote: "approved",
+      voted_at: new Date().toISOString(),
+    });
+
+    await supabase.from("activity_log").insert({
+      action: "Requested to leave business",
+      details: { partner_name: myPartner.name },
+      business_id: businessId, user_id: user.id,
+    });
+
+    toast.success("Leave request sent to partners for approval");
+    fetchData();
+  };
+
+  const handleLeaveVote = async (requestId: string, vote: "approved" | "rejected") => {
+    if (!user || !businessId) return;
+
+    await (supabase.from("partner_leave_votes") as any)
+      .update({ vote, voted_at: new Date().toISOString() })
+      .eq("request_id", requestId)
+      .eq("user_id", user.id);
+
+    const request = leaveRequests.find(r => r.id === requestId);
+    const leavingPartner = request ? acceptedPartners.find(p => p.id === request.partner_id) : null;
+
+    if (vote === "rejected") {
+      await (supabase.from("partner_leave_requests") as any)
+        .update({ status: "rejected" })
+        .eq("id", requestId);
+
+      if (request && request.requested_by !== user.id) {
+        await (supabase.from("notifications") as any).insert({
+          user_id: request.requested_by,
+          business_id: businessId,
+          title: "Leave Request Rejected",
+          message: `Your request to leave the business was rejected by a partner.`,
+          type: "leave_request",
+        });
+      }
+      toast.info("You rejected the leave request");
+    } else {
+      // Check if all voted approved
+      const { data: allVotes } = await (supabase
+        .from("partner_leave_votes")
+        .select("*") as any)
+        .eq("request_id", requestId);
+
+      const allApproved = (allVotes || []).every((v: any) => v.vote === "approved");
+      if (allApproved && leavingPartner) {
+        // Execute leave: remove partner from business
+        await (supabase.from("partner_leave_requests") as any)
+          .update({ status: "approved" })
+          .eq("id", requestId);
+
+        await supabase.from("partners").delete().eq("id", leavingPartner.id);
+
+        if (leavingPartner.user_id) {
+          try {
+            await supabase.rpc("add_partner_to_business" as any, {
+              _target_user_id: leavingPartner.user_id,
+              _business_id: null as any,
+              _role: "admin",
+            });
+          } catch {}
+
+          await (supabase.from("notifications") as any).insert({
+            user_id: leavingPartner.user_id,
+            business_id: businessId,
+            title: "You have left the business",
+            message: `All partners approved your request to leave.`,
+            type: "leave_request",
+          });
+        }
+
+        await supabase.from("activity_log").insert({
+          action: "Partner left business (approved)",
+          details: { partner_name: leavingPartner.name },
+          business_id: businessId, user_id: user.id,
+        });
+
+        toast.success(`${leavingPartner.name} has been removed from the business`);
+      } else {
+        toast.success("Vote recorded. Waiting for other partners.");
+      }
+    }
+    fetchData();
+  };
+
+  const getMyLeaveRequest = () => {
+    if (!user) return null;
+    const myPartner = acceptedPartners.find(p => p.user_id === user.id);
+    if (!myPartner) return null;
+    return leaveRequests.find(r => r.partner_id === myPartner.id);
+  };
+
   const acceptedPartners = partners.filter(p => p.status === "accepted");
 
   // Calculate equity
