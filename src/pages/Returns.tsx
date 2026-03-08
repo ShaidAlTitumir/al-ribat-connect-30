@@ -16,6 +16,7 @@ const Returns = () => {
   const [refundAmount, setRefundAmount] = useState("");
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!businessId) return;
