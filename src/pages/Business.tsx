@@ -784,7 +784,7 @@ const Business = () => {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 px-3 py-2 bg-card rounded-lg border border-border">
-                                <span className="material-symbols-outlined text-muted-foreground text-[16px]">savings</span>
+                                <span className="material-symbols-outlined text-muted-foreground text-[16px]">account_balance</span>
                                 <div>
                                   <p className="text-[10px] text-muted-foreground">Capital</p>
                                   <p className="text-xs font-bold text-foreground">৳{stats.totalCapital.toLocaleString("en-IN")}</p>
