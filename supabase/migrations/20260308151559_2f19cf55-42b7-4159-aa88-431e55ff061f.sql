@@ -1,0 +1,1 @@
+ALTER TABLE public.businesses ADD COLUMN cash_balance numeric DEFAULT NULL;

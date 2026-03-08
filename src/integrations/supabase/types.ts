@@ -152,6 +152,7 @@ export type Database = {
         Row: {
           address: string | null
           business_type: string | null
+          cash_balance: number | null
           created_at: string
           default_currency: string
           description: string | null
@@ -166,6 +167,7 @@ export type Database = {
         Insert: {
           address?: string | null
           business_type?: string | null
+          cash_balance?: number | null
           created_at?: string
           default_currency?: string
           description?: string | null
@@ -180,6 +182,7 @@ export type Database = {
         Update: {
           address?: string | null
           business_type?: string | null
+          cash_balance?: number | null
           created_at?: string
           default_currency?: string
           description?: string | null
