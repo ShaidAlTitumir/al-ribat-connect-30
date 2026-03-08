@@ -470,8 +470,37 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
           </section>
         </div>
 
-        {/* Profit Analysis Sidebar */}
+        {/* Wallet Balance & Profit Analysis Sidebar */}
         <div className="space-y-6">
+          {/* Wallet Balance Card */}
+          <div className={`rounded-xl p-4 border ${totalLanded > 0 && walletBdt < totalLanded ? "bg-destructive/10 border-destructive/30" : "bg-card border-border"}`}>
+            <h4 className="text-sm font-bold text-foreground flex items-center gap-2 mb-3">
+              <span className="material-symbols-outlined text-[18px]">account_balance_wallet</span> Wallet Balance
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <span className="text-xs text-muted-foreground">BDT</span>
+                <p className={`font-bold text-lg ${walletBdt >= 0 ? "text-foreground" : "text-destructive"}`}>৳{walletBdt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+              </div>
+              <div>
+                <span className="text-xs text-muted-foreground">RMB</span>
+                <p className={`font-bold text-lg ${walletRmb >= 0 ? "text-foreground" : "text-destructive"}`}>¥{walletRmb.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+              </div>
+            </div>
+            {totalLanded > 0 && walletBdt < totalLanded && (
+              <div className="mt-3 flex items-center gap-1.5 text-destructive text-xs font-medium">
+                <span className="material-symbols-outlined text-[16px]">warning</span>
+                Insufficient balance — need ৳{totalLanded.toFixed(0)}
+              </div>
+            )}
+            {totalLanded > 0 && walletBdt >= totalLanded && (
+              <div className="mt-3 flex items-center gap-1.5 text-emerald-600 text-xs font-medium">
+                <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                Sufficient balance for this purchase
+              </div>
+            )}
+          </div>
+
           <div className="bg-primary text-primary-foreground rounded-xl p-6 shadow-lg sticky top-24">
             <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
               <span className="material-symbols-outlined">calculate</span> Profit Analysis
