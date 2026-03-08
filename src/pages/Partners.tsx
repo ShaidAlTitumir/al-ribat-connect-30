@@ -28,6 +28,12 @@ const Partners = () => {
   const [editContribForm, setEditContribForm] = useState({ amount: "", currency: "BDT" as "BDT" | "RMB" });
   const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
   const [leaveVotes, setLeaveVotes] = useState<Record<string, any[]>>({});
+  const [showLeaveForm, setShowLeaveForm] = useState(false);
+  const [settlementAmount, setSettlementAmount] = useState("");
+  const [settlementCurrency, setSettlementCurrency] = useState<"BDT" | "RMB">("BDT");
+  const [settlementNotes, setSettlementNotes] = useState("");
+  const [removalTarget, setRemovalTarget] = useState<any>(null);
+  const [showRemovalForm, setShowRemovalForm] = useState(false);
 
   useEffect(() => {
     if (!businessId) return;
