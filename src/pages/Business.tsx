@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { toast } from "sonner";
+import { format } from "date-fns";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 
 interface BusinessData {
@@ -34,6 +35,17 @@ interface DeletionVote {
   voted_at: string | null;
 }
 
+interface BusinessStats {
+  totalSalesRevenue: number;
+  totalExpenses: number;
+  totalProfit: number;
+  inventoryItems: number;
+  totalStock: number;
+  totalDue: number;
+  customerCount: number;
+  totalCapital: number;
+}
+
 const Business = () => {
   const { user } = useAuth();
   const { businessId, switchBusiness } = useBusiness();
@@ -46,6 +58,8 @@ const Business = () => {
   const [deletionVotes, setDeletionVotes] = useState<Record<string, DeletionVote[]>>({});
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [businessStats, setBusinessStats] = useState<Record<string, BusinessStats>>({});
 
   // Form state
   const [formName, setFormName] = useState("");
@@ -128,6 +142,59 @@ const Business = () => {
     }
 
     setLoading(false);
+  };
+
+  const fetchBusinessStats = async (bizId: string) => {
+    if (businessStats[bizId]) return; // already fetched
+
+    const [salesRes, expensesRes, inventoryRes, customersRes, capitalRes] = await Promise.all([
+      (supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity") as any)
+        .eq("business_id", bizId),
+      (supabase.from("expenses").select("amount, currency") as any)
+        .eq("business_id", bizId),
+      (supabase.from("inventory_items").select("id, current_stock") as any)
+        .eq("business_id", bizId),
+      (supabase.from("customers").select("id, total_due") as any)
+        .eq("business_id", bizId),
+      (supabase.from("capital_contributions").select("amount, currency") as any)
+        .eq("business_id", bizId),
+    ]);
+
+    const sales = salesRes.data || [];
+    const expenses = expensesRes.data || [];
+    const inventory = inventoryRes.data || [];
+    const customers = customersRes.data || [];
+    const capital = capitalRes.data || [];
+
+    const totalSalesRevenue = sales.reduce((s: number, r: any) => s + Number(r.unit_price_bdt) * Number(r.quantity), 0);
+    const totalProfit = sales.reduce((s: number, r: any) => s + Number(r.expected_profit), 0);
+    const totalExpenses = expenses.reduce((s: number, e: any) => s + Number(e.amount), 0);
+    const totalStock = inventory.reduce((s: number, i: any) => s + Number(i.current_stock), 0);
+    const totalDue = customers.reduce((s: number, c: any) => s + Number(c.total_due), 0);
+    const totalCapital = capital.reduce((s: number, c: any) => s + Number(c.amount), 0);
+
+    setBusinessStats(prev => ({
+      ...prev,
+      [bizId]: {
+        totalSalesRevenue,
+        totalExpenses,
+        totalProfit,
+        inventoryItems: inventory.length,
+        totalStock,
+        totalDue,
+        customerCount: customers.length,
+        totalCapital,
+      }
+    }));
+  };
+
+  const toggleExpand = (bizId: string) => {
+    if (expandedId === bizId) {
+      setExpandedId(null);
+    } else {
+      setExpandedId(bizId);
+      fetchBusinessStats(bizId);
+    }
   };
 
   const resetForm = () => {
@@ -593,7 +660,129 @@ const Business = () => {
                     </div>
                   </div>
 
-                  {/* Pending deletion request banner (for all members) */}
+                  {/* Expand/Collapse toggle */}
+                  <button
+                    onClick={() => toggleExpand(b.id)}
+                    className="w-full mt-2 flex items-center justify-center gap-1 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm">
+                      {expandedId === b.id ? "expand_less" : "expand_more"}
+                    </span>
+                    {expandedId === b.id ? "Show less" : "View details"}
+                  </button>
+
+                  {/* Expanded details panel */}
+                  {expandedId === b.id && (() => {
+                    const stats = businessStats[b.id];
+                    const netProfit = stats ? stats.totalProfit - stats.totalExpenses : 0;
+                    const bizValue = b.manual_value != null
+                      ? Number(b.manual_value)
+                      : (stats ? stats.totalCapital + netProfit : 0);
+
+                    return (
+                      <div className="mt-2 border border-border rounded-lg bg-muted/30 p-4 space-y-4">
+                        {!stats ? (
+                          <div className="flex items-center justify-center py-4">
+                            <span className="text-xs text-muted-foreground">Loading stats...</span>
+                          </div>
+                        ) : (
+                          <>
+                            {/* Key metrics grid */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                              <div className="bg-card rounded-lg p-3 border border-border">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <span className="material-symbols-outlined text-primary text-[16px]">account_balance</span>
+                                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Business Value</span>
+                                </div>
+                                <p className="text-sm font-bold text-foreground">৳{bizValue.toLocaleString("en-IN")}</p>
+                                {b.manual_value != null && (
+                                  <p className="text-[9px] text-muted-foreground">Manual estimate</p>
+                                )}
+                              </div>
+                              <div className="bg-card rounded-lg p-3 border border-border">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <span className="material-symbols-outlined text-emerald-500 text-[16px]">trending_up</span>
+                                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Net Profit</span>
+                                </div>
+                                <p className={`text-sm font-bold ${netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                                  {netProfit >= 0 ? "+" : ""}৳{netProfit.toLocaleString("en-IN")}
+                                </p>
+                              </div>
+                              <div className="bg-card rounded-lg p-3 border border-border">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <span className="material-symbols-outlined text-primary text-[16px]">shopping_cart</span>
+                                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Total Sales</span>
+                                </div>
+                                <p className="text-sm font-bold text-foreground">৳{stats.totalSalesRevenue.toLocaleString("en-IN")}</p>
+                              </div>
+                              <div className="bg-card rounded-lg p-3 border border-border">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <span className="material-symbols-outlined text-destructive text-[16px]">receipt_long</span>
+                                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Expenses</span>
+                                </div>
+                                <p className="text-sm font-bold text-foreground">৳{stats.totalExpenses.toLocaleString("en-IN")}</p>
+                              </div>
+                            </div>
+
+                            {/* Secondary info */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                              <div className="flex items-center gap-2 px-3 py-2 bg-card rounded-lg border border-border">
+                                <span className="material-symbols-outlined text-muted-foreground text-[16px]">inventory_2</span>
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground">Inventory</p>
+                                  <p className="text-xs font-bold text-foreground">{stats.inventoryItems} items · {stats.totalStock} units</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 px-3 py-2 bg-card rounded-lg border border-border">
+                                <span className="material-symbols-outlined text-muted-foreground text-[16px]">people</span>
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground">Customers</p>
+                                  <p className="text-xs font-bold text-foreground">{stats.customerCount}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 px-3 py-2 bg-card rounded-lg border border-border">
+                                <span className="material-symbols-outlined text-muted-foreground text-[16px]">pending</span>
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground">Total Due</p>
+                                  <p className="text-xs font-bold text-foreground">৳{stats.totalDue.toLocaleString("en-IN")}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 px-3 py-2 bg-card rounded-lg border border-border">
+                                <span className="material-symbols-outlined text-muted-foreground text-[16px]">savings</span>
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground">Capital</p>
+                                  <p className="text-xs font-bold text-foreground">৳{stats.totalCapital.toLocaleString("en-IN")}</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Meta info */}
+                            <div className="flex items-center gap-4 flex-wrap pt-1 border-t border-border">
+                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[12px]">calendar_today</span>
+                                Created {format(new Date(b.created_at), "MMM d, yyyy")}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[12px]">group</span>
+                                {partnerCount} partner{partnerCount !== 1 ? "s" : ""}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[12px]">currency_exchange</span>
+                                Rate: ¥1 = ৳{b.exchange_rate}
+                              </span>
+                              {isOwner && (
+                                <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                  <span className="material-symbols-outlined text-[12px]">shield</span>
+                                  You are the owner
+                                </span>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   {pendingRequest && (
                     <div className="mt-3 border border-destructive/30 bg-destructive/5 rounded-lg p-3 space-y-2">
                       <div className="flex items-center gap-2">
