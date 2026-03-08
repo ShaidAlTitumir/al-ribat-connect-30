@@ -304,10 +304,27 @@ const Business = () => {
 
   // Delete business (no partners — immediate delete)
   const handleDeleteDirect = async (b: BusinessData) => {
-    if (deleteConfirmText !== b.name) {
-      toast.error("Please type the business name to confirm");
+    if (deleteConfirmText !== b.name.toUpperCase()) {
+      toast.error("Please type the business name in UPPERCASE to confirm");
       return;
     }
+    // Delete related data first to avoid foreign key constraint violations
+    await supabase.from("profiles").update({ business_id: null }).eq("business_id", b.id);
+    await supabase.from("business_members").delete().eq("business_id", b.id);
+    await supabase.from("customer_ledger").delete().eq("business_id", b.id);
+    await supabase.from("returns").delete().eq("business_id", b.id);
+    await supabase.from("sales").delete().eq("business_id", b.id);
+    await supabase.from("purchase_transactions").delete().eq("business_id", b.id);
+    await supabase.from("exchanges").delete().eq("business_id", b.id);
+    await supabase.from("partner_transfers").delete().eq("business_id", b.id);
+    await supabase.from("capital_contributions").delete().eq("business_id", b.id);
+    await supabase.from("expenses").delete().eq("business_id", b.id);
+    await supabase.from("activity_log").delete().eq("business_id", b.id);
+    await supabase.from("customers").delete().eq("business_id", b.id);
+    await supabase.from("inventory_items").delete().eq("business_id", b.id);
+    await supabase.from("partners").delete().eq("business_id", b.id);
+    await supabase.from("notifications").delete().eq("business_id", b.id);
+    await supabase.from("business_deletion_requests").delete().eq("business_id", b.id);
     const { error } = await supabase.from("businesses").delete().eq("id", b.id);
     if (error) { toast.error(error.message); return; }
     
