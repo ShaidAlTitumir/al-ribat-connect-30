@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 import { format } from "date-fns";
+import { exportToCSV } from "@/lib/exportUtils";
 
 const Expenses = () => {
   const { businessId, exchangeRate } = useBusiness();
