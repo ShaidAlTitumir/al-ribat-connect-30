@@ -430,6 +430,13 @@ const Customers = () => {
         </div>
       </div>
       <InvoiceModal data={invoiceData} onClose={() => setInvoiceData(null)} />
+      <BulkInvoiceModal
+        open={showBulkInvoice}
+        onClose={() => setShowBulkInvoice(false)}
+        customerName={selectedCustomer?.name || "Customer"}
+        business={{ name: businessName, phone: businessPhone, address: businessAddress }}
+        sales={purchaseHistory}
+      />
     </div>
   );
 };
