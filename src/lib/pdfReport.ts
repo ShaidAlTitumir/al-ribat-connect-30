@@ -55,7 +55,7 @@ export async function fetchReportData(
   });
   const expenseBreakdown = Object.entries(catMap).map(([category, amount]) => ({ category, amount })).sort((a, b) => b.amount - a.amount);
 
-  const netProfit = totalProfit - totalExpenses;
+  const netProfit = totalRevenue - costOfGoods;
   const grossProfit = totalRevenue - costOfGoods;
   const margin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
 
