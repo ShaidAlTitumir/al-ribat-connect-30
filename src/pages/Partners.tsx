@@ -15,11 +15,11 @@ const Partners = () => {
   const [partnerRole, setPartnerRole] = useState("working");
   const [selectedPartnerId, setSelectedPartnerId] = useState("");
   const [capitalAmount, setCapitalAmount] = useState("");
-  const [generatedCode, setGeneratedCode] = useState("");
-  const [pendingInvites, setPendingInvites] = useState<any[]>([]);
   const [searchUsername, setSearchUsername] = useState("");
   const [foundUser, setFoundUser] = useState<any>(null);
   const [searchingUser, setSearchingUser] = useState(false);
+  const [editingPartner, setEditingPartner] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ name: "", phone: "", email: "", address: "", role: "" });
 
   useEffect(() => {
     if (!businessId) return;
