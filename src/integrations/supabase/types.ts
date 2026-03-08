@@ -519,6 +519,9 @@ export type Database = {
           id: string
           partner_id: string
           requested_by: string
+          settlement_amount: number | null
+          settlement_currency: string | null
+          settlement_notes: string | null
           status: string
           type: string
         }
@@ -528,6 +531,9 @@ export type Database = {
           id?: string
           partner_id: string
           requested_by: string
+          settlement_amount?: number | null
+          settlement_currency?: string | null
+          settlement_notes?: string | null
           status?: string
           type?: string
         }
@@ -537,6 +543,9 @@ export type Database = {
           id?: string
           partner_id?: string
           requested_by?: string
+          settlement_amount?: number | null
+          settlement_currency?: string | null
+          settlement_notes?: string | null
           status?: string
           type?: string
         }

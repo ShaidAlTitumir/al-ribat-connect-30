@@ -28,6 +28,12 @@ const Partners = () => {
   const [editContribForm, setEditContribForm] = useState({ amount: "", currency: "BDT" as "BDT" | "RMB" });
   const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
   const [leaveVotes, setLeaveVotes] = useState<Record<string, any[]>>({});
+  const [showLeaveForm, setShowLeaveForm] = useState(false);
+  const [settlementAmount, setSettlementAmount] = useState("");
+  const [settlementCurrency, setSettlementCurrency] = useState<"BDT" | "RMB">("BDT");
+  const [settlementNotes, setSettlementNotes] = useState("");
+  const [removalTarget, setRemovalTarget] = useState<any>(null);
+  const [showRemovalForm, setShowRemovalForm] = useState(false);
 
   useEffect(() => {
     if (!businessId) return;
@@ -168,6 +174,8 @@ const Partners = () => {
       const confirmed = window.confirm(`Remove ${partner.name} from the business?`);
       if (!confirmed) return;
       try {
+        // Delete capital contributions
+        await supabase.from("capital_contributions").delete().eq("partner_id", partner.id);
         const { error } = await supabase.from("partners").delete().eq("id", partner.id);
         if (error) { toast.error(error.message); return; }
         if (partner.user_id) {
@@ -193,44 +201,10 @@ const Partners = () => {
       return;
     }
 
-    // Multiple partners: create removal request needing approval
-    const existingRemoval = leaveRequests.find(r => r.partner_id === partner.id && r.type === "removal");
-    if (existingRemoval) { toast.error("A removal request is already pending for this partner"); return; }
-
-    const confirmed = window.confirm(`Request to remove ${partner.name}? Other partners will need to approve.`);
-    if (!confirmed) return;
-
-    const { data: req, error } = await (supabase
-      .from("partner_leave_requests")
-      .insert({ business_id: businessId, partner_id: partner.id, requested_by: user.id, type: "removal" }) as any)
-      .select().single();
-    if (error) { toast.error(error.message); return; }
-
-    // Create votes for all other partners (excluding the one being removed and the requester)
-    const voterPartners = acceptedPartners.filter(p => p.user_id && p.user_id !== user.id && p.id !== partner.id);
-    if (voterPartners.length > 0) {
-      const voteInserts = voterPartners.map(p => ({ request_id: req.id, user_id: p.user_id, vote: "pending" }));
-      await (supabase.from("partner_leave_votes") as any).insert(voteInserts);
-      const notifInserts = voterPartners.map(p => ({
-        user_id: p.user_id, business_id: businessId,
-        title: "Partner Removal Request",
-        message: `A request to remove ${partner.name} from the business has been submitted. Your approval is required.`,
-        type: "removal_request",
-      }));
-      await (supabase.from("notifications") as any).insert(notifInserts);
-    }
-
-    // Auto-approve for requester
-    await (supabase.from("partner_leave_votes") as any).insert({
-      request_id: req.id, user_id: user.id, vote: "approved", voted_at: new Date().toISOString(),
-    });
-
-    await supabase.from("activity_log").insert({
-      action: "Requested partner removal", details: { partner_name: partner.name },
-      business_id: businessId, user_id: user.id,
-    });
-    toast.success("Removal request sent to partners for approval");
-    fetchData();
+    // Multiple partners: show settlement form
+    setRemovalTarget(partner);
+    setShowRemovalForm(true);
+    setSettlementAmount(""); setSettlementCurrency("BDT"); setSettlementNotes("");
   };
 
   const handleEditPartner = (partner: any) => {
@@ -333,57 +307,96 @@ const Partners = () => {
     const myPartner = acceptedPartners.find(p => p.user_id === user.id);
     if (!myPartner) { toast.error("You are not a partner"); return; }
     if (acceptedPartners.length <= 1) { toast.error("You are the only partner — delete the business instead"); return; }
-
-    // Check if there's already a pending request for this partner
     const existing = leaveRequests.find(r => r.partner_id === myPartner.id);
     if (existing) { toast.error("You already have a pending leave request"); return; }
 
-    const confirmed = window.confirm("Request to leave this business? Other partners will need to approve.");
-    if (!confirmed) return;
+    const amt = parseFloat(settlementAmount) || 0;
 
     const { data: req, error } = await (supabase
       .from("partner_leave_requests")
-      .insert({ business_id: businessId, partner_id: myPartner.id, requested_by: user.id }) as any)
-      .select()
-      .single();
+      .insert({
+        business_id: businessId, partner_id: myPartner.id, requested_by: user.id,
+        settlement_amount: amt, settlement_currency: settlementCurrency,
+        settlement_notes: settlementNotes || null,
+      }) as any)
+      .select().single();
     if (error) { toast.error(error.message); return; }
 
-    // Create vote entries for all OTHER partners
     const otherPartners = acceptedPartners.filter(p => p.user_id && p.user_id !== user.id);
     if (otherPartners.length > 0) {
-      const voteInserts = otherPartners.map(p => ({
-        request_id: req.id,
-        user_id: p.user_id,
-        vote: "pending",
-      }));
-      await (supabase.from("partner_leave_votes") as any).insert(voteInserts);
-
-      // Notify other partners
-      const notifInserts = otherPartners.map(p => ({
-        user_id: p.user_id,
-        business_id: businessId,
-        title: "Partner Leave Request",
-        message: `${myPartner.name} has requested to leave the business. Your approval is required.`,
-        type: "leave_request",
-      }));
-      await (supabase.from("notifications") as any).insert(notifInserts);
+      await (supabase.from("partner_leave_votes") as any).insert(
+        otherPartners.map(p => ({ request_id: req.id, user_id: p.user_id, vote: "pending" }))
+      );
+      await (supabase.from("notifications") as any).insert(
+        otherPartners.map(p => ({
+          user_id: p.user_id, business_id: businessId,
+          title: "Partner Leave Request",
+          message: `${myPartner.name} has requested to leave with a settlement of ${settlementCurrency === "RMB" ? "¥" : "৳"}${amt}. Your approval is required.`,
+          type: "leave_request",
+        }))
+      );
     }
 
-    // Auto-approve for the requester
     await (supabase.from("partner_leave_votes") as any).insert({
-      request_id: req.id,
-      user_id: user.id,
-      vote: "approved",
-      voted_at: new Date().toISOString(),
+      request_id: req.id, user_id: user.id, vote: "approved", voted_at: new Date().toISOString(),
     });
 
     await supabase.from("activity_log").insert({
       action: "Requested to leave business",
-      details: { partner_name: myPartner.name },
+      details: { partner_name: myPartner.name, settlement_amount: amt, settlement_currency: settlementCurrency },
       business_id: businessId, user_id: user.id,
     });
 
     toast.success("Leave request sent to partners for approval");
+    setShowLeaveForm(false); setSettlementAmount(""); setSettlementNotes(""); setSettlementCurrency("BDT");
+    fetchData();
+  };
+
+  const handleSubmitRemoval = async () => {
+    if (!businessId || !user || !removalTarget) return;
+    const partner = removalTarget;
+    const existingRemoval = leaveRequests.find(r => r.partner_id === partner.id && r.type === "removal");
+    if (existingRemoval) { toast.error("A removal request is already pending"); return; }
+
+    const amt = parseFloat(settlementAmount) || 0;
+
+    const { data: req, error } = await (supabase
+      .from("partner_leave_requests")
+      .insert({
+        business_id: businessId, partner_id: partner.id, requested_by: user.id, type: "removal",
+        settlement_amount: amt, settlement_currency: settlementCurrency,
+        settlement_notes: settlementNotes || null,
+      }) as any)
+      .select().single();
+    if (error) { toast.error(error.message); return; }
+
+    const voterPartners = acceptedPartners.filter(p => p.user_id && p.user_id !== user.id && p.id !== partner.id);
+    if (voterPartners.length > 0) {
+      await (supabase.from("partner_leave_votes") as any).insert(
+        voterPartners.map(p => ({ request_id: req.id, user_id: p.user_id, vote: "pending" }))
+      );
+      await (supabase.from("notifications") as any).insert(
+        voterPartners.map(p => ({
+          user_id: p.user_id, business_id: businessId,
+          title: "Partner Removal Request",
+          message: `A request to remove ${partner.name} with settlement ${settlementCurrency === "RMB" ? "¥" : "৳"}${amt} has been submitted.`,
+          type: "removal_request",
+        }))
+      );
+    }
+
+    await (supabase.from("partner_leave_votes") as any).insert({
+      request_id: req.id, user_id: user.id, vote: "approved", voted_at: new Date().toISOString(),
+    });
+
+    await supabase.from("activity_log").insert({
+      action: "Requested partner removal",
+      details: { partner_name: partner.name, settlement_amount: amt, settlement_currency: settlementCurrency },
+      business_id: businessId, user_id: user.id,
+    });
+    toast.success("Removal request sent to partners for approval");
+    setShowRemovalForm(false); setRemovalTarget(null);
+    setSettlementAmount(""); setSettlementNotes(""); setSettlementCurrency("BDT");
     fetchData();
   };
 
@@ -432,7 +445,14 @@ const Partners = () => {
           .update({ status: "approved" })
           .eq("id", requestId);
 
+        // Delete capital contributions for the leaving partner
+        await supabase.from("capital_contributions").delete().eq("partner_id", leavingPartner.id);
+
         await supabase.from("partners").delete().eq("id", leavingPartner.id);
+
+        const settlementInfo = request?.settlement_amount > 0
+          ? ` Settlement: ${request.settlement_currency === "RMB" ? "¥" : "৳"}${request.settlement_amount}`
+          : "";
 
         if (leavingPartner.user_id) {
           try {
@@ -447,16 +467,20 @@ const Partners = () => {
             user_id: leavingPartner.user_id,
             business_id: businessId,
             title: isRemoval ? "You have been removed from the business" : "You have left the business",
-            message: isRemoval
-              ? `All partners approved your removal from the business.`
-              : `All partners approved your request to leave.`,
+            message: (isRemoval
+              ? `All partners approved your removal.`
+              : `All partners approved your request to leave.`) + settlementInfo,
             type: isRemoval ? "removal_request" : "leave_request",
           });
         }
 
         await supabase.from("activity_log").insert({
           action: isRemoval ? "Partner removed (approved)" : "Partner left business (approved)",
-          details: { partner_name: leavingPartner.name },
+          details: {
+            partner_name: leavingPartner.name,
+            settlement_amount: request?.settlement_amount || 0,
+            settlement_currency: request?.settlement_currency || "BDT",
+          },
           business_id: businessId, user_id: user.id,
         });
 
@@ -765,6 +789,11 @@ const Partners = () => {
                       <p className="text-sm font-bold text-foreground">Leave request pending</p>
                     </div>
                     <p className="text-xs text-muted-foreground">Waiting for other partners to approve your request to leave.</p>
+                    {getMyLeaveRequest()!.settlement_amount > 0 && (
+                      <p className="text-xs font-bold text-foreground mt-1">
+                        Settlement: {getMyLeaveRequest()!.settlement_currency === "RMB" ? "¥" : "৳"}{getMyLeaveRequest()!.settlement_amount}
+                      </p>
+                    )}
                     {leaveVotes[getMyLeaveRequest()!.id] && (
                       <div className="mt-2 space-y-1">
                         {leaveVotes[getMyLeaveRequest()!.id].map((v: any) => {
@@ -781,8 +810,48 @@ const Partners = () => {
                       </div>
                     )}
                   </div>
+                ) : showLeaveForm ? (
+                  <div className="p-3 rounded-lg bg-muted border border-border space-y-3">
+                    <p className="text-sm font-bold">Settlement Details</p>
+                    <p className="text-xs text-muted-foreground">Propose how much should be settled when you leave. Your capital contributions will be removed.</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold uppercase text-muted-foreground">Amount</label>
+                        <input className="w-full bg-card rounded-lg px-3 py-2 text-sm border border-border text-foreground"
+                          type="number" placeholder="0" value={settlementAmount}
+                          onChange={(e) => setSettlementAmount(e.target.value)} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold uppercase text-muted-foreground">Currency</label>
+                        <div className="flex bg-card rounded-lg p-1 border border-border">
+                          {(["BDT", "RMB"] as const).map((c) => (
+                            <button key={c} onClick={() => setSettlementCurrency(c)}
+                              className={`flex-1 py-1.5 text-xs font-bold rounded-md ${settlementCurrency === c ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+                              {c}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold uppercase text-muted-foreground">Notes (optional)</label>
+                      <input className="w-full bg-card rounded-lg px-3 py-2 text-sm border border-border text-foreground"
+                        placeholder="e.g. Return of initial investment"
+                        value={settlementNotes} onChange={(e) => setSettlementNotes(e.target.value)} />
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={handleRequestLeave}
+                        className="flex-1 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-bold hover:bg-destructive/90">
+                        Submit Leave Request
+                      </button>
+                      <button onClick={() => setShowLeaveForm(false)}
+                        className="flex-1 py-2 rounded-lg bg-muted border border-border text-foreground text-sm font-bold">
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
                 ) : (
-                  <button onClick={handleRequestLeave}
+                  <button onClick={() => { setShowLeaveForm(true); setSettlementAmount(""); setSettlementNotes(""); setSettlementCurrency("BDT"); }}
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-destructive/10 text-destructive font-bold text-sm hover:bg-destructive/20 transition-colors">
                     <LogOut className="w-4 h-4" />
                     Request to Leave Business
@@ -813,9 +882,19 @@ const Partners = () => {
                               : `${targetPartner?.name || "Partner"} wants to leave`}
                           </p>
                         </div>
-                        <p className="text-xs text-muted-foreground mb-2">
+                        <p className="text-xs text-muted-foreground mb-1">
                           Requested {format(new Date(r.created_at), "MMM d, yyyy")}
                         </p>
+                        {r.settlement_amount > 0 && (
+                          <div className="p-2 rounded-md bg-accent/50 border border-border mb-2">
+                            <p className="text-xs font-bold text-foreground">
+                              Settlement: {r.settlement_currency === "RMB" ? "¥" : "৳"}{r.settlement_amount}
+                            </p>
+                            {r.settlement_notes && (
+                              <p className="text-[10px] text-muted-foreground mt-0.5">{r.settlement_notes}</p>
+                            )}
+                          </div>
+                        )}
                         {myVote && myVote.vote !== "pending" ? (
                           <p className={`text-xs font-bold capitalize ${myVote.vote === "approved" ? "text-green-500" : "text-destructive"}`}>
                             You {myVote.vote}
@@ -1015,6 +1094,56 @@ const Partners = () => {
           ))}
         </div>
       </div>
+
+      {/* Removal Settlement Modal */}
+      {showRemovalForm && removalTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-card rounded-xl border border-border p-5 w-full max-w-md space-y-4 shadow-xl">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-destructive">person_remove</span>
+              <h3 className="font-bold text-lg">Remove {removalTarget.name}</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Propose a settlement amount for {removalTarget.name}'s departure. Their capital contributions will be removed upon approval.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase text-muted-foreground">Settlement Amount</label>
+                <input className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border-none text-foreground"
+                  type="number" placeholder="0" value={settlementAmount}
+                  onChange={(e) => setSettlementAmount(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase text-muted-foreground">Currency</label>
+                <div className="flex bg-muted rounded-lg p-1">
+                  {(["BDT", "RMB"] as const).map((c) => (
+                    <button key={c} onClick={() => setSettlementCurrency(c)}
+                      className={`flex-1 py-2 text-xs font-bold rounded-md ${settlementCurrency === c ? "bg-card shadow-sm text-primary" : "text-muted-foreground"}`}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold uppercase text-muted-foreground">Notes (optional)</label>
+              <input className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border-none text-foreground"
+                placeholder="e.g. Return of initial investment"
+                value={settlementNotes} onChange={(e) => setSettlementNotes(e.target.value)} />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button onClick={handleSubmitRemoval}
+                className="flex-1 py-2.5 rounded-lg bg-destructive text-destructive-foreground font-bold text-sm hover:bg-destructive/90">
+                Submit Removal Request
+              </button>
+              <button onClick={() => { setShowRemovalForm(false); setRemovalTarget(null); }}
+                className="flex-1 py-2.5 rounded-lg bg-muted border border-border text-foreground font-bold text-sm">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
