@@ -135,8 +135,35 @@ const Expenses = () => {
                             {c}
                           </button>
                         ))}
-                      </div>
                     </div>
+                  </div>
+                  {currency === "RMB" && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-sm font-medium">RMB Rate</label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <span className="text-xs text-muted-foreground">Manual</span>
+                          <button type="button" onClick={() => setUseManualRate(!useManualRate)}
+                            className={`relative w-9 h-5 rounded-full transition-colors ${useManualRate ? "bg-primary" : "bg-muted border border-border"}`}>
+                            <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-background shadow transition-transform ${useManualRate ? "translate-x-4" : ""}`} />
+                          </button>
+                        </label>
+                      </div>
+                      {useManualRate ? (
+                        <Input type="number" step="0.01" placeholder="Enter rate" value={manualRate}
+                          onChange={(e) => setManualRate(e.target.value)} className="bg-muted" />
+                      ) : (
+                        <div className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
+                          {exchangeRate} BDT/RMB (default)
+                        </div>
+                      )}
+                      {form.amount && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          = ৳{((parseFloat(form.amount) || 0) * (useManualRate && manualRate ? parseFloat(manualRate) : exchangeRate)).toFixed(2)} BDT
+                        </p>
+                      )}
+                    </div>
+                  )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Category</label>
