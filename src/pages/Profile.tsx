@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusiness } from "@/contexts/BusinessContext";
@@ -8,9 +10,12 @@ import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 const Profile = () => {
   const { user } = useAuth();
   const { userRole } = useBusiness();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState({ full_name: "", phone: "", username: "" });
   const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [saving, setSaving] = useState("");
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [deleteAccountText, setDeleteAccountText] = useState("");
 
   useEffect(() => {
     if (!user) return;
