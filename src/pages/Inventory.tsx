@@ -192,6 +192,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const { user } = useAuth();
   const [itemMode, setItemMode] = useState<"new" | "existing">("new");
   const [shippingMethod, setShippingMethod] = useState("sea");
+  const [additionalCostCurrency, setAdditionalCostCurrency] = useState<"BDT" | "RMB">("BDT");
   const [saving, setSaving] = useState(false);
   const [existingItems, setExistingItems] = useState<any[]>([]);
   const [selectedItemId, setSelectedItemId] = useState("");
