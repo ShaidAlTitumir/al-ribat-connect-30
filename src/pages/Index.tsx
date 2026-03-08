@@ -203,7 +203,7 @@ const Index = () => {
   const getSubtitle = (act: any) => {
     const d = act.details || {};
     switch (act.action) {
-      case "Recorded sale": return `${d.item_name || ""} × ${d.quantity || ""}${d.customer_name ? ` → ${d.customer_name}` : ""} • ৳${d.total || 0}`;
+      case "Recorded sale": return `${d.item_name || ""} × ${d.quantity || ""}${d.unit_price ? ` @৳${d.unit_price}/pc` : ""}${d.customer_name ? ` → ${d.customer_name}` : ""} • ৳${d.total || 0}`;
       case "Added capital contribution": return `${d.partner_name || ""} • ${d.currency === "RMB" ? "¥" : "৳"}${d.amount}`;
       case "Currency exchange": return `${d.from === "BDT" ? "৳" : "¥"}${d.amount_from || d.amount || 0} → ${d.to === "BDT" ? "৳" : "¥"}${d.amount_to || ""}`;
       case "Added new inventory item": case "Restocked inventory item": return `${d.item_name || ""} × ${d.quantity || ""}`;
