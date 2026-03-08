@@ -439,7 +439,7 @@ const Sales = () => {
             </div>
 
             {/* Customer Selection — collapsed by default in solo mode */}
-            {(!isSolo || selectedCustomerId || showNewCustomer) ? (
+            {(!isSolo || showCustomerSection || selectedCustomerId) ? (
               <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
                 <div className="px-4 pt-4 pb-2 lg:px-6 lg:pt-5 lg:pb-3 border-b border-border bg-muted/30">
                   <h3 className="text-xs lg:text-sm font-bold text-foreground flex items-center gap-2">
