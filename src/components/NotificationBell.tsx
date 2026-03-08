@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
+import LeaveRequestDialog from "@/components/LeaveRequestDialog";
 
 interface Notification {
   id: string;
@@ -10,12 +11,15 @@ interface Notification {
   type: string;
   is_read: boolean;
   created_at: string;
+  business_id?: string | null;
 }
 
 const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+  const [leaveDialogBusinessId, setLeaveDialogBusinessId] = useState<string | null>(null);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
@@ -76,6 +80,18 @@ const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
     info: "info",
     deletion_request: "delete_forever",
     low_stock: "inventory",
+    leave_request: "logout",
+    removal_request: "person_remove",
+    partner_removed: "person_remove",
+  };
+
+  const handleNotificationClick = (n: Notification) => {
+    if (!n.is_read) markAsRead(n.id);
+    if (n.type === "leave_request" || n.type === "removal_request") {
+      setLeaveDialogBusinessId((n as any).business_id || null);
+      setLeaveDialogOpen(true);
+      setOpen(false);
+    }
   };
 
   return (
@@ -117,7 +133,7 @@ const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
                     notifications.map((n) => (
                       <button
                         key={n.id}
-                        onClick={() => { if (!n.is_read) markAsRead(n.id); }}
+                        onClick={() => handleNotificationClick(n)}
                         className={`w-full text-left px-4 py-3 flex gap-3 border-b border-border/50 last:border-0 transition-colors hover:bg-muted/50 ${!n.is_read ? "bg-primary/5" : ""}`}
                       >
                         <span className="material-symbols-outlined text-primary text-[20px] mt-0.5 shrink-0">
@@ -156,7 +172,7 @@ const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
                   notifications.map((n) => (
                     <button
                       key={n.id}
-                      onClick={() => { if (!n.is_read) markAsRead(n.id); }}
+                      onClick={() => handleNotificationClick(n)}
                       className={`w-full text-left px-4 py-3 flex gap-3 border-b border-border/50 last:border-0 transition-colors hover:bg-muted/50 ${!n.is_read ? "bg-primary/5" : ""}`}
                     >
                       <span className="material-symbols-outlined text-primary text-[20px] mt-0.5 shrink-0">
@@ -176,6 +192,11 @@ const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
           )}
         </>
       )}
+      <LeaveRequestDialog
+        open={leaveDialogOpen}
+        onClose={() => setLeaveDialogOpen(false)}
+        notificationBusinessId={leaveDialogBusinessId}
+      />
     </div>
   );
 };
