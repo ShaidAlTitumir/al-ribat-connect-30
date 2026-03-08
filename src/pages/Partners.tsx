@@ -174,6 +174,8 @@ const Partners = () => {
       const confirmed = window.confirm(`Remove ${partner.name} from the business?`);
       if (!confirmed) return;
       try {
+        // Delete capital contributions
+        await supabase.from("capital_contributions").delete().eq("partner_id", partner.id);
         const { error } = await supabase.from("partners").delete().eq("id", partner.id);
         if (error) { toast.error(error.message); return; }
         if (partner.user_id) {
@@ -199,44 +201,10 @@ const Partners = () => {
       return;
     }
 
-    // Multiple partners: create removal request needing approval
-    const existingRemoval = leaveRequests.find(r => r.partner_id === partner.id && r.type === "removal");
-    if (existingRemoval) { toast.error("A removal request is already pending for this partner"); return; }
-
-    const confirmed = window.confirm(`Request to remove ${partner.name}? Other partners will need to approve.`);
-    if (!confirmed) return;
-
-    const { data: req, error } = await (supabase
-      .from("partner_leave_requests")
-      .insert({ business_id: businessId, partner_id: partner.id, requested_by: user.id, type: "removal" }) as any)
-      .select().single();
-    if (error) { toast.error(error.message); return; }
-
-    // Create votes for all other partners (excluding the one being removed and the requester)
-    const voterPartners = acceptedPartners.filter(p => p.user_id && p.user_id !== user.id && p.id !== partner.id);
-    if (voterPartners.length > 0) {
-      const voteInserts = voterPartners.map(p => ({ request_id: req.id, user_id: p.user_id, vote: "pending" }));
-      await (supabase.from("partner_leave_votes") as any).insert(voteInserts);
-      const notifInserts = voterPartners.map(p => ({
-        user_id: p.user_id, business_id: businessId,
-        title: "Partner Removal Request",
-        message: `A request to remove ${partner.name} from the business has been submitted. Your approval is required.`,
-        type: "removal_request",
-      }));
-      await (supabase.from("notifications") as any).insert(notifInserts);
-    }
-
-    // Auto-approve for requester
-    await (supabase.from("partner_leave_votes") as any).insert({
-      request_id: req.id, user_id: user.id, vote: "approved", voted_at: new Date().toISOString(),
-    });
-
-    await supabase.from("activity_log").insert({
-      action: "Requested partner removal", details: { partner_name: partner.name },
-      business_id: businessId, user_id: user.id,
-    });
-    toast.success("Removal request sent to partners for approval");
-    fetchData();
+    // Multiple partners: show settlement form
+    setRemovalTarget(partner);
+    setShowRemovalForm(true);
+    setSettlementAmount(""); setSettlementCurrency("BDT"); setSettlementNotes("");
   };
 
   const handleEditPartner = (partner: any) => {
