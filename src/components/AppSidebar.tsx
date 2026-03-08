@@ -74,7 +74,7 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
         </NavLink>
         <button
           onClick={signOut}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-muted transition-colors w-full mt-1"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-muted transition-all duration-200 active:scale-[0.97] w-full mt-1"
         >
           <span className="material-symbols-outlined text-[22px]">logout</span>
           <span>Sign Out</span>
