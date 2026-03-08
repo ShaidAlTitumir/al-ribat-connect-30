@@ -79,6 +79,18 @@ const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
     info: "info",
     deletion_request: "delete_forever",
     low_stock: "inventory",
+    leave_request: "logout",
+    removal_request: "person_remove",
+    partner_removed: "person_remove",
+  };
+
+  const handleNotificationClick = (n: Notification) => {
+    if (!n.is_read) markAsRead(n.id);
+    if (n.type === "leave_request" || n.type === "removal_request") {
+      setLeaveDialogBusinessId((n as any).business_id || null);
+      setLeaveDialogOpen(true);
+      setOpen(false);
+    }
   };
 
   return (
