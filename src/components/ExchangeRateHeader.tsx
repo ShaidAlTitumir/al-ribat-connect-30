@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { toast } from "sonner";
 import NotificationBell from "@/components/NotificationBell";
@@ -7,6 +8,24 @@ import { useMobileHeader } from "@/layouts/AppLayout";
 interface ExchangeRateHeaderProps {
   title: string;
 }
+
+const MobilePageHeader = ({ title, exchangeRate, onRateClick }: { title: string; exchangeRate: number; onRateClick: () => void }) => {
+  return (
+    <div className="flex items-center justify-between h-11 px-4">
+      <h2 className="text-sm font-bold text-foreground truncate">{title}</h2>
+      <div className="flex items-center gap-1.5">
+        <NotificationBell />
+        <button
+          onClick={onRateClick}
+          className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1.5 text-xs font-bold text-foreground"
+        >
+          <span className="material-symbols-outlined text-[14px] text-muted-foreground">currency_exchange</span>
+          ¥1 = ৳{exchangeRate}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
   const { exchangeRate, setExchangeRate, saveExchangeRate } = useBusiness();
@@ -27,30 +46,20 @@ const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
     }
   };
 
-  // Register mobile header content into the sticky block
+  const handleRateClick = useCallback(() => {
+    setRateOpen(prev => !prev);
+  }, []);
+
   useEffect(() => {
     setPageHeader(
-      <div className="flex items-center justify-between h-11 px-4 border-b border-border">
-        <h2 className="text-sm font-bold text-foreground truncate">{title}</h2>
-        <div className="flex items-center gap-1.5">
-          <NotificationBell />
-          <button
-            onClick={() => setRateOpen(prev => !prev)}
-            className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1.5 text-xs font-bold text-foreground"
-          >
-            <span className="material-symbols-outlined text-[14px] text-muted-foreground">currency_exchange</span>
-            ¥1 = ৳{exchangeRate}
-          </button>
-        </div>
-      </div>
+      <MobilePageHeader title={title} exchangeRate={exchangeRate} onRateClick={handleRateClick} />
     );
     return () => setPageHeader(null);
-  }, [title, exchangeRate, setPageHeader]);
+  }, [title, exchangeRate, setPageHeader, handleRateClick]);
 
-  // Desktop header (rendered inline, not in the sticky block)
   return (
     <>
-      {/* Desktop only */}
+      {/* Desktop header */}
       <header className="hidden lg:flex h-14 border-b border-border bg-card sticky top-0 z-10 px-8 items-center justify-between">
         <h2 className="text-lg font-bold text-foreground truncate">{title}</h2>
         <div className="flex items-center gap-2">
@@ -77,11 +86,11 @@ const ExchangeRateHeader = ({ title }: ExchangeRateHeaderProps) => {
         </div>
       </header>
 
-      {/* Mobile rate dropdown (portal-like, rendered at page level) */}
+      {/* Mobile rate dropdown */}
       {rateOpen && (
-        <div className="lg:hidden">
-          <div className="fixed inset-0 z-40" onClick={() => setRateOpen(false)} />
-          <div className="fixed top-[6.25rem] right-4 bg-card border border-border rounded-xl shadow-xl z-50 p-3 w-52 animate-fade-in">
+        <div className="lg:hidden fixed inset-0 z-50">
+          <div className="absolute inset-0" onClick={() => setRateOpen(false)} />
+          <div className="absolute top-[6.5rem] right-4 bg-card border border-border rounded-xl shadow-xl p-3 w-52 animate-fade-in">
             <p className="text-xs font-medium text-muted-foreground mb-2">Exchange Rate</p>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">1¥ =</span>

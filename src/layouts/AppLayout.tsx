@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef, createContext, useContext } from "react";
+import { useState, useEffect, useRef, createContext, useContext, ReactNode } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import AppSidebar from "@/components/AppSidebar";
 import { useBusiness } from "@/contexts/BusinessContext";
 
-// Context to let ExchangeRateHeader render inside the sticky block
 interface MobileHeaderContextType {
-  setPageHeader: (node: React.ReactNode) => void;
+  setPageHeader: (node: ReactNode) => void;
 }
 const MobileHeaderContext = createContext<MobileHeaderContextType>({ setPageHeader: () => {} });
 export const useMobileHeader = () => useContext(MobileHeaderContext);
@@ -16,13 +15,11 @@ const AppLayout = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
   const { businessName } = useBusiness();
-  const [pageHeader, setPageHeader] = useState<React.ReactNode>(null);
+  const [pageHeader, setPageHeader] = useState<ReactNode>(null);
 
   useEffect(() => {
     setSidebarOpen(false);
-    if (mainRef.current) {
-      mainRef.current.scrollTo({ top: 0 });
-    }
+    if (mainRef.current) mainRef.current.scrollTo({ top: 0 });
     setIsTransitioning(true);
     const timeout = setTimeout(() => setIsTransitioning(false), 20);
     return () => clearTimeout(timeout);
@@ -41,9 +38,9 @@ const AppLayout = () => {
         <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         <main ref={mainRef} className="flex-1 lg:ml-64 flex flex-col overflow-y-auto min-w-0">
-          {/* Mobile sticky block: menu bar + page header together */}
-          <div className="sticky top-0 z-30 lg:hidden bg-card">
-            <div className="flex items-center justify-between h-14 px-4 border-b border-border">
+          {/* Mobile: single sticky block with menu bar + page header */}
+          <div className="sticky top-0 z-30 lg:hidden bg-card shadow-sm">
+            <div className="flex items-center justify-between h-14 px-4">
               <div className="flex items-center gap-3 min-w-0">
                 <button
                   onClick={() => setSidebarOpen(true)}
@@ -59,8 +56,11 @@ const AppLayout = () => {
                 </div>
               </div>
             </div>
-            {/* Page-specific header rendered inside the same sticky block */}
-            {pageHeader}
+            {pageHeader && (
+              <div className="border-t border-border">
+                {pageHeader}
+              </div>
+            )}
           </div>
 
           <div
