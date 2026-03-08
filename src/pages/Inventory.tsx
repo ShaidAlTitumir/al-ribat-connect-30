@@ -305,9 +305,30 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-semibold text-foreground">Category</label>
-                    <select className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" value={form.category} onChange={(e) => updateForm("category", e.target.value)}>
-                      <option>Electronics</option><option>Fashion</option><option>Home Decor</option><option>Accessories</option><option>Other</option>
-                    </select>
+                    {showCustomCategory ? (
+                      <div className="flex gap-2">
+                        <input className="flex-1 rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          placeholder="Enter new category" value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} />
+                        <button onClick={() => {
+                          if (customCategory.trim()) {
+                            setSavedCategories((prev) => [...prev, customCategory.trim()]);
+                            updateForm("category", customCategory.trim());
+                            setCustomCategory("");
+                            setShowCustomCategory(false);
+                          }
+                        }} className="px-3 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold">Add</button>
+                        <button onClick={() => setShowCustomCategory(false)} className="px-3 py-2 bg-muted border border-border rounded-lg text-sm text-muted-foreground">✕</button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <select className="flex-1 rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" value={form.category} onChange={(e) => updateForm("category", e.target.value)}>
+                          {savedCategories.map((c) => <option key={c}>{c}</option>)}
+                        </select>
+                        <button onClick={() => setShowCustomCategory(true)} className="px-3 py-2 bg-muted border border-border rounded-lg text-muted-foreground hover:text-foreground" title="Add custom category">
+                          <span className="material-symbols-outlined text-[18px]">add</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </>
               ) : (
