@@ -998,4 +998,96 @@ const SampleOrders = ({ onBack }: { onBack: () => void }) => {
   );
 };
 
+/* ─── Edit Item View ─── */
+const EditItem = ({ item, onBack, onSaved }: { item: any; onBack: () => void; onSaved: () => void }) => {
+  const { businessId } = useBusiness();
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    name: item?.name || "",
+    category: item?.category || "",
+    current_stock: String(item?.current_stock || 0),
+    weight_per_unit: String(item?.weight_per_unit || 0),
+    default_selling_price: String(item?.default_selling_price || 0),
+    low_stock_threshold: String(item?.low_stock_threshold || 5),
+  });
+
+  const handleSave = async () => {
+    if (!item?.id || !businessId) return;
+    if (!form.name.trim()) { toast.error("Item name is required"); return; }
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("inventory_items").update({
+        name: form.name.trim(),
+        category: form.category || null,
+        current_stock: parseInt(form.current_stock) || 0,
+        weight_per_unit: parseFloat(form.weight_per_unit) || 0,
+        default_selling_price: parseFloat(form.default_selling_price) || 0,
+        low_stock_threshold: parseInt(form.low_stock_threshold) || 5,
+      }).eq("id", item.id);
+      if (error) throw error;
+      toast.success("Item updated!");
+      onSaved();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="p-4 lg:p-8 max-w-2xl mx-auto w-full space-y-4">
+      <button onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95">
+        <span className="material-symbols-outlined text-[18px]">arrow_back</span> Back to Inventory
+      </button>
+
+      <div className="bg-card rounded-xl border border-border overflow-hidden">
+        <div className="px-4 py-3 sm:p-5 flex items-center gap-2.5 border-b border-border">
+          <span className="material-symbols-outlined text-primary text-xl">edit</span>
+          <h3 className="font-bold text-base sm:text-lg">Edit Item</h3>
+        </div>
+        <div className="p-4 sm:p-5 space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Item Name</label>
+            <input className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+              value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Category</label>
+            <input className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+              value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Current Stock</label>
+              <input type="number" className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                value={form.current_stock} onChange={(e) => setForm({ ...form, current_stock: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Weight/Unit (kg)</label>
+              <input type="number" step="0.01" className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                value={form.weight_per_unit} onChange={(e) => setForm({ ...form, weight_per_unit: e.target.value })} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Selling Price (৳)</label>
+              <input type="number" className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                value={form.default_selling_price} onChange={(e) => setForm({ ...form, default_selling_price: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Low Stock Alert</label>
+              <input type="number" className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: e.target.value })} />
+            </div>
+          </div>
+          <button onClick={handleSave} disabled={saving}
+            className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-lg hover:bg-primary/90 disabled:opacity-50 active:scale-[0.98] transition-all text-sm">
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default Inventory;
