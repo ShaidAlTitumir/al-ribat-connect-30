@@ -17,6 +17,8 @@ const Wallet = () => {
   const [saving, setSaving] = useState(false);
   const [useManualRate, setUseManualRate] = useState(false);
   const [manualRate, setManualRate] = useState("");
+  const [editingEx, setEditingEx] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ amount_from: 0, rate: 0 });
 
   // Balances from capital contributions + exchanges
   const [bdtBalance, setBdtBalance] = useState(0);
@@ -229,14 +231,61 @@ const Wallet = () => {
                 <div className="space-y-2 overflow-y-auto max-h-[400px]">
                   {exchanges.map((ex) => (
                     <div key={ex.id} className="p-3 bg-muted rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-bold">{ex.from_currency} → {ex.to_currency}</span>
-                        <span className="text-xs text-muted-foreground">{format(new Date(ex.created_at), "MMM d")}</span>
-                      </div>
-                        <span className="text-xs text-muted-foreground mt-1">
-                          {ex.from_currency === "BDT" ? "৳" : "¥"}{ex.amount_from} → {ex.to_currency === "BDT" ? "৳" : "¥"}{ex.amount_to}
-                          <span className="ml-1 opacity-70">@ {ex.rate}</span>
-                        </span>
+                      {editingEx?.id === ex.id ? (
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] font-semibold text-muted-foreground">Amount</label>
+                              <input type="number" value={editForm.amount_from}
+                                onChange={e => setEditForm({...editForm, amount_from: parseFloat(e.target.value) || 0})}
+                                className="w-full h-8 bg-card border border-border rounded-lg px-2 text-sm text-foreground" />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-semibold text-muted-foreground">Rate</label>
+                              <input type="number" step="0.01" value={editForm.rate}
+                                onChange={e => setEditForm({...editForm, rate: parseFloat(e.target.value) || 0})}
+                                className="w-full h-8 bg-card border border-border rounded-lg px-2 text-sm text-foreground" />
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <button onClick={() => setEditingEx(null)} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+                            <button onClick={async () => {
+                              const newTo = ex.from_currency === "BDT" ? editForm.amount_from / editForm.rate : editForm.amount_from * editForm.rate;
+                              await supabase.from("exchanges").update({
+                                amount_from: editForm.amount_from, rate: editForm.rate, amount_to: newTo,
+                              }).eq("id", ex.id);
+                              toast.success("Exchange updated!");
+                              setEditingEx(null);
+                              fetchData();
+                            }} className="px-2 py-1 text-xs font-bold bg-primary text-primary-foreground rounded-lg">Save</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-bold">{ex.from_currency} → {ex.to_currency}</span>
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-muted-foreground">{format(new Date(ex.created_at), "MMM d")}</span>
+                              <button onClick={() => { setEditingEx(ex); setEditForm({ amount_from: ex.amount_from, rate: ex.rate }); }}
+                                className="w-7 h-7 flex items-center justify-center rounded hover:bg-card text-muted-foreground hover:text-primary transition-colors">
+                                <span className="material-symbols-outlined text-[16px]">edit</span>
+                              </button>
+                              <button onClick={async () => {
+                                await supabase.from("exchanges").delete().eq("id", ex.id);
+                                toast.success("Exchange deleted");
+                                fetchData();
+                              }}
+                                className="w-7 h-7 flex items-center justify-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                                <span className="material-symbols-outlined text-[16px]">delete</span>
+                              </button>
+                            </div>
+                          </div>
+                          <span className="text-xs text-muted-foreground mt-1">
+                            {ex.from_currency === "BDT" ? "৳" : "¥"}{ex.amount_from} → {ex.to_currency === "BDT" ? "৳" : "¥"}{ex.amount_to}
+                            <span className="ml-1 opacity-70">@ {ex.rate}</span>
+                          </span>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
