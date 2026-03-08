@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -7,14 +6,11 @@ interface AppSidebarProps {
   onClose: () => void;
 }
 
-const mainNav = [
+const navItems = [
   { icon: "home", label: "Home", path: "/" },
   { icon: "receipt_long", label: "Sales", path: "/sales" },
   { icon: "person_search", label: "Customers", path: "/customers" },
   { icon: "group", label: "Partners", path: "/partners" },
-];
-
-const moreNav = [
   { icon: "inventory_2", label: "Inventory", path: "/inventory" },
   { icon: "currency_exchange", label: "Wallet", path: "/wallet" },
   { icon: "account_balance_wallet", label: "Expenses", path: "/expenses" },
@@ -24,9 +20,6 @@ const moreNav = [
 const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
   const location = useLocation();
   const { signOut } = useAuth();
-  const [moreOpen, setMoreOpen] = useState(() =>
-    moreNav.some((item) => location.pathname === item.path)
-  );
 
   const linkClass = (path: string) => {
     const isActive = location.pathname === path;
@@ -62,7 +55,7 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 sm:px-4 space-y-1 overflow-y-auto">
-        {mainNav.map((item) => (
+        {navItems.map((item) => (
           <NavLink key={item.path} to={item.path} className={linkClass(item.path)}>
             <span className="material-symbols-outlined text-[22px]" style={iconStyle(item.path)}>
               {item.icon}
@@ -70,33 +63,6 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
             <span>{item.label}</span>
           </NavLink>
         ))}
-
-        {/* More section */}
-        <button
-          onClick={() => setMoreOpen(!moreOpen)}
-          className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-muted transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-[22px]">more_horiz</span>
-            <span>More</span>
-          </div>
-          <span className="material-symbols-outlined text-[18px] transition-transform" style={{ transform: moreOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
-            expand_more
-          </span>
-        </button>
-
-        {moreOpen && (
-          <div className="pl-2 space-y-1">
-            {moreNav.map((item) => (
-              <NavLink key={item.path} to={item.path} className={linkClass(item.path)}>
-                <span className="material-symbols-outlined text-[22px]" style={iconStyle(item.path)}>
-                  {item.icon}
-                </span>
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
-          </div>
-        )}
       </nav>
 
       {/* Footer */}
