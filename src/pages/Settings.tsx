@@ -108,6 +108,25 @@ const Settings = () => {
     finally { setSaving(""); }
   };
 
+  const cleanAllData = async () => {
+    if (!businessId || cleanConfirmText !== "DELETE") return;
+    setSaving("clean");
+    try {
+      const tables = [
+        "customer_ledger", "returns", "sales", "purchase_transactions",
+        "exchanges", "partner_transfers", "capital_contributions",
+        "expenses", "activity_log", "customers", "inventory_items"
+      ];
+      for (const table of tables) {
+        await supabase.from(table).delete().eq("business_id", businessId);
+      }
+      toast.success("All business data has been cleaned!");
+      setShowCleanConfirm(false);
+      setCleanConfirmText("");
+    } catch (err: any) { toast.error(err.message); }
+    finally { setSaving(""); }
+  };
+
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <ExchangeRateHeader title="Settings" />
