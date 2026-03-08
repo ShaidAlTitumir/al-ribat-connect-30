@@ -74,6 +74,7 @@ const NotificationBell = () => {
   const typeIcon: Record<string, string> = {
     partner_added: "handshake",
     info: "info",
+    deletion_request: "delete_forever",
   };
 
   return (
