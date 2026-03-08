@@ -12,7 +12,7 @@ import {
 const quickActions = [
   { icon: "point_of_sale", label: "Record Sale", path: "/sales" },
   { icon: "add_box", label: "Add Stock", path: "/inventory" },
-  { icon: "payments", label: "Exchange Money", path: "/wallet" },
+  { icon: "payments", label: "Exchange", path: "/wallet" },
   { icon: "assignment_return", label: "Collect Due", path: "/customers" },
 ];
 
@@ -44,7 +44,6 @@ const Index = () => {
   }, [businessId, exchangeRate]);
 
   const fetchDashboard = async () => {
-    // Fetch all data in parallel
     const sevenDaysAgo = startOfDay(subDays(new Date(), 6)).toISOString();
     const [capsRes, salesRes, paymentsRes, expsRes, purchasesRes, invRes, custsRes, exchRes, partnersRes, actsRes, recentSalesRes] = await Promise.all([
       supabase.from("capital_contributions").select("amount, currency, partner_id").eq("business_id", businessId!),
@@ -71,7 +70,6 @@ const Index = () => {
     const exchanges = exchRes.data || [];
     const partnersList = partnersRes.data || [];
 
-    // Calculate separate BDT and RMB balances
     let bdt = 0, rmb = 0;
     caps.forEach((c) => { if (c.currency === "BDT") bdt += c.amount; else rmb += c.amount; });
     sales.forEach((s) => { bdt += s.received_now_bdt; });
@@ -90,7 +88,6 @@ const Index = () => {
 
     const totalValueBdt = bdt + rmb * exchangeRate;
 
-    // Inventory cost
     let inventoryCost = 0;
     if (invItems.length > 0) {
       for (const item of invItems) {
@@ -100,17 +97,13 @@ const Index = () => {
       }
     }
 
-    // Customer dues
     const totalDues = custs.reduce((s, c) => s + c.total_due, 0);
-
-    // Net profit
     const totalProfit = sales.reduce((s, r) => s + r.expected_profit, 0);
     const totalExpenses = exps.reduce((s, e) => s + (e.currency === "RMB" ? e.amount * exchangeRate : e.amount), 0);
     const netProfit = totalProfit - totalExpenses;
 
     setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, netProfit });
 
-    // Partner equity from capital contributions
     const partnerCapMap: Record<string, number> = {};
     caps.forEach((c) => {
       const bdtVal = c.currency === "RMB" ? c.amount * exchangeRate : c.amount;
@@ -131,10 +124,8 @@ const Index = () => {
       })
       .sort((a, b) => b.totalBdt - a.totalBdt);
     setPartners(partnerEquities);
-
     setActivities(actsRes.data || []);
 
-    // Daily sales chart (last 7 days)
     const recentSales = recentSalesRes.data || [];
     const dayMap: Record<string, { revenue: number; profit: number }> = {};
     for (let i = 6; i >= 0; i--) {
@@ -151,7 +142,6 @@ const Index = () => {
     });
     setDailySales(Object.entries(dayMap).map(([day, v]) => ({ day, ...v })));
 
-    // Top selling items (from recent sales)
     const itemMap: Record<string, { name: string; quantity: number; revenue: number }> = {};
     recentSales.forEach((s: any) => {
       const name = s.inventory_items?.name || "Unknown";
@@ -161,7 +151,6 @@ const Index = () => {
     });
     setTopItems(Object.values(itemMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5));
 
-    // Low stock alerts
     const lowStock = invItems
       .filter(i => (i as any).current_stock <= (i as any).low_stock_threshold)
       .map(i => ({ name: (i as any).name, stock: (i as any).current_stock, threshold: (i as any).low_stock_threshold }))
@@ -175,109 +164,122 @@ const Index = () => {
     <div className="flex-1 flex flex-col min-w-0">
       <ExchangeRateHeader title="Dashboard" />
       <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
+        {/* Quick Actions — compact on mobile */}
+        <section className="grid grid-cols-4 gap-2 lg:hidden">
+          {quickActions.map((action) => (
+            <button key={action.label} onClick={() => navigate(action.path)}
+              className="flex flex-col items-center justify-center p-3 bg-card rounded-xl border border-border active:scale-95 transition-all">
+              <div className="w-9 h-9 bg-muted rounded-full flex items-center justify-center mb-1">
+                <span className="material-symbols-outlined text-[18px]">{action.icon}</span>
+              </div>
+              <span className="text-[10px] font-bold text-foreground leading-tight text-center">{action.label}</span>
+            </button>
+          ))}
+        </section>
+
         {/* Business Snapshot */}
         <section>
-          <h3 className="text-base lg:text-lg font-bold mb-3">Business Snapshot</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          <h3 className="text-sm lg:text-lg font-bold mb-2 lg:mb-3">Business Snapshot</h3>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
             {/* Total Business Value */}
-            <div className="bg-card p-4 lg:p-5 rounded-xl border border-border shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <span className="p-1.5 rounded-lg text-blue-600 bg-blue-50">
-                  <span className="material-symbols-outlined text-[20px]">account_balance</span>
+            <div className="bg-card p-3 lg:p-5 rounded-xl border border-border">
+              <div className="flex items-center justify-between mb-1 lg:mb-2">
+                <span className="p-1 lg:p-1.5 rounded-lg text-blue-600 bg-blue-50">
+                  <span className="material-symbols-outlined text-[16px] lg:text-[20px]">account_balance</span>
                 </span>
               </div>
-              <p className="text-muted-foreground text-xs font-medium">Total Business Value</p>
-              <p className="text-xl lg:text-2xl font-black mt-0.5 text-foreground">৳{kpis.totalValueBdt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
-              <div className="mt-2 pt-2 border-t border-border space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">BDT Balance</span>
+              <p className="text-muted-foreground text-[10px] lg:text-xs font-medium">Total Value</p>
+              <p className="text-lg lg:text-2xl font-black mt-0.5 text-foreground">৳{kpis.totalValueBdt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+              <div className="mt-1.5 lg:mt-2 pt-1.5 lg:pt-2 border-t border-border space-y-0.5 lg:space-y-1">
+                <div className="flex justify-between text-[10px] lg:text-xs">
+                  <span className="text-muted-foreground">BDT</span>
                   <span className="font-bold">৳{kpis.bdtBalance.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
                 </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">RMB Balance</span>
+                <div className="flex justify-between text-[10px] lg:text-xs">
+                  <span className="text-muted-foreground">RMB</span>
                   <span className="font-bold">¥{kpis.rmbBalance.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
                 </div>
               </div>
             </div>
 
             {/* Inventory */}
-            <div className="bg-card p-4 lg:p-5 rounded-xl border border-border shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <span className="p-1.5 rounded-lg text-purple-600 bg-purple-50">
-                  <span className="material-symbols-outlined text-[20px]">inventory_2</span>
+            <div className="bg-card p-3 lg:p-5 rounded-xl border border-border">
+              <div className="flex items-center justify-between mb-1 lg:mb-2">
+                <span className="p-1 lg:p-1.5 rounded-lg text-purple-600 bg-purple-50">
+                  <span className="material-symbols-outlined text-[16px] lg:text-[20px]">inventory_2</span>
                 </span>
               </div>
-              <p className="text-muted-foreground text-xs font-medium">Inventory Value</p>
-              <p className="text-xl lg:text-2xl font-black mt-0.5 text-foreground">৳{kpis.inventory.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+              <p className="text-muted-foreground text-[10px] lg:text-xs font-medium">Inventory</p>
+              <p className="text-lg lg:text-2xl font-black mt-0.5 text-foreground">৳{kpis.inventory.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
             </div>
 
             {/* Dues */}
-            <div className="bg-card p-4 lg:p-5 rounded-xl border border-border shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <span className="p-1.5 rounded-lg text-amber-600 bg-amber-50">
-                  <span className="material-symbols-outlined text-[20px]">person_search</span>
+            <div className="bg-card p-3 lg:p-5 rounded-xl border border-border">
+              <div className="flex items-center justify-between mb-1 lg:mb-2">
+                <span className="p-1 lg:p-1.5 rounded-lg text-amber-600 bg-amber-50">
+                  <span className="material-symbols-outlined text-[16px] lg:text-[20px]">person_search</span>
                 </span>
               </div>
-              <p className="text-muted-foreground text-xs font-medium">Customer Dues</p>
-              <p className="text-xl lg:text-2xl font-black mt-0.5 text-foreground">৳{kpis.dues.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+              <p className="text-muted-foreground text-[10px] lg:text-xs font-medium">Dues</p>
+              <p className="text-lg lg:text-2xl font-black mt-0.5 text-foreground">৳{kpis.dues.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
             </div>
 
             {/* Net Profit */}
-            <div className="bg-card p-4 lg:p-5 rounded-xl border border-border shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <span className="p-1.5 rounded-lg text-emerald-600 bg-emerald-50">
-                  <span className="material-symbols-outlined text-[20px]">trending_up</span>
+            <div className="bg-card p-3 lg:p-5 rounded-xl border border-border">
+              <div className="flex items-center justify-between mb-1 lg:mb-2">
+                <span className="p-1 lg:p-1.5 rounded-lg text-emerald-600 bg-emerald-50">
+                  <span className="material-symbols-outlined text-[16px] lg:text-[20px]">trending_up</span>
                 </span>
               </div>
-              <p className="text-muted-foreground text-xs font-medium">Net Profit</p>
-              <p className="text-xl lg:text-2xl font-black mt-0.5 text-foreground">৳{kpis.netProfit.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+              <p className="text-muted-foreground text-[10px] lg:text-xs font-medium">Net Profit</p>
+              <p className="text-lg lg:text-2xl font-black mt-0.5 text-foreground">৳{kpis.netProfit.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
             </div>
           </div>
         </section>
 
-        {/* Analytics Row: Daily Sales + Top Items + Low Stock */}
+        {/* Analytics Row */}
         <section>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4">
             {/* Daily Sales Chart */}
-            <div className="lg:col-span-2 bg-card rounded-xl border border-border p-4 lg:p-5">
-              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-[20px]">bar_chart</span>
+            <div className="lg:col-span-2 bg-card rounded-xl border border-border p-3 lg:p-5">
+              <h3 className="text-xs lg:text-sm font-bold text-foreground mb-2 lg:mb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[18px] lg:text-[20px]">bar_chart</span>
                 Last 7 Days Sales
               </h3>
               {dailySales.some(d => d.revenue > 0) ? (
                 <div>
-                  <div className="flex items-center gap-4 mb-2">
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "hsl(var(--primary))" }} />
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-1 text-[10px] lg:text-xs">
+                      <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "hsl(var(--primary))" }} />
                       <span className="text-muted-foreground">Revenue</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "hsl(142, 71%, 45%)" }} />
+                    <div className="flex items-center gap-1 text-[10px] lg:text-xs">
+                      <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "hsl(142, 71%, 45%)" }} />
                       <span className="text-muted-foreground">Profit</span>
                     </div>
                   </div>
-                  <div className="h-48">
+                  <div className="h-36 lg:h-48">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={dailySales} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+                      <BarChart data={dailySales} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="day" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={45}
+                        <XAxis dataKey="day" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={35}
                           tickFormatter={(v: number) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)} />
                         <Tooltip
-                          contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
-                          formatter={(value: number, name: string) => [`৳${value.toLocaleString("en-IN")}`, name === "revenue" ? "💰 Revenue" : "📈 Profit"]}
+                          contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "11px" }}
+                          formatter={(value: number, name: string) => [`৳${value.toLocaleString("en-IN")}`, name === "revenue" ? "Revenue" : "Profit"]}
                           cursor={{ fill: "hsl(var(--muted) / 0.3)" }}
                         />
-                        <Bar dataKey="revenue" name="revenue" fill="hsl(var(--primary))" radius={[4,4,0,0]} barSize={16} opacity={0.85} />
-                        <Bar dataKey="profit" name="profit" fill="hsl(142, 71%, 45%)" radius={[4,4,0,0]} barSize={16} />
+                        <Bar dataKey="revenue" name="revenue" fill="hsl(var(--primary))" radius={[3,3,0,0]} barSize={12} opacity={0.85} />
+                        <Bar dataKey="profit" name="profit" fill="hsl(142, 71%, 45%)" radius={[3,3,0,0]} barSize={12} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
               ) : (
-                <div className="h-48 flex items-center justify-center text-center">
+                <div className="h-36 lg:h-48 flex items-center justify-center text-center">
                   <div>
-                    <span className="material-symbols-outlined text-3xl text-muted-foreground/30 block mb-1">show_chart</span>
+                    <span className="material-symbols-outlined text-2xl text-muted-foreground/30 block mb-1">show_chart</span>
                     <p className="text-xs text-muted-foreground">No sales in the last 7 days</p>
                   </div>
                 </div>
@@ -285,73 +287,67 @@ const Index = () => {
             </div>
 
             {/* Top Items + Low Stock */}
-            <div className="space-y-4">
-              {/* Top Selling Items */}
-              <div className="bg-card rounded-xl border border-border p-4">
-                <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-amber-600 text-[20px]">emoji_events</span>
-                  Top Items (7d)
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 lg:gap-4">
+              <div className="bg-card rounded-xl border border-border p-3 lg:p-4">
+                <h3 className="text-xs font-bold text-foreground mb-2 lg:mb-3 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-amber-600 text-[16px] lg:text-[20px]">emoji_events</span>
+                  Top Items
                 </h3>
                 {topItems.length > 0 ? (
-                  <div className="space-y-2">
-                    {topItems.map((item, i) => (
-                      <div key={item.name} className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-muted-foreground font-bold w-4">#{i + 1}</span>
+                  <div className="space-y-1.5 lg:space-y-2">
+                    {topItems.slice(0, 3).map((item, i) => (
+                      <div key={item.name} className="flex items-center justify-between text-[10px] lg:text-xs">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="text-muted-foreground font-bold w-3">#{i + 1}</span>
                           <span className="font-medium truncate">{item.name}</span>
                         </div>
-                        <div className="text-right shrink-0 ml-2">
-                          <span className="font-bold">৳{item.revenue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
-                          <span className="text-muted-foreground ml-1">({item.quantity})</span>
-                        </div>
+                        <span className="font-bold shrink-0 ml-1">৳{item.revenue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground text-center py-3">No sales data</p>
+                  <p className="text-[10px] text-muted-foreground text-center py-2">No data</p>
                 )}
               </div>
 
-              {/* Low Stock Alerts */}
-              <div className="bg-card rounded-xl border border-border p-4">
-                <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-destructive text-[20px]">warning</span>
-                  Low Stock Alerts
+              <div className="bg-card rounded-xl border border-border p-3 lg:p-4">
+                <h3 className="text-xs font-bold text-foreground mb-2 lg:mb-3 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-destructive text-[16px] lg:text-[20px]">warning</span>
+                  Low Stock
                 </h3>
                 {lowStockItems.length > 0 ? (
-                  <div className="space-y-2">
-                    {lowStockItems.map(item => (
-                      <div key={item.name} className="flex items-center justify-between text-xs">
+                  <div className="space-y-1.5 lg:space-y-2">
+                    {lowStockItems.slice(0, 3).map(item => (
+                      <div key={item.name} className="flex items-center justify-between text-[10px] lg:text-xs">
                         <span className="font-medium truncate">{item.name}</span>
-                        <span className={`font-bold px-1.5 py-0.5 rounded ${item.stock === 0 ? "bg-destructive/10 text-destructive" : "bg-amber-50 text-amber-700"}`}>
-                          {item.stock === 0 ? "Out of stock" : `${item.stock} left`}
+                        <span className={`font-bold px-1 py-0.5 rounded text-[9px] lg:text-[10px] ${item.stock === 0 ? "bg-destructive/10 text-destructive" : "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"}`}>
+                          {item.stock === 0 ? "Out" : `${item.stock}`}
                         </span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground text-center py-3">All items well stocked ✓</p>
+                  <p className="text-[10px] text-muted-foreground text-center py-2">All stocked ✓</p>
                 )}
               </div>
             </div>
           </div>
         </section>
 
-
+        {/* Partner Equity */}
         <section>
-          <h3 className="text-base lg:text-lg font-bold mb-3">Partner Equity</h3>
+          <h3 className="text-sm lg:text-lg font-bold mb-2 lg:mb-3">Partner Equity</h3>
           {partners.length === 0 ? (
-            <div className="bg-card rounded-xl border border-border p-8 text-center">
-              <span className="material-symbols-outlined text-3xl text-muted-foreground/40 mb-2">group</span>
-              <p className="font-bold">No partners yet</p>
-              <p className="text-sm text-muted-foreground mt-1">Add partners and contribute capital to see equity here.</p>
+            <div className="bg-card rounded-xl border border-border p-6 text-center">
+              <span className="material-symbols-outlined text-2xl text-muted-foreground/40 mb-1">group</span>
+              <p className="font-bold text-sm">No partners yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Add partners and contribute capital.</p>
             </div>
           ) : (
-            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-              {/* Equity bar */}
+            <div className="bg-card rounded-xl border border-border overflow-hidden">
               {partners.some(p => p.percentage > 0) && (
-                <div className="px-4 pt-4">
-                  <div className="flex h-3 w-full overflow-hidden rounded-full">
+                <div className="px-3 pt-3">
+                  <div className="flex h-2.5 w-full overflow-hidden rounded-full">
                     {partners.filter(p => p.percentage > 0).map((p, i) => (
                       <div key={p.name} className={`${colors[i % colors.length]} transition-all duration-500`}
                         style={{ width: `${p.percentage}%` }} />
@@ -361,22 +357,22 @@ const Index = () => {
               )}
               <div className="divide-y divide-border">
                 {partners.map((p, i) => (
-                  <div key={p.name} className="px-4 py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`h-8 w-8 rounded-full ${colors[i % colors.length]} flex items-center justify-center text-white text-xs font-bold`}>
+                  <div key={p.name} className="px-3 py-2.5 lg:px-4 lg:py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`h-7 w-7 lg:h-8 lg:w-8 rounded-full ${colors[i % colors.length]} flex items-center justify-center text-white text-[10px] lg:text-xs font-bold`}>
                         {p.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-foreground">{p.name}</p>
-                        <p className="text-[10px] text-muted-foreground capitalize">{p.role} Partner</p>
+                        <p className="text-xs lg:text-sm font-semibold text-foreground">{p.name}</p>
+                        <p className="text-[9px] lg:text-[10px] text-muted-foreground capitalize">{p.role}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-foreground">৳{p.totalBdt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
-                      <div className="flex items-center gap-2 justify-end">
-                        <span className="text-[10px] text-muted-foreground">{p.percentage.toFixed(1)}% equity</span>
+                      <p className="text-xs lg:text-sm font-bold text-foreground">৳{p.totalBdt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <span className="text-[9px] lg:text-[10px] text-muted-foreground">{p.percentage.toFixed(1)}%</span>
                         {p.profitShare > 0 && (
-                          <span className="text-[10px] font-medium text-emerald-600">+৳{p.profitShare.toLocaleString("en-IN", { maximumFractionDigits: 0 })} profit</span>
+                          <span className="text-[9px] lg:text-[10px] font-medium text-emerald-600">+৳{p.profitShare.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
                         )}
                       </div>
                     </div>
@@ -387,17 +383,17 @@ const Index = () => {
           )}
         </section>
 
-        {/* Quick Actions */}
-        <section>
-          <h3 className="text-base lg:text-lg font-bold mb-3">Quick Actions</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4">
+        {/* Quick Actions — Desktop */}
+        <section className="hidden lg:block">
+          <h3 className="text-lg font-bold mb-3">Quick Actions</h3>
+          <div className="grid grid-cols-4 gap-4">
             {quickActions.map((action) => (
               <button key={action.label} onClick={() => navigate(action.path)}
-                className="flex flex-col items-center justify-center p-5 lg:p-8 bg-card rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all group">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-muted rounded-full flex items-center justify-center mb-2 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                  <span className="material-symbols-outlined text-[20px] lg:text-[24px]">{action.icon}</span>
+                className="flex flex-col items-center justify-center p-8 bg-card rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all group">
+                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-2 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                  <span className="material-symbols-outlined text-[24px]">{action.icon}</span>
                 </div>
-                <span className="text-xs lg:text-sm font-bold">{action.label}</span>
+                <span className="text-sm font-bold">{action.label}</span>
               </button>
             ))}
           </div>
@@ -405,15 +401,15 @@ const Index = () => {
 
         {/* Recent Activity */}
         <section>
-          <h3 className="text-base lg:text-lg font-bold mb-3">Recent Activity</h3>
+          <h3 className="text-sm lg:text-lg font-bold mb-2 lg:mb-3">Recent Activity</h3>
           {activities.length === 0 ? (
-            <div className="bg-card rounded-xl border border-border p-8 text-center">
-              <span className="material-symbols-outlined text-3xl text-muted-foreground/40 mb-2">history</span>
-              <p className="font-bold">No activity yet</p>
-              <p className="text-sm text-muted-foreground mt-1">Actions you perform will appear here.</p>
+            <div className="bg-card rounded-xl border border-border p-6 text-center">
+              <span className="material-symbols-outlined text-2xl text-muted-foreground/40 mb-1">history</span>
+              <p className="font-bold text-sm">No activity yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Actions you perform will appear here.</p>
             </div>
           ) : (
-             <div className="bg-card rounded-xl border border-border divide-y divide-border max-h-[400px] overflow-y-auto scrollbar-thin">
+            <div className="bg-card rounded-xl border border-border divide-y divide-border max-h-[350px] lg:max-h-[400px] overflow-y-auto scrollbar-thin">
               {activities.map((act) => {
                 const iconMap: Record<string, { icon: string; color: string }> = {
                   "Recorded sale": { icon: "point_of_sale", color: "text-emerald-600 bg-emerald-50" },
@@ -434,75 +430,42 @@ const Index = () => {
                 const match = iconMap[act.action] || { icon: "bolt", color: "text-primary bg-primary/10" };
                 const details = act.details || {};
                 let subtitle = "";
-                
-                // Build rich subtitle based on action type
+
                 switch (act.action) {
                   case "Recorded sale":
                     subtitle = `${details.item_name || ""} × ${details.quantity || ""}`;
                     if (details.customer_name) subtitle += ` → ${details.customer_name}`;
                     subtitle += ` • ৳${details.total || 0}`;
-                    if (details.received > 0) subtitle += ` (received ৳${details.received})`;
-                    if (details.due > 0) subtitle += ` (due ৳${details.due})`;
-                    if (details.profit) subtitle += ` • Profit: ৳${details.profit}`;
                     break;
                   case "Added capital contribution":
                     subtitle = details.partner_name || "";
                     subtitle += ` • ${details.currency === "RMB" ? "¥" : "৳"}${details.amount}`;
-                    if (details.currency === "RMB" && details.rate) {
-                      subtitle += ` @ ${details.rate} BDT/RMB`;
-                      if (details.bdt_equivalent) subtitle += ` = ৳${details.bdt_equivalent.toFixed(0)}`;
-                    }
                     break;
                   case "Currency exchange":
                     subtitle = `${details.from === "BDT" ? "৳" : "¥"}${details.amount_from || details.amount || 0}`;
                     subtitle += ` → ${details.to === "BDT" ? "৳" : "¥"}${details.amount_to || ""}`;
-                    if (details.rate) subtitle += ` @ ${details.rate} BDT/RMB`;
                     break;
                   case "Added new inventory item":
                   case "Restocked inventory item":
                     subtitle = `${details.item_name || ""} × ${details.quantity || ""}`;
-                    if (details.buying_cost_rmb) subtitle += ` • Buy: ¥${details.buying_cost_rmb}/unit`;
-                    if (details.total_landed_cost) subtitle += ` • Landed: ৳${details.total_landed_cost}`;
-                    if (details.rate) subtitle += ` @ ${details.rate}`;
                     break;
                   case "Added expense":
                   case "Deleted expense":
-                    subtitle = details.title || "";
-                    subtitle += ` • ${details.currency === "RMB" ? "¥" : "৳"}${details.amount}`;
+                    subtitle = `${details.title || ""} • ${details.currency === "RMB" ? "¥" : "৳"}${details.amount}`;
                     break;
                   case "Collected due payment":
                     subtitle = `${details.customer || ""} • ৳${details.amount || 0}`;
                     break;
-                  case "Added new customer":
-                    subtitle = details.customer_name || "";
-                    if (details.phone) subtitle += ` • ${details.phone}`;
-                    break;
-                  case "Deleted customer":
-                    subtitle = details.customer_name || "";
-                    break;
-                  case "Updated capital contribution":
-                    subtitle = details.partner_name || "";
-                    subtitle += ` • ${details.old_currency === "RMB" ? "¥" : "৳"}${details.old_amount} → ${details.new_currency === "RMB" ? "¥" : "৳"}${details.new_amount}`;
-                    break;
-                  case "Deleted capital contribution":
-                    subtitle = `${details.partner_name || ""} • ${details.currency === "RMB" ? "¥" : "৳"}${details.amount}`;
-                    break;
-                  case "Added new partner":
-                    subtitle = `${details.partner_name || ""} • ${details.role || ""}`;
-                    break;
-                  case "Removed partner":
-                    subtitle = details.partner_name || "";
-                    break;
                   default:
-                    if (details.item_name) subtitle += details.item_name;
+                    if (details.partner_name) subtitle = details.partner_name;
+                    else if (details.item_name) subtitle = details.item_name;
                     if (details.amount) subtitle += ` • ${details.currency === "RMB" ? "¥" : "৳"}${details.amount}`;
                     break;
                 }
-                // Build expanded detail rows
+
                 const detailRows: { label: string; value: string }[] = [];
                 if (details.item_name) detailRows.push({ label: "Item", value: details.item_name });
-                if (details.quantity) detailRows.push({ label: "Quantity", value: String(details.quantity) });
-                if (details.unit_price) detailRows.push({ label: "Unit Price", value: `৳${details.unit_price}` });
+                if (details.quantity) detailRows.push({ label: "Qty", value: String(details.quantity) });
                 if (details.total) detailRows.push({ label: "Total", value: `৳${details.total}` });
                 if (details.received !== undefined && details.received !== null) detailRows.push({ label: "Received", value: `৳${details.received}` });
                 if (details.due > 0) detailRows.push({ label: "Due", value: `৳${details.due}` });
@@ -510,22 +473,8 @@ const Index = () => {
                 if (details.customer_name) detailRows.push({ label: "Customer", value: details.customer_name });
                 if (details.customer) detailRows.push({ label: "Customer", value: details.customer });
                 if (details.partner_name) detailRows.push({ label: "Partner", value: details.partner_name });
-                if (details.role) detailRows.push({ label: "Role", value: details.role });
                 if (details.amount !== undefined) detailRows.push({ label: "Amount", value: `${details.currency === "RMB" ? "¥" : "৳"}${details.amount}` });
-                if (details.amount_from) detailRows.push({ label: "From", value: `${details.from === "BDT" ? "৳" : "¥"}${details.amount_from}` });
-                if (details.amount_to) detailRows.push({ label: "To", value: `${details.to === "BDT" ? "৳" : "¥"}${details.amount_to}` });
                 if (details.rate) detailRows.push({ label: "Rate", value: `1 RMB = ${details.rate} BDT` });
-                if (details.bdt_equivalent) detailRows.push({ label: "BDT Equivalent", value: `৳${Number(details.bdt_equivalent).toFixed(0)}` });
-                if (details.buying_cost_rmb) detailRows.push({ label: "Buy Cost", value: `¥${details.buying_cost_rmb}/unit` });
-                if (details.shipping_method) detailRows.push({ label: "Shipping", value: details.shipping_method });
-                if (details.total_landed_cost) detailRows.push({ label: "Landed Cost", value: `৳${details.total_landed_cost}` });
-                if (details.landed_per_unit) detailRows.push({ label: "Per Unit", value: `৳${details.landed_per_unit}` });
-                if (details.title) detailRows.push({ label: "Title", value: details.title });
-                if (details.phone) detailRows.push({ label: "Phone", value: details.phone });
-                if (details.address) detailRows.push({ label: "Address", value: details.address });
-                if (details.shop_name) detailRows.push({ label: "Shop", value: details.shop_name });
-                if (details.old_amount !== undefined) detailRows.push({ label: "Previous", value: `${details.old_currency === "RMB" ? "¥" : "৳"}${details.old_amount}` });
-                if (details.new_amount !== undefined) detailRows.push({ label: "Updated", value: `${details.new_currency === "RMB" ? "¥" : "৳"}${details.new_amount}` });
 
                 const isExpanded = expandedActivity === act.id;
 
@@ -533,25 +482,25 @@ const Index = () => {
                   <div key={act.id} className="transition-colors hover:bg-muted/30">
                     <button
                       onClick={() => setExpandedActivity(isExpanded ? null : act.id)}
-                      className="w-full p-3 flex items-center gap-3 text-left"
+                      className="w-full p-2.5 lg:p-3 flex items-center gap-2.5 lg:gap-3 text-left active:bg-muted/50"
                     >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${match.color}`}>
-                        <span className="material-symbols-outlined text-[18px]">{match.icon}</span>
+                      <div className={`w-7 h-7 lg:w-8 lg:h-8 rounded-full flex items-center justify-center shrink-0 ${match.color}`}>
+                        <span className="material-symbols-outlined text-[16px] lg:text-[18px]">{match.icon}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm truncate">{act.action}</p>
-                        {!isExpanded && subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
-                        <p className="text-[10px] text-muted-foreground">{format(new Date(act.created_at), "MMM d, h:mm a")}</p>
+                        <p className="font-semibold text-xs lg:text-sm truncate">{act.action}</p>
+                        {!isExpanded && subtitle && <p className="text-[10px] lg:text-[10px] text-muted-foreground truncate">{subtitle}</p>}
+                        <p className="text-[9px] lg:text-[10px] text-muted-foreground">{format(new Date(act.created_at), "MMM d, h:mm a")}</p>
                       </div>
-                      <span className={`material-symbols-outlined text-muted-foreground text-[18px] shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}>
+                      <span className={`material-symbols-outlined text-muted-foreground text-[16px] shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}>
                         expand_more
                       </span>
                     </button>
                     {isExpanded && detailRows.length > 0 && (
-                      <div className="px-3 pb-3 ml-11 animate-in slide-in-from-top-1 duration-200">
-                        <div className="bg-muted rounded-lg p-3 space-y-1.5">
+                      <div className="px-2.5 pb-2.5 ml-9 lg:ml-11 animate-in slide-in-from-top-1 duration-200">
+                        <div className="bg-muted rounded-lg p-2.5 space-y-1">
                           {detailRows.map((row, i) => (
-                            <div key={i} className="flex justify-between items-center text-xs">
+                            <div key={i} className="flex justify-between items-center text-[10px] lg:text-xs">
                               <span className="text-muted-foreground">{row.label}</span>
                               <span className="font-semibold text-foreground">{row.value}</span>
                             </div>

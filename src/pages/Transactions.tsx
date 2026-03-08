@@ -79,27 +79,27 @@ const TransactionList = ({ onSend }: { onSend: () => void }) => {
   return (
     <div className="p-3 lg:p-8 space-y-4 lg:space-y-6 max-w-7xl mx-auto w-full">
       {/* Summary Cards */}
-      <section className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-6">
-        <div className="bg-card p-4 lg:p-6 rounded-xl border border-border">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-muted-foreground text-xs lg:text-sm font-medium">Total Transfers</span>
-            <span className="material-symbols-outlined text-primary text-[20px]">swap_horiz</span>
+      <section className="grid grid-cols-3 gap-2 lg:gap-6">
+        <div className="bg-card p-3 lg:p-6 rounded-xl border border-border">
+          <div className="flex items-center justify-between mb-1 lg:mb-2">
+            <span className="text-muted-foreground text-[10px] lg:text-sm font-medium">Transfers</span>
+            <span className="material-symbols-outlined text-primary text-[16px] lg:text-[20px]">swap_horiz</span>
           </div>
-          <div className="text-2xl lg:text-3xl font-bold text-foreground">{transfers.length}</div>
+          <div className="text-xl lg:text-3xl font-bold text-foreground">{transfers.length}</div>
         </div>
-        <div className="bg-card p-4 lg:p-6 rounded-xl border border-border">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-muted-foreground text-xs lg:text-sm font-medium">Total Amount</span>
-            <span className="material-symbols-outlined text-emerald-500 text-[20px]">payments</span>
+        <div className="bg-card p-3 lg:p-6 rounded-xl border border-border">
+          <div className="flex items-center justify-between mb-1 lg:mb-2">
+            <span className="text-muted-foreground text-[10px] lg:text-sm font-medium">Amount</span>
+            <span className="material-symbols-outlined text-emerald-500 text-[16px] lg:text-[20px]">payments</span>
           </div>
-          <div className="text-2xl lg:text-3xl font-bold text-foreground">৳{totalTransferred.toLocaleString()}</div>
+          <div className="text-xl lg:text-3xl font-bold text-foreground">৳{totalTransferred.toLocaleString()}</div>
         </div>
-        <div className="bg-card p-4 lg:p-6 rounded-xl border border-border col-span-2 lg:col-span-1">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-muted-foreground text-xs lg:text-sm font-medium">Partners</span>
-            <span className="material-symbols-outlined text-accent-foreground text-[20px]">group</span>
+        <div className="bg-card p-3 lg:p-6 rounded-xl border border-border">
+          <div className="flex items-center justify-between mb-1 lg:mb-2">
+            <span className="text-muted-foreground text-[10px] lg:text-sm font-medium">Partners</span>
+            <span className="material-symbols-outlined text-accent-foreground text-[16px] lg:text-[20px]">group</span>
           </div>
-          <div className="text-2xl lg:text-3xl font-bold text-foreground">{partners.length}</div>
+          <div className="text-xl lg:text-3xl font-bold text-foreground">{partners.length}</div>
         </div>
       </section>
 

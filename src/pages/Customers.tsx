@@ -30,6 +30,7 @@ const Customers = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", phone: "", address: "", shop_name: "" });
   const [invoiceData, setInvoiceData] = useState<any>(null);
+  const [mobileView, setMobileView] = useState<"list" | "detail">("list");
 
   useEffect(() => {
     if (!businessId) return;
@@ -58,6 +59,12 @@ const Customers = () => {
   const totalReceivables = customers.reduce((sum, c) => sum + (c.total_due || 0), 0);
   const customersWithDue = customers.filter(c => (c.total_due || 0) > 0).length;
 
+  const handleSelectCustomer = (id: string) => {
+    setSelectedCustomerId(id);
+    setExpandedId(expandedId === id ? null : id);
+    setMobileView("detail");
+  };
+
   const handleCollect = async () => {
     if (!businessId || !user || !selectedCustomerId || !amount) return;
     const amt = parseFloat(amount);
@@ -69,17 +76,14 @@ const Customers = () => {
       await supabase.from("customers")
         .update({ total_due: (selectedCustomer?.total_due || 0) - amt })
         .eq("id", selectedCustomerId);
-
       await supabase.from("customer_ledger").insert({
         customer_id: selectedCustomerId, transaction_type: "payment", amount: amt,
         business_id: businessId, user_id: user.id,
       });
-
       await supabase.from("activity_log").insert({
         action: "Collected due payment", details: { customer: selectedCustomer?.name, amount: amt },
         business_id: businessId, user_id: user.id,
       });
-
       toast.success(`৳${amt} collected from ${selectedCustomer?.name}`);
       setAmount("");
       fetchCustomers();
@@ -99,17 +103,13 @@ const Customers = () => {
     if (!newPhone.trim()) { toast.error("Phone number is required"); return; }
     try {
       await supabase.from("customers").insert({
-        name: newName.trim(),
-        phone: newPhone.trim(),
-        total_due: 0,
-        business_id: businessId,
-        user_id: user.id,
-        address: newAddress.trim() || null,
-        shop_name: newShopName.trim() || null,
+        name: newName.trim(), phone: newPhone.trim(), total_due: 0,
+        business_id: businessId, user_id: user.id,
+        address: newAddress.trim() || null, shop_name: newShopName.trim() || null,
       } as any);
       await supabase.from("activity_log").insert({
         action: "Added new customer",
-        details: { customer_name: newName.trim(), phone: newPhone.trim(), address: newAddress.trim() || null, shop_name: newShopName.trim() || null },
+        details: { customer_name: newName.trim(), phone: newPhone.trim() },
         business_id: businessId, user_id: user.id,
       });
       toast.success("Customer added!");
@@ -123,12 +123,7 @@ const Customers = () => {
 
   const handleStartEdit = (c: any) => {
     setEditingId(c.id);
-    setEditForm({
-      name: c.name || "",
-      phone: c.phone || "",
-      address: c.address || "",
-      shop_name: c.shop_name || "",
-    });
+    setEditForm({ name: c.name || "", phone: c.phone || "", address: c.address || "", shop_name: c.shop_name || "" });
   };
 
   const handleSaveEdit = async () => {
@@ -136,12 +131,7 @@ const Customers = () => {
     if (!editForm.name.trim()) { toast.error("Name is required"); return; }
     if (!editForm.phone.trim()) { toast.error("Phone is required"); return; }
     const { error } = await (supabase.from("customers") as any)
-      .update({
-        name: editForm.name.trim(),
-        phone: editForm.phone.trim(),
-        address: editForm.address.trim() || null,
-        shop_name: editForm.shop_name.trim() || null,
-      })
+      .update({ name: editForm.name.trim(), phone: editForm.phone.trim(), address: editForm.address.trim() || null, shop_name: editForm.shop_name.trim() || null })
       .eq("id", editingId);
     if (error) { toast.error(error.message); return; }
     toast.success("Customer updated!");
@@ -150,14 +140,13 @@ const Customers = () => {
   };
 
   const handleDelete = async (c: any) => {
-    if (!window.confirm(`Delete ${c.name}? This cannot be undone.`)) return;
+    if (!window.confirm(`Delete ${c.name}?`)) return;
     const { error } = await supabase.from("customers").delete().eq("id", c.id);
     if (error) { toast.error(error.message); return; }
-    if (selectedCustomerId === c.id) setSelectedCustomerId("");
+    if (selectedCustomerId === c.id) { setSelectedCustomerId(""); setMobileView("list"); }
     if (businessId && user) {
       await supabase.from("activity_log").insert({
-        action: "Deleted customer",
-        details: { customer_name: c.name },
+        action: "Deleted customer", details: { customer_name: c.name },
         business_id: businessId, user_id: user.id,
       });
     }
@@ -174,216 +163,169 @@ const Customers = () => {
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <ExchangeRateHeader title="Customers" />
-      <div className="p-4 lg:p-8 max-w-6xl w-full mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Customer List + Collect */}
-          <div className="lg:col-span-1 space-y-4">
+      <div className="p-3 lg:p-8 max-w-6xl w-full mx-auto flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+          {/* Left: Customer List */}
+          <div className={`lg:col-span-1 space-y-3 ${mobileView !== "list" ? "hidden lg:block" : ""}`}>
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-primary/5 p-2.5 rounded-xl border border-primary/10">
+                <p className="text-[9px] font-bold text-primary uppercase">Receivable</p>
+                <p className="text-base font-black mt-0.5">৳{totalReceivables.toFixed(0)}</p>
+              </div>
+              <div className="bg-muted p-2.5 rounded-xl border border-border">
+                <p className="text-[9px] font-bold text-muted-foreground uppercase">Total</p>
+                <p className="text-base font-black mt-0.5">{customers.length}</p>
+              </div>
+              <div className="bg-destructive/5 p-2.5 rounded-xl border border-destructive/10">
+                <p className="text-[9px] font-bold text-destructive uppercase">With Due</p>
+                <p className="text-base font-black mt-0.5">{customersWithDue}</p>
+              </div>
+            </div>
+
             {/* Search + Add */}
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-[18px]">search</span>
-                <input className="w-full bg-card border border-border rounded-lg pl-9 pr-3 py-2.5 text-sm text-foreground"
-                  placeholder="Search name, phone, shop..." value={search} onChange={(e) => setSearch(e.target.value)} />
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-[16px]">search</span>
+                <input className="w-full bg-card border border-border rounded-lg pl-9 pr-3 py-2 text-sm text-foreground"
+                  placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
               <button onClick={() => setShowAddCustomer(!showAddCustomer)}
-                className="bg-primary text-primary-foreground px-3 rounded-lg">
-                <span className="material-symbols-outlined text-[20px]">{showAddCustomer ? "close" : "add"}</span>
+                className="bg-primary text-primary-foreground px-3 rounded-lg active:scale-95 transition-all">
+                <span className="material-symbols-outlined text-[18px]">{showAddCustomer ? "close" : "add"}</span>
               </button>
             </div>
 
             {/* Add Customer Form */}
             {showAddCustomer && (
-              <div className="bg-card p-4 rounded-xl border border-border space-y-3">
-                <h4 className="font-bold text-sm flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-base">person_add</span>
-                  New Customer
+              <div className="bg-card p-3 rounded-xl border border-border space-y-2">
+                <h4 className="font-bold text-xs flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-primary text-sm">person_add</span> New Customer
                 </h4>
-                <div className="space-y-2">
-                  <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase">Name *</label>
-                    <Input placeholder="Customer name" value={newName} onChange={(e) => setNewName(e.target.value)} className="bg-muted mt-1" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase">Phone *</label>
-                    <Input placeholder="Phone number" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} className="bg-muted mt-1" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase">Shop Name</label>
-                    <Input placeholder="Shop / business name" value={newShopName} onChange={(e) => setNewShopName(e.target.value)} className="bg-muted mt-1" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase">Address</label>
-                    <Input placeholder="Address" value={newAddress} onChange={(e) => setNewAddress(e.target.value)} className="bg-muted mt-1" />
-                  </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Name *" value={newName} onChange={(e) => setNewName(e.target.value)} className="bg-muted h-9 text-sm" />
+                  <Input placeholder="Phone *" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} className="bg-muted h-9 text-sm" />
+                  <Input placeholder="Shop name" value={newShopName} onChange={(e) => setNewShopName(e.target.value)} className="bg-muted h-9 text-sm" />
+                  <Input placeholder="Address" value={newAddress} onChange={(e) => setNewAddress(e.target.value)} className="bg-muted h-9 text-sm" />
                 </div>
-                <Button onClick={handleAddCustomer} className="w-full bg-primary text-primary-foreground font-bold">Add Customer</Button>
+                <Button onClick={handleAddCustomer} className="w-full bg-primary text-primary-foreground font-bold h-9 text-sm">Add Customer</Button>
               </div>
             )}
 
             {/* Customer List */}
-            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            <div className="space-y-1.5 max-h-[60vh] lg:max-h-[400px] overflow-y-auto">
               {filtered.map((c) => (
                 <div key={c.id} className={`rounded-lg border overflow-hidden transition-colors ${
                   selectedCustomerId === c.id ? "border-primary bg-primary/5" : "border-border bg-card"
                 }`}>
                   {editingId === c.id ? (
-                    <div className="p-3 space-y-2">
-                      <Input placeholder="Name *" value={editForm.name}
-                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="bg-muted text-sm h-8" />
-                      <Input placeholder="Phone *" value={editForm.phone}
-                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className="bg-muted text-sm h-8" />
-                      <Input placeholder="Shop name" value={editForm.shop_name}
-                        onChange={(e) => setEditForm({ ...editForm, shop_name: e.target.value })} className="bg-muted text-sm h-8" />
-                      <Input placeholder="Address" value={editForm.address}
-                        onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} className="bg-muted text-sm h-8" />
+                    <div className="p-2.5 space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input placeholder="Name *" value={editForm.name}
+                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="bg-muted text-xs h-8" />
+                        <Input placeholder="Phone *" value={editForm.phone}
+                          onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className="bg-muted text-xs h-8" />
+                      </div>
                       <div className="flex gap-2">
-                        <Button onClick={handleSaveEdit} size="sm" className="flex-1 bg-primary text-primary-foreground font-bold h-8">
-                          <Check className="w-3.5 h-3.5 mr-1" /> Save
+                        <Button onClick={handleSaveEdit} size="sm" className="flex-1 bg-primary text-primary-foreground font-bold h-7 text-[10px]">
+                          <Check className="w-3 h-3 mr-0.5" /> Save
                         </Button>
-                        <Button onClick={() => setEditingId(null)} size="sm" variant="outline" className="flex-1 h-8">
-                          <X className="w-3.5 h-3.5 mr-1" /> Cancel
+                        <Button onClick={() => setEditingId(null)} size="sm" variant="outline" className="flex-1 h-7 text-[10px]">
+                          <X className="w-3 h-3 mr-0.5" /> Cancel
                         </Button>
                       </div>
                     </div>
                   ) : (
-                    <>
-                      <button
-                        className="w-full text-left p-3"
-                        onClick={() => {
-                          setSelectedCustomerId(c.id);
-                          setExpandedId(expandedId === c.id ? null : c.id);
-                        }}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-sm shrink-0">
-                              {c.name?.charAt(0).toUpperCase() || "?"}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-semibold text-sm truncate">{c.name}</p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                {c.phone && <span>{c.phone}</span>}
-                                {c.shop_name && <span>· {c.shop_name}</span>}
-                              </div>
-                            </div>
+                    <button
+                      className="w-full text-left p-2.5 active:bg-muted/50 transition-colors"
+                      onClick={() => handleSelectCustomer(c.id)}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-xs shrink-0">
+                            {c.name?.charAt(0).toUpperCase() || "?"}
                           </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {(c.total_due || 0) > 0 ? (
-                              <span className="text-sm font-bold text-destructive">৳{c.total_due}</span>
-                            ) : (
-                              <span className="text-xs font-medium text-emerald-600">Paid</span>
-                            )}
-                            {expandedId === c.id ? (
-                              <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                            )}
-                          </div>
-                        </div>
-                      </button>
-                      {expandedId === c.id && (
-                        <div className="px-3 pb-3 space-y-2 border-t border-border pt-2">
-                          <div className="space-y-1.5">
-                            {c.phone && (
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Phone className="w-3.5 h-3.5 shrink-0" /> <span>{c.phone}</span>
-                              </div>
-                            )}
-                            {c.shop_name && (
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Store className="w-3.5 h-3.5 shrink-0" /> <span>{c.shop_name}</span>
-                              </div>
-                            )}
-                            {c.address && (
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <MapPin className="w-3.5 h-3.5 shrink-0" /> <span>{c.address}</span>
-                              </div>
-                            )}
-                            <div className="flex items-center gap-2 text-sm">
-                              <span className="material-symbols-outlined text-sm text-muted-foreground">receipt</span>
-                              <span className="text-muted-foreground">Due:</span>
-                              <span className={`font-bold ${(c.total_due || 0) > 0 ? "text-destructive" : "text-emerald-600"}`}>
-                                ৳{(c.total_due || 0).toFixed(0)}
-                              </span>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              Added {format(new Date(c.created_at), "MMM d, yyyy")}
+                          <div className="min-w-0">
+                            <p className="font-semibold text-xs truncate">{c.name}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {c.phone}{c.shop_name ? ` · ${c.shop_name}` : ""}
                             </p>
                           </div>
-                          <div className="flex gap-1.5 pt-1">
-                            <button onClick={(e) => { e.stopPropagation(); handleStartEdit(c); }}
-                              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-accent text-foreground text-xs font-bold hover:bg-accent/80 transition-colors">
-                              <Edit2 className="w-3.5 h-3.5" /> Edit
-                            </button>
-                            <button onClick={(e) => { e.stopPropagation(); handleDelete(c); }}
-                              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-bold hover:bg-destructive/20 transition-colors">
-                              <Trash2 className="w-3.5 h-3.5" /> Delete
-                            </button>
-                          </div>
                         </div>
-                      )}
-                    </>
+                        <div className="flex items-center gap-1 shrink-0 ml-2">
+                          {(c.total_due || 0) > 0 ? (
+                            <span className="text-xs font-bold text-destructive">৳{c.total_due}</span>
+                          ) : (
+                            <span className="text-[10px] font-medium text-emerald-600">Paid</span>
+                          )}
+                          <span className="material-symbols-outlined text-muted-foreground text-[16px]">chevron_right</span>
+                        </div>
+                      </div>
+                    </button>
                   )}
                 </div>
               ))}
               {filtered.length === 0 && (
-                <p className="text-center text-sm text-muted-foreground py-4">No customers found</p>
+                <p className="text-center text-xs text-muted-foreground py-4">No customers found</p>
               )}
             </div>
 
             {/* Collect Due */}
             {selectedCustomer && selectedCustomer.total_due > 0 && (
-              <div className="bg-card rounded-xl border border-border p-4">
-                <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-[18px]">payments</span>
+              <div className="bg-card rounded-xl border border-border p-3">
+                <h3 className="text-xs font-bold mb-2 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-primary text-[16px]">payments</span>
                   Collect from {selectedCustomer.name}
                 </h3>
-                <p className="text-xs text-muted-foreground mb-3">Current due: <span className="font-bold text-destructive">৳{selectedCustomer.total_due}</span></p>
+                <p className="text-[10px] text-muted-foreground mb-2">Due: <span className="font-bold text-destructive">৳{selectedCustomer.total_due}</span></p>
                 <div className="flex gap-2">
                   <Input type="number" placeholder="Amount" value={amount}
-                    onChange={(e) => setAmount(e.target.value)} className="bg-muted flex-1" />
-                  <Button onClick={handleCollect} disabled={saving} className="bg-primary text-primary-foreground font-bold">
+                    onChange={(e) => setAmount(e.target.value)} className="bg-muted flex-1 h-9 text-sm" />
+                  <Button onClick={handleCollect} disabled={saving} className="bg-primary text-primary-foreground font-bold h-9 text-sm">
                     {saving ? "..." : "Collect"}
                   </Button>
                 </div>
               </div>
             )}
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-primary/5 p-3 rounded-xl border border-primary/10">
-                <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Receivables</p>
-                <p className="text-lg font-black mt-1">৳{totalReceivables.toFixed(0)}</p>
-              </div>
-              <div className="bg-muted p-3 rounded-xl border border-border">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Customers</p>
-                <p className="text-lg font-black mt-1">{customers.length}</p>
-              </div>
-              <div className="bg-destructive/5 p-3 rounded-xl border border-destructive/10">
-                <p className="text-[10px] font-bold text-destructive uppercase tracking-wider">With Due</p>
-                <p className="text-lg font-black mt-1">{customersWithDue}</p>
-              </div>
-            </div>
           </div>
 
-          <div className="lg:col-span-2">
-            <div className="bg-card rounded-xl border border-border min-h-[400px] flex flex-col">
-              <div className="p-4 border-b border-border">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-bold">
+          {/* Right: Customer Detail */}
+          <div className={`lg:col-span-2 ${mobileView !== "detail" ? "hidden lg:block" : ""}`}>
+            {/* Mobile back button */}
+            {mobileView === "detail" && (
+              <button onClick={() => { setMobileView("list"); setSelectedCustomerId(""); }}
+                className="lg:hidden flex items-center gap-1 text-xs font-medium text-muted-foreground mb-3 active:scale-95">
+                <span className="material-symbols-outlined text-[18px]">arrow_back</span> Back to list
+              </button>
+            )}
+
+            <div className="bg-card rounded-xl border border-border min-h-[300px] flex flex-col">
+              <div className="p-3 lg:p-4 border-b border-border">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm lg:text-lg font-bold">
                     {selectedCustomer ? selectedCustomer.name : "Customer Details"}
                   </h3>
                   {selectedCustomer && (
-                    <span className={`text-sm font-bold ${(selectedCustomer.total_due || 0) > 0 ? "text-destructive" : "text-emerald-600"}`}>
-                      Due: ৳{(selectedCustomer.total_due || 0).toFixed(0)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-bold ${(selectedCustomer.total_due || 0) > 0 ? "text-destructive" : "text-emerald-600"}`}>
+                        Due: ৳{(selectedCustomer.total_due || 0).toFixed(0)}
+                      </span>
+                      <button onClick={() => handleStartEdit(selectedCustomer)}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground active:scale-95">
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => handleDelete(selectedCustomer)}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground active:scale-95">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   )}
                 </div>
                 {selectedCustomer && (
-                  <div className="flex gap-1 bg-muted p-1 rounded-lg">
+                  <div className="flex gap-1 bg-muted p-0.5 rounded-lg">
                     {(["ledger", "purchases"] as const).map((t) => (
                       <button key={t} onClick={() => setActiveTab(t)}
-                        className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${
+                        className={`flex-1 py-1.5 text-[10px] lg:text-xs font-bold rounded-md transition-colors ${
                           activeTab === t ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
                         }`}>
                         {t === "ledger" ? `Ledger (${ledger.length})` : `Purchases (${purchaseHistory.length})`}
@@ -393,36 +335,35 @@ const Customers = () => {
                 )}
               </div>
               {!selectedCustomerId ? (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                  <span className="material-symbols-outlined text-4xl text-muted-foreground/40 mb-3">person_search</span>
-                  <h4 className="font-bold">Select a customer</h4>
-                  <p className="text-muted-foreground text-sm mt-1">Choose a customer to view their transaction history.</p>
+                <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                  <span className="material-symbols-outlined text-3xl text-muted-foreground/40 mb-2">person_search</span>
+                  <h4 className="font-bold text-sm">Select a customer</h4>
+                  <p className="text-muted-foreground text-xs mt-1">Choose a customer to view details.</p>
                 </div>
               ) : activeTab === "ledger" ? (
                 ledger.length === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                    <span className="material-symbols-outlined text-4xl text-muted-foreground/40 mb-3">receipt_long</span>
-                    <h4 className="font-bold">No transactions yet</h4>
-                    <p className="text-muted-foreground text-sm mt-1">This customer has no ledger entries.</p>
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                    <span className="material-symbols-outlined text-3xl text-muted-foreground/40 mb-2">receipt_long</span>
+                    <h4 className="font-bold text-sm">No transactions yet</h4>
                   </div>
                 ) : (
-                  <div className="divide-y divide-border overflow-y-auto max-h-[500px]">
+                  <div className="divide-y divide-border overflow-y-auto max-h-[400px] lg:max-h-[500px]">
                     {ledger.map((entry) => (
-                      <div key={entry.id} className="p-3 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      <div key={entry.id} className="p-2.5 lg:p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center ${
                             entry.transaction_type === "payment" ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
                           }`}>
-                            <span className="material-symbols-outlined text-[18px]">
+                            <span className="material-symbols-outlined text-[16px]">
                               {entry.transaction_type === "payment" ? "arrow_downward" : "arrow_upward"}
                             </span>
                           </div>
                           <div>
-                            <p className="font-semibold text-sm capitalize">{entry.transaction_type}</p>
-                            <p className="text-xs text-muted-foreground">{format(new Date(entry.created_at), "MMM d, yyyy h:mm a")}</p>
+                            <p className="font-semibold text-xs capitalize">{entry.transaction_type}</p>
+                            <p className="text-[10px] text-muted-foreground">{format(new Date(entry.created_at), "MMM d, h:mm a")}</p>
                           </div>
                         </div>
-                        <span className={`font-bold ${entry.transaction_type === "payment" ? "text-emerald-600" : "text-destructive"}`}>
+                        <span className={`font-bold text-xs ${entry.transaction_type === "payment" ? "text-emerald-600" : "text-destructive"}`}>
                           {entry.transaction_type === "payment" ? "-" : "+"}৳{entry.amount}
                         </span>
                       </div>
@@ -431,60 +372,47 @@ const Customers = () => {
                 )
               ) : (
                 purchaseHistory.length === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                    <span className="material-symbols-outlined text-4xl text-muted-foreground/40 mb-3">shopping_bag</span>
-                    <h4 className="font-bold">No purchases yet</h4>
-                    <p className="text-muted-foreground text-sm mt-1">This customer hasn't made any purchases.</p>
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                    <span className="material-symbols-outlined text-3xl text-muted-foreground/40 mb-2">shopping_bag</span>
+                    <h4 className="font-bold text-sm">No purchases yet</h4>
                   </div>
                 ) : (
-                  <div className="divide-y divide-border overflow-y-auto max-h-[500px]">
+                  <div className="divide-y divide-border overflow-y-auto max-h-[400px] lg:max-h-[500px]">
                     {purchaseHistory.map((sale) => (
-                      <div key={sale.id} className="p-3 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                            <span className="material-symbols-outlined text-[18px]">shopping_cart</span>
+                      <div key={sale.id} className="p-2.5 lg:p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <span className="material-symbols-outlined text-[16px]">shopping_cart</span>
                           </div>
                           <div>
-                            <p className="font-semibold text-sm">{sale.inventory_items?.name || "Item"}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {sale.quantity} × ৳{sale.unit_price_bdt} · {format(new Date(sale.created_at), "MMM d, yyyy")}
+                            <p className="font-semibold text-xs">{sale.inventory_items?.name || "Item"}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {sale.quantity} × ৳{sale.unit_price_bdt} · {format(new Date(sale.created_at), "MMM d")}
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           <div className="text-right">
-                            <p className="font-bold text-sm">৳{(sale.quantity * sale.unit_price_bdt).toFixed(0)}</p>
-                            {sale.due > 0 && (
-                              <p className="text-xs text-destructive font-medium">Due: ৳{sale.due}</p>
-                            )}
-                            {sale.due === 0 && (
-                              <p className="text-xs text-emerald-600 font-medium">Paid</p>
-                            )}
+                            <p className="font-bold text-xs">৳{(sale.quantity * sale.unit_price_bdt).toFixed(0)}</p>
+                            {sale.due > 0 && <p className="text-[10px] text-destructive">Due: ৳{sale.due}</p>}
+                            {sale.due === 0 && <p className="text-[10px] text-emerald-600">Paid</p>}
                           </div>
                           <button
                             onClick={() => setInvoiceData({
-                              sale,
-                              itemName: sale.inventory_items?.name || "Item",
+                              sale, itemName: sale.inventory_items?.name || "Item",
                               customerName: selectedCustomer?.name || "Customer",
                               business: { name: businessName, phone: businessPhone, address: businessAddress },
                             })}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                            title="Download Receipt"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">receipt</span>
+                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground active:scale-95">
+                            <span className="material-symbols-outlined text-[16px]">receipt</span>
                           </button>
                         </div>
                       </div>
                     ))}
-                    {/* Purchase summary */}
-                    <div className="p-3 bg-muted/50">
-                      <div className="flex justify-between text-sm">
-                        <span className="font-medium text-muted-foreground">Total Purchases</span>
+                    <div className="p-2.5 bg-muted/50">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">Total Purchases</span>
                         <span className="font-bold">৳{purchaseHistory.reduce((s, p) => s + p.quantity * p.unit_price_bdt, 0).toFixed(0)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm mt-1">
-                        <span className="font-medium text-muted-foreground">Total Paid</span>
-                        <span className="font-bold text-emerald-600">৳{purchaseHistory.reduce((s, p) => s + p.received_now_bdt, 0).toFixed(0)}</span>
                       </div>
                     </div>
                   </div>
