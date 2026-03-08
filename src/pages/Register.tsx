@@ -9,6 +9,10 @@ import { z } from "zod";
 
 const registerSchema = z.object({
   fullName: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
+  username: z.string().trim().toLowerCase()
+    .min(3, "Username must be at least 3 characters")
+    .max(20, "Username must be at most 20 characters")
+    .regex(/^[a-z0-9_]+$/, "Only lowercase letters, numbers, and underscores"),
   email: z.string().trim().email("Invalid email address").max(255),
   phone: z.string().trim().min(6, "Phone must be at least 6 characters").max(20),
   password: z.string().min(6, "Password must be at least 6 characters").max(128),
@@ -23,6 +27,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     fullName: "",
+    username: "",
     email: "",
     phone: "",
     password: "",
@@ -31,7 +36,9 @@ const Register = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    let value = e.target.value;
+    if (e.target.name === "username") value = value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+    setForm({ ...form, [e.target.name]: value });
     setErrors({ ...errors, [e.target.name]: "" });
   };
 
@@ -59,6 +66,7 @@ const Register = () => {
           data: {
             full_name: form.fullName.trim(),
             phone: form.phone.trim(),
+            username: form.username.trim().toLowerCase(),
           },
         },
       });
@@ -102,6 +110,23 @@ const Register = () => {
               />
             </div>
             {errors.fullName && <p className="text-xs text-destructive mt-1">{errors.fullName}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Username</label>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xl">alternate_email</span>
+              <Input
+                name="username"
+                placeholder="john_doe"
+                value={form.username}
+                onChange={handleChange}
+                className="pl-10 py-2.5 h-11 bg-card border-border focus-visible:ring-primary"
+                maxLength={20}
+              />
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">Partners can find you by this username.</p>
+            {errors.username && <p className="text-xs text-destructive mt-1">{errors.username}</p>}
           </div>
 
           <div>
