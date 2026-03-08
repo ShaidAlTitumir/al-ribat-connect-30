@@ -11,6 +11,7 @@ interface Notification {
   type: string;
   is_read: boolean;
   created_at: string;
+  business_id?: string | null;
 }
 
 const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
