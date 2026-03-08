@@ -39,7 +39,7 @@ const AppLayout = () => {
 
       <main ref={mainRef} className="flex-1 lg:ml-64 flex flex-col overflow-y-auto min-w-0">
         {/* Mobile top bar */}
-        <div className="sticky top-0 z-30 lg:hidden flex items-center justify-between h-16 px-4 bg-card border-b border-border shadow-sm">
+        <div className="sticky top-0 z-30 lg:hidden flex items-center justify-between h-16 px-4 bg-card border-b border-border">
           <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -55,6 +55,7 @@ const AppLayout = () => {
             </div>
           </div>
         </div>
+        {/* Spacer to prevent content from showing between sticky bars */}
         <div
           className="flex-1 flex flex-col transition-opacity duration-300 ease-out"
           style={{ opacity: isTransitioning ? 0 : 1 }}
