@@ -1094,6 +1094,56 @@ const Partners = () => {
           ))}
         </div>
       </div>
+
+      {/* Removal Settlement Modal */}
+      {showRemovalForm && removalTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-card rounded-xl border border-border p-5 w-full max-w-md space-y-4 shadow-xl">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-destructive">person_remove</span>
+              <h3 className="font-bold text-lg">Remove {removalTarget.name}</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Propose a settlement amount for {removalTarget.name}'s departure. Their capital contributions will be removed upon approval.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase text-muted-foreground">Settlement Amount</label>
+                <input className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border-none text-foreground"
+                  type="number" placeholder="0" value={settlementAmount}
+                  onChange={(e) => setSettlementAmount(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase text-muted-foreground">Currency</label>
+                <div className="flex bg-muted rounded-lg p-1">
+                  {(["BDT", "RMB"] as const).map((c) => (
+                    <button key={c} onClick={() => setSettlementCurrency(c)}
+                      className={`flex-1 py-2 text-xs font-bold rounded-md ${settlementCurrency === c ? "bg-card shadow-sm text-primary" : "text-muted-foreground"}`}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold uppercase text-muted-foreground">Notes (optional)</label>
+              <input className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm border-none text-foreground"
+                placeholder="e.g. Return of initial investment"
+                value={settlementNotes} onChange={(e) => setSettlementNotes(e.target.value)} />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button onClick={handleSubmitRemoval}
+                className="flex-1 py-2.5 rounded-lg bg-destructive text-destructive-foreground font-bold text-sm hover:bg-destructive/90">
+                Submit Removal Request
+              </button>
+              <button onClick={() => { setShowRemovalForm(false); setRemovalTarget(null); }}
+                className="flex-1 py-2.5 rounded-lg bg-muted border border-border text-foreground font-bold text-sm">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
