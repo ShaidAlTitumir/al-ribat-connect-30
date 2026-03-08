@@ -33,6 +33,9 @@ export const useBusiness = () => useContext(BusinessContext);
 export const BusinessProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [businessId, setBusinessId] = useState<string | null>(null);
+  const [businessName, setBusinessName] = useState("");
+  const [businessPhone, setBusinessPhone] = useState("");
+  const [businessAddress, setBusinessAddress] = useState("");
   const [exchangeRate, setExchangeRate] = useState(18);
   const [userRole, setUserRole] = useState("admin");
   const [loading, setLoading] = useState(true);
