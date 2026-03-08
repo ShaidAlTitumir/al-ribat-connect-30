@@ -197,6 +197,7 @@ const Business = () => {
     }
   };
 
+  const resetForm = () => {
     setFormName(""); setFormType(""); setFormDescription("");
     setFormAddress(""); setFormPhone(""); setFormManualValue("");
     setShowCreate(false); setEditingId(null);
