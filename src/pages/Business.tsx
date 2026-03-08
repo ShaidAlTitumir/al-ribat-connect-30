@@ -157,9 +157,9 @@ const Business = () => {
     if (businessStats[bizId]) return; // already fetched
 
     const [salesRes, expensesRes, inventoryRes, customersRes, capitalRes] = await Promise.all([
-      (supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity") as any)
+      (supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity, created_at") as any)
         .eq("business_id", bizId),
-      (supabase.from("expenses").select("amount, currency") as any)
+      (supabase.from("expenses").select("amount, currency, created_at") as any)
         .eq("business_id", bizId),
       (supabase.from("inventory_items").select("id, current_stock") as any)
         .eq("business_id", bizId),
@@ -182,6 +182,32 @@ const Business = () => {
     const totalDue = customers.reduce((s: number, c: any) => s + Number(c.total_due), 0);
     const totalCapital = capital.reduce((s: number, c: any) => s + Number(c.amount), 0);
 
+    // Build monthly data for last 6 months
+    const now = new Date();
+    const monthlyData: MonthlyData[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const monthDate = subMonths(now, i);
+      const mStart = startOfMonth(monthDate);
+      const mEnd = endOfMonth(monthDate);
+      const label = format(monthDate, "MMM yy");
+
+      const monthSales = sales.filter((s: any) => {
+        const d = new Date(s.created_at);
+        return d >= mStart && d <= mEnd;
+      });
+      const monthExpenses = expenses.filter((e: any) => {
+        const d = new Date(e.created_at);
+        return d >= mStart && d <= mEnd;
+      });
+
+      monthlyData.push({
+        month: label,
+        sales: monthSales.reduce((s: number, r: any) => s + Number(r.unit_price_bdt) * Number(r.quantity), 0),
+        profit: monthSales.reduce((s: number, r: any) => s + Number(r.expected_profit), 0),
+        expenses: monthExpenses.reduce((s: number, e: any) => s + Number(e.amount), 0),
+      });
+    }
+
     setBusinessStats(prev => ({
       ...prev,
       [bizId]: {
@@ -193,6 +219,7 @@ const Business = () => {
         totalDue,
         customerCount: customers.length,
         totalCapital,
+        monthlyData,
       }
     }));
   };
