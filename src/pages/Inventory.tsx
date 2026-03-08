@@ -206,6 +206,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const [form, setForm] = useState({
     name: "", category: "", quantity: "", weightPerUnit: "",
     buyingCostRmb: "", shippingRate: "", additionalCost: "", sellingPrice: "",
+    lowStockThreshold: "5",
   });
 
   useEffect(() => {
