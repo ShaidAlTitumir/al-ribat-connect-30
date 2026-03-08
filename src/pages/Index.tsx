@@ -101,12 +101,12 @@ const Index = () => {
     const totalDues = custs.reduce((s, c) => s + c.total_due, 0);
     // Revenue = total sales amount (unit_price × quantity)
     const totalRevenue = sales.reduce((s, r) => s + r.unit_price_bdt * r.quantity, 0);
-    // COGS = Revenue - Expected Profit (expected_profit = selling margin per sale)
+    // COGS = sum of (landed_cost × quantity) for each sale, derived from revenue - expected_profit
     const totalCOGS = totalRevenue - sales.reduce((s, r) => s + r.expected_profit, 0);
     // Operating Expenses (converted to BDT)
     const totalExpenses = exps.reduce((s, e) => s + (e.currency === "RMB" ? e.amount * exchangeRate : e.amount), 0);
-    // Net Profit = Revenue - COGS - Operating Expenses
-    const netProfit = totalRevenue - totalCOGS - totalExpenses;
+    // Net Profit = Total Revenue - Cost of Goods
+    const netProfit = totalRevenue - totalCOGS;
 
     const totalProfit = sales.reduce((s, r) => s + r.expected_profit, 0);
     setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, revenue: totalRevenue, netProfit, totalProfit, totalExpenses, totalCOGS });
