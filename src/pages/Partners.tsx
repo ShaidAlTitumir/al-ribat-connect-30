@@ -789,6 +789,11 @@ const Partners = () => {
                       <p className="text-sm font-bold text-foreground">Leave request pending</p>
                     </div>
                     <p className="text-xs text-muted-foreground">Waiting for other partners to approve your request to leave.</p>
+                    {getMyLeaveRequest()!.settlement_amount > 0 && (
+                      <p className="text-xs font-bold text-foreground mt-1">
+                        Settlement: {getMyLeaveRequest()!.settlement_currency === "RMB" ? "¥" : "৳"}{getMyLeaveRequest()!.settlement_amount}
+                      </p>
+                    )}
                     {leaveVotes[getMyLeaveRequest()!.id] && (
                       <div className="mt-2 space-y-1">
                         {leaveVotes[getMyLeaveRequest()!.id].map((v: any) => {
@@ -805,8 +810,48 @@ const Partners = () => {
                       </div>
                     )}
                   </div>
+                ) : showLeaveForm ? (
+                  <div className="p-3 rounded-lg bg-muted border border-border space-y-3">
+                    <p className="text-sm font-bold">Settlement Details</p>
+                    <p className="text-xs text-muted-foreground">Propose how much should be settled when you leave. Your capital contributions will be removed.</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold uppercase text-muted-foreground">Amount</label>
+                        <input className="w-full bg-card rounded-lg px-3 py-2 text-sm border border-border text-foreground"
+                          type="number" placeholder="0" value={settlementAmount}
+                          onChange={(e) => setSettlementAmount(e.target.value)} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold uppercase text-muted-foreground">Currency</label>
+                        <div className="flex bg-card rounded-lg p-1 border border-border">
+                          {(["BDT", "RMB"] as const).map((c) => (
+                            <button key={c} onClick={() => setSettlementCurrency(c)}
+                              className={`flex-1 py-1.5 text-xs font-bold rounded-md ${settlementCurrency === c ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+                              {c}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold uppercase text-muted-foreground">Notes (optional)</label>
+                      <input className="w-full bg-card rounded-lg px-3 py-2 text-sm border border-border text-foreground"
+                        placeholder="e.g. Return of initial investment"
+                        value={settlementNotes} onChange={(e) => setSettlementNotes(e.target.value)} />
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={handleRequestLeave}
+                        className="flex-1 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-bold hover:bg-destructive/90">
+                        Submit Leave Request
+                      </button>
+                      <button onClick={() => setShowLeaveForm(false)}
+                        className="flex-1 py-2 rounded-lg bg-muted border border-border text-foreground text-sm font-bold">
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
                 ) : (
-                  <button onClick={handleRequestLeave}
+                  <button onClick={() => { setShowLeaveForm(true); setSettlementAmount(""); setSettlementNotes(""); setSettlementCurrency("BDT"); }}
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-destructive/10 text-destructive font-bold text-sm hover:bg-destructive/20 transition-colors">
                     <LogOut className="w-4 h-4" />
                     Request to Leave Business
