@@ -229,9 +229,10 @@ const Wallet = () => {
                         <span className="text-sm font-bold">{ex.from_currency} → {ex.to_currency}</span>
                         <span className="text-xs text-muted-foreground">{format(new Date(ex.created_at), "MMM d")}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {ex.from_currency === "BDT" ? "৳" : "¥"}{ex.amount_from} → {ex.to_currency === "BDT" ? "৳" : "¥"}{ex.amount_to}
-                      </p>
+                        <span className="text-xs text-muted-foreground mt-1">
+                          {ex.from_currency === "BDT" ? "৳" : "¥"}{ex.amount_from} → {ex.to_currency === "BDT" ? "৳" : "¥"}{ex.amount_to}
+                          <span className="ml-1 opacity-70">@ {ex.rate}</span>
+                        </span>
                     </div>
                   ))}
                 </div>
