@@ -27,7 +27,7 @@ const Inventory = () => {
 };
 
 /* ─── Inventory List View ─── */
-const InventoryList = ({ onAdd }: { onAdd: () => void }) => {
+const InventoryList = ({ onAdd, onSamples }: { onAdd: () => void; onSamples: () => void }) => {
   const { businessId } = useBusiness();
   const [items, setItems] = useState<any[]>([]);
   const [search, setSearch] = useState("");
