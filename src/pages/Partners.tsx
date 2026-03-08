@@ -446,14 +446,16 @@ const Partners = () => {
           await (supabase.from("notifications") as any).insert({
             user_id: leavingPartner.user_id,
             business_id: businessId,
-            title: "You have left the business",
-            message: `All partners approved your request to leave.`,
-            type: "leave_request",
+            title: isRemoval ? "You have been removed from the business" : "You have left the business",
+            message: isRemoval
+              ? `All partners approved your removal from the business.`
+              : `All partners approved your request to leave.`,
+            type: isRemoval ? "removal_request" : "leave_request",
           });
         }
 
         await supabase.from("activity_log").insert({
-          action: "Partner left business (approved)",
+          action: isRemoval ? "Partner removed (approved)" : "Partner left business (approved)",
           details: { partner_name: leavingPartner.name },
           business_id: businessId, user_id: user.id,
         });
