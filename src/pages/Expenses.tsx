@@ -18,6 +18,8 @@ const Expenses = () => {
   const [useManualRate, setUseManualRate] = useState(false);
   const [manualRate, setManualRate] = useState("");
   const [saving, setSaving] = useState(false);
+  const [editingExp, setEditingExp] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ title: "", amount: 0, category: "" });
 
   useEffect(() => {
     if (!businessId) return;
