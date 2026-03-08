@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import AppSidebar from "@/components/AppSidebar";
+import { useBusiness } from "@/contexts/BusinessContext";
 
 const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
+  const { businessName } = useBusiness();
 
   // Close sidebar on route change (mobile) & smooth fade transition
   useEffect(() => {
@@ -44,7 +46,10 @@ const AppLayout = () => {
           >
             <span className="material-symbols-outlined">menu</span>
           </button>
-          <h1 className="text-base font-bold tracking-tight text-foreground">Al-Ribat Manager</h1>
+          <h1 className="text-base font-bold tracking-tight text-foreground">
+            Al-Ribat Manager
+            {businessName && <span className="text-xs font-medium text-muted-foreground ml-1.5">· {businessName}</span>}
+          </h1>
         </div>
         <div
           className="flex-1 flex flex-col transition-opacity duration-300 ease-out"
