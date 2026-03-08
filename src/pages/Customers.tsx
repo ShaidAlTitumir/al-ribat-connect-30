@@ -6,11 +6,12 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
+import InvoiceModal from "@/components/InvoiceModal";
 import { format } from "date-fns";
 import { ChevronDown, ChevronUp, Phone, MapPin, Store, Edit2, Trash2, X, Check } from "lucide-react";
 
 const Customers = () => {
-  const { businessId } = useBusiness();
+  const { businessId, businessName, businessPhone, businessAddress } = useBusiness();
   const { user } = useAuth();
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
@@ -28,6 +29,7 @@ const Customers = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", phone: "", address: "", shop_name: "" });
+  const [invoiceData, setInvoiceData] = useState<any>(null);
 
   useEffect(() => {
     if (!businessId) return;
@@ -449,14 +451,28 @@ const Customers = () => {
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-sm">৳{(sale.quantity * sale.unit_price_bdt).toFixed(0)}</p>
-                          {sale.due > 0 && (
-                            <p className="text-xs text-destructive font-medium">Due: ৳{sale.due}</p>
-                          )}
-                          {sale.due === 0 && (
-                            <p className="text-xs text-emerald-600 font-medium">Paid</p>
-                          )}
+                        <div className="flex items-center gap-2">
+                          <div className="text-right">
+                            <p className="font-bold text-sm">৳{(sale.quantity * sale.unit_price_bdt).toFixed(0)}</p>
+                            {sale.due > 0 && (
+                              <p className="text-xs text-destructive font-medium">Due: ৳{sale.due}</p>
+                            )}
+                            {sale.due === 0 && (
+                              <p className="text-xs text-emerald-600 font-medium">Paid</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => setInvoiceData({
+                              sale,
+                              itemName: sale.inventory_items?.name || "Item",
+                              customerName: selectedCustomer?.name || "Customer",
+                              business: { name: businessName, phone: businessPhone, address: businessAddress },
+                            })}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                            title="Download Receipt"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">receipt</span>
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -478,6 +494,7 @@ const Customers = () => {
           </div>
         </div>
       </div>
+      <InvoiceModal data={invoiceData} onClose={() => setInvoiceData(null)} />
     </div>
   );
 };
