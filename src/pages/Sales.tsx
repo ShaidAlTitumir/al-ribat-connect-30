@@ -532,6 +532,7 @@ const Sales = () => {
                   ))}
                 </div>
               )}
+          </div>
 
           {/* Desktop Summary Sidebar */}
           <div className="hidden lg:block">
