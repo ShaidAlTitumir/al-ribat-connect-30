@@ -9,11 +9,13 @@ import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 import { format } from "date-fns";
 
 const Expenses = () => {
-  const { businessId } = useBusiness();
+  const { businessId, exchangeRate } = useBusiness();
   const { user } = useAuth();
   const [expenses, setExpenses] = useState<any[]>([]);
   const [form, setForm] = useState({ title: "", amount: "", category: "Shipping" });
   const [currency, setCurrency] = useState<"BDT" | "RMB">("BDT");
+  const [useManualRate, setUseManualRate] = useState(false);
+  const [manualRate, setManualRate] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
