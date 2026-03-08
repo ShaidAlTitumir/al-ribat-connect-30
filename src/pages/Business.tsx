@@ -18,6 +18,22 @@ interface BusinessData {
   created_at: string;
 }
 
+interface DeletionRequest {
+  id: string;
+  business_id: string;
+  requested_by: string;
+  status: string;
+  created_at: string;
+}
+
+interface DeletionVote {
+  id: string;
+  request_id: string;
+  user_id: string;
+  vote: string;
+  voted_at: string | null;
+}
+
 const Business = () => {
   const { user } = useAuth();
   const { businessId, switchBusiness } = useBusiness();
@@ -25,6 +41,11 @@ const Business = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [partnerCounts, setPartnerCounts] = useState<Record<string, number>>({});
+  const [deletionRequests, setDeletionRequests] = useState<Record<string, DeletionRequest>>({});
+  const [deletionVotes, setDeletionVotes] = useState<Record<string, DeletionVote[]>>({});
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   // Form state
   const [formName, setFormName] = useState("");
@@ -40,7 +61,6 @@ const Business = () => {
 
   const fetchBusinesses = async () => {
     setLoading(true);
-    // Fetch businesses where user is owner, current business, or member
     const { data: memberOf } = await (supabase
       .from("business_members")
       .select("business_id") as any)
@@ -56,7 +76,57 @@ const Business = () => {
       .select("*") as any)
       .or(`owner_id.eq.${user!.id}${allIds.size > 0 ? `,id.in.(${Array.from(allIds).join(",")})` : ""}`);
 
-    setBusinesses((data as BusinessData[]) || []);
+    const bizList = (data as BusinessData[]) || [];
+    setBusinesses(bizList);
+
+    // Fetch partner counts and deletion requests for each business
+    const bizIds = bizList.map(b => b.id);
+    if (bizIds.length > 0) {
+      // Partner counts
+      const { data: partners } = await (supabase
+        .from("partners")
+        .select("business_id") as any)
+        .in("business_id", bizIds)
+        .eq("status", "accepted");
+      
+      const counts: Record<string, number> = {};
+      (partners || []).forEach((p: any) => {
+        counts[p.business_id] = (counts[p.business_id] || 0) + 1;
+      });
+      setPartnerCounts(counts);
+
+      // Deletion requests
+      const { data: requests } = await (supabase
+        .from("business_deletion_requests")
+        .select("*") as any)
+        .in("business_id", bizIds)
+        .eq("status", "pending");
+
+      const reqMap: Record<string, DeletionRequest> = {};
+      (requests || []).forEach((r: any) => {
+        reqMap[r.business_id] = r;
+      });
+      setDeletionRequests(reqMap);
+
+      // Votes for pending requests
+      const requestIds = (requests || []).map((r: any) => r.id);
+      if (requestIds.length > 0) {
+        const { data: votes } = await (supabase
+          .from("business_deletion_votes")
+          .select("*") as any)
+          .in("request_id", requestIds);
+
+        const voteMap: Record<string, DeletionVote[]> = {};
+        (votes || []).forEach((v: any) => {
+          if (!voteMap[v.request_id]) voteMap[v.request_id] = [];
+          voteMap[v.request_id].push(v);
+        });
+        setDeletionVotes(voteMap);
+      } else {
+        setDeletionVotes({});
+      }
+    }
+
     setLoading(false);
   };
 
@@ -108,7 +178,6 @@ const Business = () => {
         .single();
       if (error) { toast.error(error.message); return; }
 
-      // Add self as member
       await (supabase.from("business_members") as any).insert({
         user_id: user.id,
         business_id: data.id,
@@ -128,6 +197,133 @@ const Business = () => {
       .eq("user_id", user.id);
     switchBusiness(id);
     toast.success("Switched business!");
+  };
+
+  // Delete business (no partners — immediate delete)
+  const handleDeleteDirect = async (b: BusinessData) => {
+    if (deleteConfirmText !== b.name) {
+      toast.error("Please type the business name to confirm");
+      return;
+    }
+    const { error } = await supabase.from("businesses").delete().eq("id", b.id);
+    if (error) { toast.error(error.message); return; }
+    
+    // If this was the active business, clear it
+    if (b.id === businessId && user) {
+      await supabase.from("profiles").update({ business_id: null }).eq("user_id", user.id);
+      switchBusiness("");
+    }
+    toast.success("Business deleted permanently");
+    setConfirmDeleteId(null);
+    setDeleteConfirmText("");
+    fetchBusinesses();
+  };
+
+  // Request deletion (has partners — needs approval)
+  const handleRequestDeletion = async (b: BusinessData) => {
+    if (!user) return;
+    // Create deletion request
+    const { data: req, error } = await (supabase
+      .from("business_deletion_requests")
+      .insert({ business_id: b.id, requested_by: user.id }) as any)
+      .select()
+      .single();
+    if (error) { toast.error(error.message); return; }
+
+    // Get all accepted partners with user_ids (excluding requester)
+    const { data: partners } = await (supabase
+      .from("partners")
+      .select("user_id") as any)
+      .eq("business_id", b.id)
+      .eq("status", "accepted")
+      .not("user_id", "is", null);
+
+    const partnerUserIds = (partners || [])
+      .map((p: any) => p.user_id)
+      .filter((uid: string) => uid !== user.id);
+
+    // Create vote entries for each partner
+    if (partnerUserIds.length > 0) {
+      const voteInserts = partnerUserIds.map((uid: string) => ({
+        request_id: req.id,
+        user_id: uid,
+        vote: "pending",
+      }));
+      await (supabase.from("business_deletion_votes") as any).insert(voteInserts);
+
+      // Also auto-approve for the requester
+      await (supabase.from("business_deletion_votes") as any).insert({
+        request_id: req.id,
+        user_id: user.id,
+        vote: "approved",
+        voted_at: new Date().toISOString(),
+      });
+    }
+
+    toast.success("Deletion request sent to all partners for approval");
+    setConfirmDeleteId(null);
+    setDeleteConfirmText("");
+    fetchBusinesses();
+  };
+
+  // Vote on a deletion request
+  const handleVote = async (requestId: string, vote: "approved" | "rejected") => {
+    if (!user) return;
+
+    await (supabase.from("business_deletion_votes") as any)
+      .update({ vote, voted_at: new Date().toISOString() })
+      .eq("request_id", requestId)
+      .eq("user_id", user.id);
+
+    if (vote === "rejected") {
+      // Cancel the whole request
+      await (supabase.from("business_deletion_requests") as any)
+        .update({ status: "rejected" })
+        .eq("id", requestId);
+      toast.info("You rejected the deletion request");
+    } else {
+      // Check if all partners approved
+      const { data: allVotes } = await (supabase
+        .from("business_deletion_votes")
+        .select("*") as any)
+        .eq("request_id", requestId);
+
+      const allApproved = (allVotes || []).every((v: any) => v.vote === "approved");
+      if (allApproved) {
+        // Get the business_id from the request
+        const { data: req } = await (supabase
+          .from("business_deletion_requests")
+          .select("business_id") as any)
+          .eq("id", requestId)
+          .single();
+
+        if (req) {
+          // Delete the business
+          await supabase.from("businesses").delete().eq("id", req.business_id);
+          await (supabase.from("business_deletion_requests") as any)
+            .update({ status: "completed" })
+            .eq("id", requestId);
+
+          if (req.business_id === businessId && user) {
+            await supabase.from("profiles").update({ business_id: null }).eq("user_id", user.id);
+            switchBusiness("");
+          }
+          toast.success("All partners approved — business deleted");
+        }
+      } else {
+        toast.success("Your approval recorded. Waiting for other partners.");
+      }
+    }
+    fetchBusinesses();
+  };
+
+  // Cancel own deletion request
+  const handleCancelRequest = async (requestId: string) => {
+    await (supabase.from("business_deletion_requests") as any)
+      .update({ status: "cancelled" })
+      .eq("id", requestId);
+    toast.info("Deletion request cancelled");
+    fetchBusinesses();
   };
 
   return (
@@ -236,6 +432,15 @@ const Business = () => {
             {businesses.map((b) => {
               const isActive = b.id === businessId;
               const isOwner = b.owner_id === user?.id;
+              const partnerCount = partnerCounts[b.id] || 0;
+              const hasPartners = partnerCount > 1; // more than just self
+              const pendingRequest = deletionRequests[b.id];
+              const votes = pendingRequest ? (deletionVotes[pendingRequest.id] || []) : [];
+              const myVote = votes.find(v => v.user_id === user?.id);
+              const approvedCount = votes.filter(v => v.vote === "approved").length;
+              const totalVotes = votes.length;
+              const isRequester = pendingRequest?.requested_by === user?.id;
+
               return (
                 <div key={b.id}
                   className={`bg-card rounded-xl border p-4 lg:p-5 transition-all ${
@@ -250,7 +455,7 @@ const Business = () => {
                         <span className="material-symbols-outlined text-xl">storefront</span>
                       </div>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="font-bold text-sm text-foreground truncate">{b.name}</h4>
                           {isActive && (
                             <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full shrink-0">
@@ -288,6 +493,12 @@ const Business = () => {
                               ৳{Number(b.manual_value).toLocaleString("en-IN")}
                             </span>
                           )}
+                          {partnerCount > 0 && (
+                            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[12px]">group</span>
+                              {partnerCount} partner{partnerCount !== 1 ? "s" : ""}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -300,6 +511,13 @@ const Business = () => {
                           <span className="material-symbols-outlined text-muted-foreground text-[18px]">edit</span>
                         </button>
                       )}
+                      {isOwner && !pendingRequest && (
+                        <button onClick={() => { setConfirmDeleteId(b.id); setDeleteConfirmText(""); }}
+                          className="p-2 rounded-lg hover:bg-destructive/10 transition-colors"
+                          title="Delete Business">
+                          <span className="material-symbols-outlined text-destructive text-[18px]">delete</span>
+                        </button>
+                      )}
                       {!isActive && (
                         <button onClick={() => handleSelect(b.id)}
                           className="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-primary/90">
@@ -308,6 +526,110 @@ const Business = () => {
                       )}
                     </div>
                   </div>
+
+                  {/* Pending deletion request banner (for all members) */}
+                  {pendingRequest && (
+                    <div className="mt-3 border border-destructive/30 bg-destructive/5 rounded-lg p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-destructive text-base">warning</span>
+                        <p className="text-xs font-bold text-destructive">Deletion Requested</p>
+                        <span className="ml-auto text-[10px] text-muted-foreground">
+                          {approvedCount}/{totalVotes} approved
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {votes.map((v) => (
+                          <span key={v.id} className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                            v.vote === "approved"
+                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                              : v.vote === "rejected"
+                              ? "bg-destructive/10 text-destructive"
+                              : "bg-muted text-muted-foreground"
+                          }`}>
+                            {v.user_id === user?.id ? "You" : "Partner"}: {v.vote}
+                          </span>
+                        ))}
+                      </div>
+                      {/* Show vote buttons if user hasn't voted yet */}
+                      {myVote && myVote.vote === "pending" && (
+                        <div className="flex items-center gap-2 pt-1">
+                          <button onClick={() => handleVote(pendingRequest.id, "approved")}
+                            className="flex-1 bg-destructive text-destructive-foreground py-1.5 rounded-lg text-xs font-bold hover:bg-destructive/90">
+                            Approve Deletion
+                          </button>
+                          <button onClick={() => handleVote(pendingRequest.id, "rejected")}
+                            className="flex-1 bg-muted text-foreground py-1.5 rounded-lg text-xs font-bold hover:bg-muted/80">
+                            Reject
+                          </button>
+                        </div>
+                      )}
+                      {/* Owner can cancel */}
+                      {isRequester && (
+                        <button onClick={() => handleCancelRequest(pendingRequest.id)}
+                          className="w-full text-xs text-muted-foreground hover:text-foreground py-1 transition-colors">
+                          Cancel request
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Delete confirmation panel */}
+                  {confirmDeleteId === b.id && (
+                    <div className="mt-3 border-2 border-destructive/40 bg-destructive/5 rounded-lg p-4 space-y-3">
+                      <div className="flex items-start gap-2">
+                        <span className="material-symbols-outlined text-destructive text-xl mt-0.5">dangerous</span>
+                        <div>
+                          <p className="font-bold text-sm text-destructive">Delete "{b.name}"?</p>
+                          {hasPartners ? (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              This business has <strong>{partnerCount}</strong> partners. All partners must approve before deletion.
+                              A request will be sent to each partner.
+                            </p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              This will <strong>permanently delete</strong> all data including inventory, sales, expenses, and customers.
+                              This action cannot be undone.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {!hasPartners && (
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                            Type "{b.name}" to confirm
+                          </label>
+                          <input
+                            className="w-full bg-background rounded-lg px-3 py-2 text-sm border border-destructive/30 text-foreground"
+                            placeholder={b.name}
+                            value={deleteConfirmText}
+                            onChange={(e) => setDeleteConfirmText(e.target.value)}
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2">
+                        {hasPartners ? (
+                          <button onClick={() => handleRequestDeletion(b)}
+                            className="flex-1 bg-destructive text-destructive-foreground py-2 rounded-lg text-xs font-bold hover:bg-destructive/90 flex items-center justify-center gap-1.5">
+                            <span className="material-symbols-outlined text-sm">send</span>
+                            Request Partner Approval
+                          </button>
+                        ) : (
+                          <button onClick={() => handleDeleteDirect(b)}
+                            disabled={deleteConfirmText !== b.name}
+                            className="flex-1 bg-destructive text-destructive-foreground py-2 rounded-lg text-xs font-bold hover:bg-destructive/90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5">
+                            <span className="material-symbols-outlined text-sm">delete_forever</span>
+                            Delete Permanently
+                          </button>
+                        )}
+                        <button onClick={() => { setConfirmDeleteId(null); setDeleteConfirmText(""); }}
+                          className="px-4 py-2 rounded-lg text-xs font-bold bg-muted hover:bg-muted/80 text-foreground">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
