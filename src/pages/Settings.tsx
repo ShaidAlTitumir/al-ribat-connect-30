@@ -112,14 +112,17 @@ const Settings = () => {
     if (!businessId || cleanConfirmText !== "DELETE") return;
     setSaving("clean");
     try {
-      const tables = [
-        "customer_ledger", "returns", "sales", "purchase_transactions",
-        "exchanges", "partner_transfers", "capital_contributions",
-        "expenses", "activity_log", "customers", "inventory_items"
-      ];
-      for (const table of tables) {
-        await supabase.from(table).delete().eq("business_id", businessId);
-      }
+      await supabase.from("customer_ledger").delete().eq("business_id", businessId);
+      await supabase.from("returns").delete().eq("business_id", businessId);
+      await supabase.from("sales").delete().eq("business_id", businessId);
+      await supabase.from("purchase_transactions").delete().eq("business_id", businessId);
+      await supabase.from("exchanges").delete().eq("business_id", businessId);
+      await supabase.from("partner_transfers").delete().eq("business_id", businessId);
+      await supabase.from("capital_contributions").delete().eq("business_id", businessId);
+      await supabase.from("expenses").delete().eq("business_id", businessId);
+      await supabase.from("activity_log").delete().eq("business_id", businessId);
+      await supabase.from("customers").delete().eq("business_id", businessId);
+      await supabase.from("inventory_items").delete().eq("business_id", businessId);
       toast.success("All business data has been cleaned!");
       setShowCleanConfirm(false);
       setCleanConfirmText("");
