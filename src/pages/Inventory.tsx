@@ -177,6 +177,18 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
       .eq("business_id", businessId).then(({ data }) => setExistingItems(data || []));
   }, [businessId]);
 
+  // Load existing categories from inventory
+  useEffect(() => {
+    if (!businessId) return;
+    supabase.from("inventory_items").select("category").eq("business_id", businessId).then(({ data }) => {
+      const cats = new Set(savedCategories);
+      (data || []).forEach((d) => { if (d.category) cats.add(d.category); });
+      setSavedCategories(Array.from(cats));
+    });
+  }, [businessId]);
+
+  const activeRate = useManualRate && manualRate ? parseFloat(manualRate) : exchangeRate;
+
   const qty = parseInt(form.quantity) || 0;
   const weight = parseFloat(form.weightPerUnit) || 0;
   const buyRmb = parseFloat(form.buyingCostRmb) || 0;
@@ -184,8 +196,9 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const addCost = parseFloat(form.additionalCost) || 0;
   const sellPrice = parseFloat(form.sellingPrice) || 0;
 
+  const buyingPerUnitBdt = buyRmb * activeRate;
   const totalWeight = qty * weight;
-  const totalBuyingBdt = buyRmb * qty * exchangeRate;
+  const totalBuyingBdt = buyRmb * qty * activeRate;
   const totalShipping = totalWeight * shipRate;
   const totalLanded = totalBuyingBdt + totalShipping + addCost;
   const landedPerUnit = qty > 0 ? totalLanded / qty : 0;
