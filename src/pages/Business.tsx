@@ -563,33 +563,20 @@ const Business = () => {
       <ExchangeRateHeader title="My Businesses" />
       <div className="p-4 lg:p-8 max-w-4xl mx-auto space-y-6 w-full">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-foreground">Your Businesses</h2>
             <p className="text-sm text-muted-foreground">Create, manage, and switch between your businesses.</p>
           </div>
-          <div className="flex items-center gap-2">
-            {businesses.length > 1 && (
-              <select
-                value={businessId || ""}
-                onChange={(e) => handleSelect(e.target.value)}
-                className="h-9 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
-              >
-                {businesses.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
-            )}
-            {!showCreate && (
-              <button
-                onClick={() => { resetForm(); setShowCreate(true); }}
-                className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-primary/90"
-              >
-                <span className="material-symbols-outlined text-base">add</span>
-                New Business
-              </button>
-            )}
-          </div>
+          {!showCreate && (
+            <button
+              onClick={() => { resetForm(); setShowCreate(true); }}
+              className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-primary/90"
+            >
+              <span className="material-symbols-outlined text-base">add</span>
+              New Business
+            </button>
+          )}
         </div>
 
         {/* Create / Edit Form */}
@@ -779,7 +766,10 @@ const Business = () => {
                         </button>
                       )}
                       {!isActive && (
-                        <span className="text-[10px] text-muted-foreground italic">Use dropdown above to switch</span>
+                        <button onClick={() => handleSelect(b.id)}
+                          className="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-primary/90">
+                          Select
+                        </button>
                       )}
                     </div>
                   </div>
