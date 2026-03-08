@@ -202,8 +202,8 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const [walletRmb, setWalletRmb] = useState(0);
 
   const [form, setForm] = useState({
-    name: "", category: "", quantity: "", weightPerUnit: "",
-    buyingCostRmb: "", shippingRate: "", additionalCost: "", sellingPrice: "",
+    name: "", category: "", quantity: "", totalWeight: "",
+    buyingCostRmb: "", totalBuyingCostRmb: "", shippingRate: "", additionalCost: "", sellingPrice: "",
     lowStockThreshold: "5",
   });
 
