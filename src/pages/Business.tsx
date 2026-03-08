@@ -755,7 +755,7 @@ const Business = () => {
                   {/* Expanded details panel */}
                   {expandedId === b.id && (() => {
                     const stats = businessStats[b.id];
-                    const netProfit = stats ? stats.totalSalesRevenue - (stats.totalSalesRevenue - stats.totalProfit) : 0;
+                    const netProfit = stats ? stats.totalProfit : 0;
                     const bizValue = b.manual_value != null
                       ? Number(b.manual_value)
                       : (stats ? stats.totalCapital + netProfit : 0);
