@@ -681,7 +681,14 @@ const Partners = () => {
                               {p.name?.charAt(0).toUpperCase() || "?"}
                             </div>
                             <div className="text-left">
-                              <p className="font-bold text-sm">{p.name}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-bold text-sm">{p.name}</p>
+                                {leaveRequests.find(r => r.partner_id === p.id) && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 font-bold">
+                                    {leaveRequests.find(r => r.partner_id === p.id)?.type === "removal" ? "Removal pending" : "Leaving"}
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-xs text-muted-foreground capitalize">{p.role}</p>
                             </div>
                           </div>
