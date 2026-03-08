@@ -222,6 +222,48 @@ const Partners = () => {
     fetchData();
   };
 
+  const handleEditContribution = (contrib: any) => {
+    setEditingContribution(contrib);
+    setEditContribForm({ amount: String(contrib.amount), currency: contrib.currency });
+  };
+
+  const handleSaveContribution = async () => {
+    if (!editingContribution || !businessId || !user) return;
+    const amt = parseFloat(editContribForm.amount);
+    if (!amt || amt <= 0) { toast.error("Enter a valid amount"); return; }
+    const { error } = await supabase.from("capital_contributions")
+      .update({ amount: amt, currency: editContribForm.currency })
+      .eq("id", editingContribution.id);
+    if (error) { toast.error(error.message); return; }
+    await supabase.from("activity_log").insert({
+      action: "Updated capital contribution",
+      details: { 
+        partner_name: editingContribution.partners?.name,
+        old_amount: editingContribution.amount, old_currency: editingContribution.currency,
+        new_amount: amt, new_currency: editContribForm.currency,
+      },
+      business_id: businessId, user_id: user.id,
+    });
+    toast.success("Contribution updated!");
+    setEditingContribution(null);
+    fetchData();
+  };
+
+  const handleDeleteContribution = async (contrib: any) => {
+    if (!businessId || !user) return;
+    const confirmed = window.confirm(`Delete ${contrib.currency === "RMB" ? "¥" : "৳"}${contrib.amount} contribution?`);
+    if (!confirmed) return;
+    const { error } = await supabase.from("capital_contributions").delete().eq("id", contrib.id);
+    if (error) { toast.error(error.message); return; }
+    await supabase.from("activity_log").insert({
+      action: "Deleted capital contribution",
+      details: { partner_name: contrib.partners?.name, amount: contrib.amount, currency: contrib.currency },
+      business_id: businessId, user_id: user.id,
+    });
+    toast.success("Contribution deleted!");
+    fetchData();
+  };
+
   const acceptedPartners = partners.filter(p => p.status === "accepted");
 
   // Calculate equity
