@@ -271,6 +271,8 @@ const Index = () => {
                   "Added new inventory item": { icon: "add_box", color: "text-purple-600 bg-purple-50" },
                   "Restocked inventory item": { icon: "inventory", color: "text-purple-600 bg-purple-50" },
                   "Added capital contribution": { icon: "account_balance", color: "text-amber-600 bg-amber-50" },
+                  "Updated capital contribution": { icon: "edit", color: "text-amber-600 bg-amber-50" },
+                  "Deleted capital contribution": { icon: "delete", color: "text-red-600 bg-red-50" },
                   "Collected due payment": { icon: "receipt", color: "text-emerald-600 bg-emerald-50" },
                   "Added new customer": { icon: "person_add", color: "text-blue-600 bg-blue-50" },
                   "Deleted customer": { icon: "person_remove", color: "text-red-600 bg-red-50" },
