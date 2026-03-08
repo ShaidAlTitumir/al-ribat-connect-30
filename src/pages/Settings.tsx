@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusiness } from "@/contexts/BusinessContext";
@@ -278,7 +279,7 @@ const Settings = () => {
           </div>
         </section>
 
-        {showCleanConfirm && (
+        {showCleanConfirm && createPortal(
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
             <div className="bg-card border border-destructive/50 rounded-xl p-6 max-w-md w-full mx-4 space-y-4">
               <div className="flex items-center gap-3">
@@ -310,7 +311,7 @@ const Settings = () => {
               </div>
             </div>
           </div>
-        )}
+        , document.body)}
 
         {/* Builder Credit */}
         <div className="text-center py-6 border-t border-border mt-4">
