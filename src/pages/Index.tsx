@@ -34,6 +34,9 @@ const Index = () => {
   const [partners, setPartners] = useState<PartnerEquity[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
+  const [dailySales, setDailySales] = useState<{ day: string; revenue: number; profit: number }[]>([]);
+  const [topItems, setTopItems] = useState<{ name: string; quantity: number; revenue: number }[]>([]);
+  const [lowStockItems, setLowStockItems] = useState<{ name: string; stock: number; threshold: number }[]>([]);
 
   useEffect(() => {
     if (!businessId) return;
