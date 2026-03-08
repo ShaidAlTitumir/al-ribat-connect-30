@@ -784,20 +784,28 @@ const Partners = () => {
               </>
             )}
 
-            {/* Show other partners' pending leave requests for voting */}
+            {/* Show pending requests needing my vote (leave + removal) */}
             {leaveRequests.filter(r => r.requested_by !== user?.id).length > 0 && (
               <div className="space-y-2 pt-2 border-t border-border">
-                <p className="text-xs font-bold uppercase text-muted-foreground">Pending Leave Requests</p>
+                <p className="text-xs font-bold uppercase text-muted-foreground">Pending Requests</p>
                 {leaveRequests
                   .filter(r => r.requested_by !== user?.id)
                   .map(r => {
-                    const leavingPartner = acceptedPartners.find(p => p.id === r.partner_id);
+                    const targetPartner = acceptedPartners.find(p => p.id === r.partner_id);
                     const myVote = (leaveVotes[r.id] || []).find((v: any) => v.user_id === user?.id);
+                    const isRemoval = r.type === "removal";
                     return (
                       <div key={r.id} className="p-3 rounded-lg bg-muted border border-border">
-                        <p className="text-sm font-bold mb-1">
-                          {leavingPartner?.name || "Partner"} wants to leave
-                        </p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`material-symbols-outlined text-[16px] ${isRemoval ? "text-destructive" : "text-amber-500"}`}>
+                            {isRemoval ? "person_remove" : "exit_to_app"}
+                          </span>
+                          <p className="text-sm font-bold">
+                            {isRemoval
+                              ? `Remove ${targetPartner?.name || "Partner"}`
+                              : `${targetPartner?.name || "Partner"} wants to leave`}
+                          </p>
+                        </div>
                         <p className="text-xs text-muted-foreground mb-2">
                           Requested {format(new Date(r.created_at), "MMM d, yyyy")}
                         </p>
@@ -815,6 +823,42 @@ const Partners = () => {
                               className="flex-1 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-bold hover:bg-destructive/20 transition-colors">
                               Reject
                             </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+
+            {/* Show my removal requests (initiated by me to remove others) */}
+            {leaveRequests.filter(r => r.requested_by === user?.id && r.type === "removal").length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-border">
+                <p className="text-xs font-bold uppercase text-muted-foreground">Your Removal Requests</p>
+                {leaveRequests
+                  .filter(r => r.requested_by === user?.id && r.type === "removal")
+                  .map(r => {
+                    const targetPartner = acceptedPartners.find(p => p.id === r.partner_id);
+                    return (
+                      <div key={r.id} className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="material-symbols-outlined text-amber-500 text-[18px]">hourglass_top</span>
+                          <p className="text-sm font-bold">Removing {targetPartner?.name || "Partner"}</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Waiting for other partners to approve.</p>
+                        {leaveVotes[r.id] && (
+                          <div className="mt-2 space-y-1">
+                            {leaveVotes[r.id].map((v: any) => {
+                              const voter = acceptedPartners.find(p => p.user_id === v.user_id);
+                              return (
+                                <div key={v.id} className="flex items-center justify-between text-xs">
+                                  <span className="text-muted-foreground">{voter?.name || "Partner"}</span>
+                                  <span className={`font-bold capitalize ${v.vote === "approved" ? "text-green-500" : v.vote === "rejected" ? "text-destructive" : "text-amber-500"}`}>
+                                    {v.vote}
+                                  </span>
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
