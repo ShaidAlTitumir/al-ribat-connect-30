@@ -202,8 +202,8 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const [walletRmb, setWalletRmb] = useState(0);
 
   const [form, setForm] = useState({
-    name: "", category: "", quantity: "", weightPerUnit: "",
-    buyingCostRmb: "", shippingRate: "", additionalCost: "", sellingPrice: "",
+    name: "", category: "", quantity: "", totalWeight: "",
+    buyingCostRmb: "", totalBuyingCostRmb: "", shippingRate: "", additionalCost: "", sellingPrice: "",
     lowStockThreshold: "5",
   });
 
@@ -252,14 +252,14 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const activeRate = useManualRate && manualRate ? parseFloat(manualRate) : exchangeRate;
 
   const qty = parseInt(form.quantity) || 0;
-  const weight = parseFloat(form.weightPerUnit) || 0;
+  const totalWeight = parseFloat(form.totalWeight) || 0;
+  const weightPerUnit = qty > 0 ? totalWeight / qty : 0;
   const buyRmb = parseFloat(form.buyingCostRmb) || 0;
   const shipRate = parseFloat(form.shippingRate) || 0;
   const addCost = parseFloat(form.additionalCost) || 0;
   const sellPrice = parseFloat(form.sellingPrice) || 0;
 
   const buyingPerUnitBdt = buyRmb * activeRate;
-  const totalWeight = qty * weight;
   const totalBuyingBdt = buyRmb * qty * activeRate;
   const totalShipping = totalWeight * shipRate;
   const totalLanded = totalBuyingBdt + totalShipping + addCost;
@@ -288,7 +288,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
 
       if (itemMode === "new") {
         const { data: newItem, error } = await supabase.from("inventory_items").insert({
-          name: form.name.trim(), category: form.category, weight_per_unit: weight,
+          name: form.name.trim(), category: form.category, weight_per_unit: weightPerUnit,
           current_stock: qty, default_selling_price: sellPrice,
           low_stock_threshold: parseInt(form.lowStockThreshold) || 5,
           business_id: businessId, user_id: user.id,
@@ -298,7 +298,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
       } else {
         // Existing item — add without purchase cost (pre-existing stock)
         const { data: newItem, error } = await supabase.from("inventory_items").insert({
-          name: form.name.trim(), category: form.category, weight_per_unit: weight,
+          name: form.name.trim(), category: form.category, weight_per_unit: weightPerUnit,
           current_stock: qty, default_selling_price: sellPrice,
           low_stock_threshold: parseInt(form.lowStockThreshold) || 5,
           business_id: businessId, user_id: user.id,
@@ -416,9 +416,12 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                   value={form.quantity} onChange={(e) => updateForm("quantity", e.target.value)} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-foreground">Weight per unit (kg)</label>
+                <label className="text-sm font-semibold text-foreground">Total Weight (kg)</label>
                 <input className="rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" step="0.01" placeholder="0.00"
-                  value={form.weightPerUnit} onChange={(e) => updateForm("weightPerUnit", e.target.value)} />
+                  value={form.totalWeight} onChange={(e) => updateForm("totalWeight", e.target.value)} />
+                {qty > 0 && totalWeight > 0 && (
+                  <span className="text-xs text-muted-foreground">= {weightPerUnit.toFixed(3)} kg per unit</span>
+                )}
               </div>
               {(
                 <div className="flex flex-col gap-1.5">
@@ -442,10 +445,29 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">¥</span>
                   <input className="pl-7 w-full rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" placeholder="0.00"
-                    value={form.buyingCostRmb} onChange={(e) => updateForm("buyingCostRmb", e.target.value)} />
+                    value={form.buyingCostRmb} onChange={(e) => {
+                      updateForm("buyingCostRmb", e.target.value);
+                      const perUnit = parseFloat(e.target.value) || 0;
+                      if (qty > 0 && perUnit > 0) updateForm("totalBuyingCostRmb", (perUnit * qty).toFixed(2));
+                    }} />
                 </div>
                 {buyRmb > 0 && (
                   <span className="text-xs text-muted-foreground">= ৳{buyingPerUnitBdt.toFixed(2)} BDT/unit @ {activeRate} rate</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-foreground">Total Buying Cost (RMB)</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">¥</span>
+                  <input className="pl-7 w-full rounded-lg border border-border bg-muted px-4 py-2.5 text-foreground" type="number" placeholder="0.00"
+                    value={form.totalBuyingCostRmb} onChange={(e) => {
+                      updateForm("totalBuyingCostRmb", e.target.value);
+                      const total = parseFloat(e.target.value) || 0;
+                      if (qty > 0 && total > 0) updateForm("buyingCostRmb", (total / qty).toFixed(2));
+                    }} />
+                </div>
+                {parseFloat(form.totalBuyingCostRmb) > 0 && (
+                  <span className="text-xs text-muted-foreground">= ৳{(parseFloat(form.totalBuyingCostRmb) * activeRate).toFixed(2)} BDT total</span>
                 )}
               </div>
               <div className="flex flex-col gap-1.5">
