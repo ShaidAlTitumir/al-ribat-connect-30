@@ -16,6 +16,8 @@ const Customers = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [amount, setAmount] = useState("");
   const [ledger, setLedger] = useState<any[]>([]);
+  const [purchaseHistory, setPurchaseHistory] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<"ledger" | "purchases">("ledger");
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [showAddCustomer, setShowAddCustomer] = useState(false);
