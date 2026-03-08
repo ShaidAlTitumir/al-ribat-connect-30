@@ -169,7 +169,7 @@ const Index = () => {
     setLowStockItems(lowStock);
   };
 
-  const colors = ["bg-primary", "bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-purple-500"];
+  const colors = ["bg-sky-500", "bg-orange-500", "bg-emerald-500", "bg-rose-500", "bg-violet-500"];
 
   return (
     <>
