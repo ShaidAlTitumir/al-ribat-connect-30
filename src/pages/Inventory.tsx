@@ -309,31 +309,35 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
         itemId = newItem.id;
       }
 
-      // Record purchase transaction
-      await supabase.from("purchase_transactions").insert({
-        item_id: itemId, quantity: qty, buying_cost_per_unit_rmb: buyRmb,
-        shipping_method: shippingMethod, shipping_rate_bdt_per_kg: shipRate,
-        additional_cost_bdt: addCost, total_landed_cost_bdt: totalLanded,
-        landed_cost_per_unit_bdt: landedPerUnit, exchange_rate_used: activeRate,
-        business_id: businessId, user_id: user.id,
-      });
+      // Record purchase transaction (only for new purchases, not existing items)
+      if (itemMode === "new" && totalLanded > 0) {
+        await supabase.from("purchase_transactions").insert({
+          item_id: itemId, quantity: qty, buying_cost_per_unit_rmb: buyRmb,
+          shipping_method: shippingMethod, shipping_rate_bdt_per_kg: shipRate,
+          additional_cost_bdt: addCost, total_landed_cost_bdt: totalLanded,
+          landed_cost_per_unit_bdt: landedPerUnit, exchange_rate_used: activeRate,
+          business_id: businessId, user_id: user.id,
+        });
+      }
 
       // Log activity
       await supabase.from("activity_log").insert({
-        action: itemMode === "new" ? "Added new inventory item" : "Restocked inventory item",
+        action: itemMode === "new" ? "Added new inventory item" : "Added existing item",
         details: { 
-          item_name: itemMode === "new" ? form.name : existingItems.find(i => i.id === selectedItemId)?.name, 
+          item_name: form.name, 
           quantity: qty,
-          buying_cost_rmb: buyRmb,
-          shipping_method: shippingMethod,
-          total_landed_cost: totalLanded,
-          landed_per_unit: landedPerUnit,
-          rate: activeRate,
+          ...(itemMode === "new" ? {
+            buying_cost_rmb: buyRmb,
+            shipping_method: shippingMethod,
+            total_landed_cost: totalLanded,
+            landed_per_unit: landedPerUnit,
+            rate: activeRate,
+          } : {}),
         },
         business_id: businessId, user_id: user.id,
       });
 
-      toast.success(itemMode === "new" ? "Item added to inventory!" : "Item restocked!");
+      toast.success(itemMode === "new" ? "Item added to inventory!" : "Existing item added!");
       onSaved();
     } catch (err: any) {
       toast.error(err.message || "Failed to save");
