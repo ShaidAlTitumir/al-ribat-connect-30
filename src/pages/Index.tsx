@@ -98,11 +98,16 @@ const Index = () => {
     }
 
     const totalDues = custs.reduce((s, c) => s + c.total_due, 0);
-    const totalProfit = sales.reduce((s, r) => s + r.expected_profit, 0);
+    // Revenue = total sales amount (unit_price × quantity)
+    const totalRevenue = sales.reduce((s, r) => s + r.unit_price_bdt * r.quantity, 0);
+    // COGS = Revenue - Expected Profit (expected_profit = selling margin per sale)
+    const totalCOGS = totalRevenue - sales.reduce((s, r) => s + r.expected_profit, 0);
+    // Operating Expenses (converted to BDT)
     const totalExpenses = exps.reduce((s, e) => s + (e.currency === "RMB" ? e.amount * exchangeRate : e.amount), 0);
-    const netProfit = totalProfit - totalExpenses;
+    // Net Profit = Revenue - COGS - Operating Expenses
+    const netProfit = totalRevenue - totalCOGS - totalExpenses;
 
-    setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, netProfit });
+    setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, revenue: totalRevenue, netProfit });
 
     const partnerCapMap: Record<string, number> = {};
     caps.forEach((c) => {
