@@ -745,6 +745,77 @@ export type Database = {
           },
         ]
       }
+      returns: {
+        Row: {
+          business_id: string
+          created_at: string
+          customer_id: string | null
+          id: string
+          item_id: string
+          quantity: number
+          reason: string | null
+          refund_amount: number
+          sale_id: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          item_id: string
+          quantity: number
+          reason?: string | null
+          refund_amount?: number
+          sale_id?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          item_id?: string
+          quantity?: number
+          reason?: string | null
+          refund_amount?: number
+          sale_id?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "returns_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales: {
         Row: {
           business_id: string
