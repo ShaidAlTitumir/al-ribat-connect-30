@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusiness } from "@/contexts/BusinessContext";
-import KPICard from "@/components/KPICard";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 import { format } from "date-fns";
 
@@ -13,10 +12,20 @@ const quickActions = [
   { icon: "assignment_return", label: "Collect Due", path: "/customers" },
 ];
 
+interface PartnerEquity {
+  name: string;
+  totalBdt: number;
+  percentage: number;
+}
+
 const Index = () => {
   const navigate = useNavigate();
   const { businessId, exchangeRate } = useBusiness();
-  const [kpis, setKpis] = useState({ wallet: 0, inventory: 0, dues: 0, netProfit: 0 });
+  const [kpis, setKpis] = useState({
+    bdtBalance: 0, rmbBalance: 0, totalValueBdt: 0,
+    inventory: 0, dues: 0, netProfit: 0,
+  });
+  const [partners, setPartners] = useState<PartnerEquity[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
 
   useEffect(() => {
@@ -25,27 +34,47 @@ const Index = () => {
   }, [businessId, exchangeRate]);
 
   const fetchDashboard = async () => {
-    // Wallet value: capital + sales received + collections - expenses - purchases + exchange adjustments
-    const { data: caps } = await supabase.from("capital_contributions").select("amount, currency").eq("business_id", businessId!);
-    let bdt = 0;
-    (caps || []).forEach((c) => { bdt += c.currency === "RMB" ? c.amount * exchangeRate : c.amount; });
+    // Fetch all data in parallel
+    const [capsRes, salesRes, paymentsRes, expsRes, purchasesRes, invRes, custsRes, exchRes, partnersRes, actsRes] = await Promise.all([
+      supabase.from("capital_contributions").select("amount, currency, partner_id").eq("business_id", businessId!),
+      supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity").eq("business_id", businessId!),
+      supabase.from("customer_ledger").select("amount").eq("business_id", businessId!).eq("transaction_type", "payment"),
+      supabase.from("expenses").select("amount, currency").eq("business_id", businessId!),
+      supabase.from("purchase_transactions").select("total_landed_cost_bdt").eq("business_id", businessId!),
+      supabase.from("inventory_items").select("id, current_stock").eq("business_id", businessId!),
+      supabase.from("customers").select("total_due").eq("business_id", businessId!),
+      supabase.from("exchanges").select("*").eq("business_id", businessId!),
+      supabase.from("partners").select("id, name, status").eq("business_id", businessId!),
+      supabase.from("activity_log").select("*").eq("business_id", businessId!).order("created_at", { ascending: false }).limit(5),
+    ]);
 
-    const { data: sales } = await supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity").eq("business_id", businessId!);
-    (sales || []).forEach((s) => { bdt += s.received_now_bdt; });
+    const caps = capsRes.data || [];
+    const sales = salesRes.data || [];
+    const payments = paymentsRes.data || [];
+    const exps = expsRes.data || [];
+    const purchases = purchasesRes.data || [];
+    const invItems = invRes.data || [];
+    const custs = custsRes.data || [];
+    const exchanges = exchRes.data || [];
+    const partnersList = partnersRes.data || [];
 
-    const { data: payments } = await supabase.from("customer_ledger").select("amount").eq("business_id", businessId!).eq("transaction_type", "payment");
-    (payments || []).forEach((p) => { bdt += p.amount; });
+    // Calculate separate BDT and RMB balances
+    let bdt = 0, rmb = 0;
+    caps.forEach((c) => { if (c.currency === "BDT") bdt += c.amount; else rmb += c.amount; });
+    sales.forEach((s) => { bdt += s.received_now_bdt; });
+    payments.forEach((p) => { bdt += p.amount; });
+    exps.forEach((e) => { if (e.currency === "BDT") bdt -= e.amount; else rmb -= e.amount; });
+    purchases.forEach((p) => { bdt -= p.total_landed_cost_bdt; });
+    exchanges.forEach((e) => {
+      if (e.from_currency === "BDT") { bdt -= e.amount_from; rmb += e.amount_to; }
+      else { rmb -= e.amount_from; bdt += e.amount_to; }
+    });
 
-    const { data: exps } = await supabase.from("expenses").select("amount, currency").eq("business_id", businessId!);
-    (exps || []).forEach((e) => { bdt -= e.currency === "RMB" ? e.amount * exchangeRate : e.amount; });
-
-    const { data: purchases } = await supabase.from("purchase_transactions").select("total_landed_cost_bdt").eq("business_id", businessId!);
-    (purchases || []).forEach((p) => { bdt -= p.total_landed_cost_bdt; });
+    const totalValueBdt = bdt + rmb * exchangeRate;
 
     // Inventory cost
-    const { data: invItems } = await supabase.from("inventory_items").select("id, current_stock").eq("business_id", businessId!);
     let inventoryCost = 0;
-    if (invItems && invItems.length > 0) {
+    if (invItems.length > 0) {
       for (const item of invItems) {
         const { data: lastPurchase } = await supabase.from("purchase_transactions").select("landed_cost_per_unit_bdt")
           .eq("item_id", item.id).order("created_at", { ascending: false }).limit(1);
@@ -54,22 +83,36 @@ const Index = () => {
     }
 
     // Customer dues
-    const { data: custs } = await supabase.from("customers").select("total_due").eq("business_id", businessId!);
-    const totalDues = (custs || []).reduce((s, c) => s + c.total_due, 0);
+    const totalDues = custs.reduce((s, c) => s + c.total_due, 0);
 
-    // Net profit: total sales revenue - total landed cost of sold items - expenses
-    const totalSalesRevenue = (sales || []).reduce((s, r) => s + r.unit_price_bdt * r.quantity, 0);
-    const totalExpenses = (exps || []).reduce((s, e) => s + (e.currency === "RMB" ? e.amount * exchangeRate : e.amount), 0);
-    const totalProfit = (sales || []).reduce((s, r) => s + r.expected_profit, 0);
+    // Net profit
+    const totalProfit = sales.reduce((s, r) => s + r.expected_profit, 0);
+    const totalExpenses = exps.reduce((s, e) => s + (e.currency === "RMB" ? e.amount * exchangeRate : e.amount), 0);
     const netProfit = totalProfit - totalExpenses;
 
-    setKpis({ wallet: bdt, inventory: inventoryCost, dues: totalDues, netProfit });
+    setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, netProfit });
 
-    // Recent activity
-    const { data: acts } = await supabase.from("activity_log").select("*")
-      .eq("business_id", businessId!).order("created_at", { ascending: false }).limit(5);
-    setActivities(acts || []);
+    // Partner equity from capital contributions
+    const partnerCapMap: Record<string, number> = {};
+    caps.forEach((c) => {
+      const bdtVal = c.currency === "RMB" ? c.amount * exchangeRate : c.amount;
+      partnerCapMap[c.partner_id] = (partnerCapMap[c.partner_id] || 0) + bdtVal;
+    });
+    const totalCap = Object.values(partnerCapMap).reduce((s, v) => s + v, 0);
+    const partnerEquities: PartnerEquity[] = partnersList
+      .filter(p => p.status === "accepted")
+      .map((p) => ({
+        name: p.name,
+        totalBdt: partnerCapMap[p.id] || 0,
+        percentage: totalCap > 0 ? ((partnerCapMap[p.id] || 0) / totalCap) * 100 : 0,
+      }))
+      .sort((a, b) => b.totalBdt - a.totalBdt);
+    setPartners(partnerEquities);
+
+    setActivities(actsRes.data || []);
   };
+
+  const colors = ["bg-primary", "bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-purple-500"];
 
   return (
     <>
@@ -78,13 +121,90 @@ const Index = () => {
         {/* Business Snapshot */}
         <section>
           <h3 className="text-base lg:text-lg font-bold mb-3">Business Snapshot</h3>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
-            <KPICard title="Wallet Value" value={`৳${kpis.wallet.toFixed(0)}`} icon="account_balance_wallet" iconColor="text-blue-600 bg-blue-50" />
-            <KPICard title="Inventory Cost" value={`৳${kpis.inventory.toFixed(0)}`} icon="inventory_2" iconColor="text-purple-600 bg-purple-50" />
-            <KPICard title="Customer Dues" value={`৳${kpis.dues.toFixed(0)}`} icon="person_search" iconColor="text-amber-600 bg-amber-50" />
-            <KPICard title="Net Profit" value={`৳${kpis.netProfit.toFixed(0)}`} icon="trending_up" iconColor="text-emerald-600 bg-emerald-50" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+            {/* Total Business Value */}
+            <div className="bg-card p-4 lg:p-5 rounded-xl border border-border shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="p-1.5 rounded-lg text-blue-600 bg-blue-50">
+                  <span className="material-symbols-outlined text-[20px]">account_balance</span>
+                </span>
+              </div>
+              <p className="text-muted-foreground text-xs font-medium">Total Business Value</p>
+              <p className="text-xl lg:text-2xl font-black mt-0.5 text-foreground">৳{kpis.totalValueBdt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+              <div className="mt-2 pt-2 border-t border-border space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">BDT Balance</span>
+                  <span className="font-bold">৳{kpis.bdtBalance.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">RMB Balance</span>
+                  <span className="font-bold">¥{kpis.rmbBalance.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Inventory */}
+            <div className="bg-card p-4 lg:p-5 rounded-xl border border-border shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="p-1.5 rounded-lg text-purple-600 bg-purple-50">
+                  <span className="material-symbols-outlined text-[20px]">inventory_2</span>
+                </span>
+              </div>
+              <p className="text-muted-foreground text-xs font-medium">Inventory Value</p>
+              <p className="text-xl lg:text-2xl font-black mt-0.5 text-foreground">৳{kpis.inventory.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+            </div>
+
+            {/* Dues */}
+            <div className="bg-card p-4 lg:p-5 rounded-xl border border-border shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="p-1.5 rounded-lg text-amber-600 bg-amber-50">
+                  <span className="material-symbols-outlined text-[20px]">person_search</span>
+                </span>
+              </div>
+              <p className="text-muted-foreground text-xs font-medium">Customer Dues</p>
+              <p className="text-xl lg:text-2xl font-black mt-0.5 text-foreground">৳{kpis.dues.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+            </div>
+
+            {/* Net Profit */}
+            <div className="bg-card p-4 lg:p-5 rounded-xl border border-border shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="p-1.5 rounded-lg text-emerald-600 bg-emerald-50">
+                  <span className="material-symbols-outlined text-[20px]">trending_up</span>
+                </span>
+              </div>
+              <p className="text-muted-foreground text-xs font-medium">Net Profit</p>
+              <p className="text-xl lg:text-2xl font-black mt-0.5 text-foreground">৳{kpis.netProfit.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+            </div>
           </div>
         </section>
+
+        {/* Partner Shares */}
+        {partners.length > 0 && (
+          <section>
+            <h3 className="text-base lg:text-lg font-bold mb-3">Partner Shares</h3>
+            <div className="bg-card rounded-xl border border-border p-4 lg:p-5 shadow-sm">
+              {/* Equity bar */}
+              <div className="flex h-3 w-full overflow-hidden rounded-full mb-4">
+                {partners.map((p, i) => (
+                  <div key={p.name} className={`${colors[i % colors.length]} transition-all duration-500`}
+                    style={{ width: `${p.percentage}%` }} />
+                ))}
+              </div>
+              <div className="space-y-2.5">
+                {partners.map((p, i) => (
+                  <div key={p.name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`h-2.5 w-2.5 rounded-full ${colors[i % colors.length]}`} />
+                      <span className="text-sm font-semibold text-foreground">{p.name}</span>
+                      <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{p.percentage.toFixed(1)}%</span>
+                    </div>
+                    <span className="text-sm font-bold text-foreground">৳{p.totalBdt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Quick Actions */}
         <section>
