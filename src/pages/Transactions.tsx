@@ -203,12 +203,50 @@ const TransactionList = ({ onSend }: { onSend: () => void }) => {
                         </div>
                       )}
                     </div>
-                    <div className="flex justify-end">
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => {
+                        setEditingId(t.id);
+                        setEditForm({ amount: t.amount, method: t.method, notes: t.notes || "", transaction_id: t.transaction_id || "" });
+                      }}
+                        className="flex items-center gap-1 text-primary text-xs font-medium hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors">
+                        <span className="material-symbols-outlined text-[16px]">edit</span> Edit
+                      </button>
                       <button onClick={() => handleDelete(t.id)}
                         className="flex items-center gap-1 text-destructive text-xs font-medium hover:bg-destructive/10 px-3 py-1.5 rounded-lg transition-colors">
                         <span className="material-symbols-outlined text-[16px]">delete</span> Delete
                       </button>
                     </div>
+                    {editingId === t.id && (
+                      <div className="mt-3 pt-3 border-t border-border space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-semibold text-muted-foreground">Amount</label>
+                            <input type="number" value={editForm.amount}
+                              onChange={e => setEditForm({...editForm, amount: parseFloat(e.target.value) || 0})}
+                              className="w-full h-9 bg-muted border border-border rounded-lg px-3 text-sm text-foreground" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-semibold text-muted-foreground">Method</label>
+                            <select value={editForm.method} onChange={e => setEditForm({...editForm, method: e.target.value})}
+                              className="w-full h-9 bg-muted border border-border rounded-lg px-3 text-sm text-foreground">
+                              {METHODS.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
+                            </select>
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => setEditingId(null)} className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+                          <button onClick={async () => {
+                            await supabase.from("partner_transfers").update({
+                              amount: editForm.amount, method: editForm.method,
+                              notes: editForm.notes || null, transaction_id: editForm.transaction_id || null,
+                            }).eq("id", t.id);
+                            toast.success("Transfer updated!");
+                            setEditingId(null);
+                            setTransfers(prev => prev.map(tr => tr.id === t.id ? {...tr, ...editForm} : tr));
+                          }} className="px-3 py-1.5 text-xs font-bold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">Save</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

@@ -223,8 +223,8 @@ const Returns = () => {
                       <div key={r.id} className="p-3 hover:bg-muted/30 transition-colors">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center">
-                              <span className="material-symbols-outlined text-red-600 text-[18px]">undo</span>
+                            <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center">
+                              <span className="material-symbols-outlined text-destructive text-[18px]">undo</span>
                             </div>
                             <div>
                               <p className="text-sm font-semibold">{r.inventory_items?.name || "Item"} × {r.quantity}</p>
@@ -234,9 +234,32 @@ const Returns = () => {
                               {r.reason && <p className="text-[10px] text-muted-foreground italic mt-0.5">"{r.reason}"</p>}
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-sm font-bold text-destructive">-৳{Number(r.refund_amount).toLocaleString("en-IN")}</p>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">{r.status}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="text-right">
+                              <p className="text-sm font-bold text-destructive">-৳{Number(r.refund_amount).toLocaleString("en-IN")}</p>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">{r.status}</span>
+                            </div>
+                            <button onClick={async () => {
+                              setDeletingId(r.id);
+                              try {
+                                // Reverse: reduce stock
+                                const { data: item } = await supabase.from("inventory_items").select("current_stock").eq("id", r.item_id).single();
+                                if (item) await supabase.from("inventory_items").update({ current_stock: Math.max(0, item.current_stock - r.quantity) }).eq("id", r.item_id);
+                                // Reverse: restore customer due
+                                if (r.customer_id && r.refund_amount > 0) {
+                                  const { data: cust } = await supabase.from("customers").select("total_due").eq("id", r.customer_id).single();
+                                  if (cust) await supabase.from("customers").update({ total_due: cust.total_due + r.refund_amount }).eq("id", r.customer_id);
+                                }
+                                await supabase.from("returns").delete().eq("id", r.id);
+                                toast.success("Return reversed and deleted");
+                                fetchData();
+                              } catch (err: any) { toast.error(err.message); }
+                              finally { setDeletingId(null); }
+                            }}
+                              disabled={deletingId === r.id}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50" title="Delete & Reverse">
+                              <span className="material-symbols-outlined text-[18px]">{deletingId === r.id ? "hourglass_empty" : "delete"}</span>
+                            </button>
                           </div>
                         </div>
                       </div>
