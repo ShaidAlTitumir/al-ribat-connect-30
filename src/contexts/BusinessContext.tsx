@@ -102,11 +102,14 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
     setBusinessId(id);
     const { data: biz } = await supabase
       .from("businesses")
-      .select("exchange_rate")
+      .select("exchange_rate, name, phone, address")
       .eq("id", id)
       .maybeSingle();
-    if (biz?.exchange_rate) {
-      setExchangeRate(Number(biz.exchange_rate));
+    if (biz) {
+      if (biz.exchange_rate) setExchangeRate(Number(biz.exchange_rate));
+      setBusinessName(biz.name || "");
+      setBusinessPhone(biz.phone || "");
+      setBusinessAddress(biz.address || "");
     }
   };
 
