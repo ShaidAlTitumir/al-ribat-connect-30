@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusiness } from "@/contexts/BusinessContext";
@@ -279,39 +279,39 @@ const Settings = () => {
           </div>
         </section>
 
-        {showCleanConfirm && createPortal(
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-            <div className="bg-card border border-destructive/50 rounded-xl p-6 max-w-md w-full mx-4 space-y-4">
+        <Dialog open={showCleanConfirm} onOpenChange={(open) => { setShowCleanConfirm(open); if (!open) setCleanConfirmText(""); }}>
+          <DialogContent className="border-destructive/50 max-w-md">
+            <DialogHeader>
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-destructive text-3xl">delete_forever</span>
-                <h3 className="font-bold text-lg text-destructive">Are you absolutely sure?</h3>
+                <DialogTitle className="text-destructive">Are you absolutely sure?</DialogTitle>
               </div>
-              <p className="text-sm text-muted-foreground">
-                This will permanently delete <strong>all business data</strong> including sales, expenses, purchases, returns, exchanges, partner transfers, customers, inventory items, and activity logs. This action cannot be undone.
-              </p>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-muted-foreground">Type <span className="text-destructive font-mono">DELETE</span> to confirm</label>
-                <input
-                  className="w-full h-11 rounded-lg border border-destructive/50 bg-card px-4 text-foreground focus:ring-2 focus:ring-destructive/20"
-                  value={cleanConfirmText}
-                  onChange={(e) => setCleanConfirmText(e.target.value)}
-                  placeholder="DELETE"
-                />
-              </div>
-              <div className="flex gap-3 justify-end">
-                <button onClick={() => { setShowCleanConfirm(false); setCleanConfirmText(""); }}
-                  className="px-5 py-2.5 rounded-lg border border-border font-semibold hover:bg-muted">Cancel</button>
-                <button
-                  onClick={cleanAllData}
-                  disabled={cleanConfirmText !== "DELETE" || saving === "clean"}
-                  className="bg-destructive text-destructive-foreground font-bold px-5 py-2.5 rounded-lg hover:bg-destructive/90 disabled:opacity-50"
-                >
-                  {saving === "clean" ? "Cleaning..." : "Delete Everything"}
-                </button>
-              </div>
+              <DialogDescription>
+                This will permanently delete <strong className="text-foreground">all business data</strong> including sales, expenses, purchases, returns, exchanges, partner transfers, customers, inventory items, and activity logs. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-muted-foreground">Type <span className="text-destructive font-mono">DELETE</span> to confirm</label>
+              <input
+                className="w-full h-11 rounded-lg border border-destructive/50 bg-card px-4 text-foreground focus:ring-2 focus:ring-destructive/20"
+                value={cleanConfirmText}
+                onChange={(e) => setCleanConfirmText(e.target.value)}
+                placeholder="DELETE"
+              />
             </div>
-          </div>
-        , document.body)}
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => { setShowCleanConfirm(false); setCleanConfirmText(""); }}
+                className="px-5 py-2.5 rounded-lg border border-border font-semibold hover:bg-muted">Cancel</button>
+              <button
+                onClick={cleanAllData}
+                disabled={cleanConfirmText !== "DELETE" || saving === "clean"}
+                className="bg-destructive text-destructive-foreground font-bold px-5 py-2.5 rounded-lg hover:bg-destructive/90 disabled:opacity-50"
+              >
+                {saving === "clean" ? "Cleaning..." : "Delete Everything"}
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Builder Credit */}
         <div className="text-center py-6 border-t border-border mt-4">
