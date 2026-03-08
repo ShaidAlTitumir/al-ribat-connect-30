@@ -33,7 +33,11 @@ const Settings = () => {
     if (!businessId) return;
     setSaving("business");
     try {
-      await supabase.from("businesses").update({ name: business.name, default_currency: business.default_currency }).eq("id", businessId);
+      await supabase.from("businesses").update({
+        name: business.name, default_currency: business.default_currency,
+        phone: business.phone || null, address: business.address || null,
+        business_type: business.business_type || null, description: business.description || null,
+      }).eq("id", businessId);
       toast.success("Business settings saved!");
     } catch (err: any) { toast.error(err.message); }
     finally { setSaving(""); }
