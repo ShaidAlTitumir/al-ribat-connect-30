@@ -29,7 +29,7 @@ const Index = () => {
   const { businessId, exchangeRate } = useBusiness();
   const [kpis, setKpis] = useState({
     bdtBalance: 0, rmbBalance: 0, totalValueBdt: 0,
-    inventory: 0, dues: 0, netProfit: 0,
+    inventory: 0, dues: 0, revenue: 0, netProfit: 0,
   });
   const [partners, setPartners] = useState<PartnerEquity[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
