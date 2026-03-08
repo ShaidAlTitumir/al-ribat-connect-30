@@ -3,9 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { Pencil, Trash2 } from "lucide-react";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 
-type InventoryTab = "list" | "add";
+type InventoryTab = "list" | "add" | "samples";
 
 const Inventory = () => {
   const [activeTab, setActiveTab] = useState<InventoryTab>("list");
@@ -14,7 +16,9 @@ const Inventory = () => {
     <div className="flex-1 flex flex-col min-w-0">
       <ExchangeRateHeader title="Inventory" />
       {activeTab === "list" ? (
-        <InventoryList onAdd={() => setActiveTab("add")} />
+        <InventoryList onAdd={() => setActiveTab("add")} onSamples={() => setActiveTab("samples")} />
+      ) : activeTab === "samples" ? (
+        <SampleOrders onBack={() => setActiveTab("list")} />
       ) : (
         <AddItem onBack={() => setActiveTab("list")} onSaved={() => setActiveTab("list")} />
       )}
