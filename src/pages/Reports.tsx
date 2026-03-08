@@ -4,6 +4,13 @@ import { useBusiness } from "@/contexts/BusinessContext";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { exportToCSV } from "@/lib/exportUtils";
+import { fetchReportData, generatePDFHTML, downloadPDF } from "@/lib/pdfReport";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { CalendarIcon } from "lucide-react";
+import { toast } from "sonner";
 import {
   BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, ComposedChart, Line,
@@ -34,6 +41,25 @@ const Reports = () => {
   const [partnerShares, setPartnerShares] = useState<any[]>([]);
   const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
   const [trendMonths, setTrendMonths] = useState(6);
+  const [pdfFrom, setPdfFrom] = useState<Date>(startOfMonth(new Date()));
+  const [pdfTo, setPdfTo] = useState<Date>(new Date());
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  const handleGeneratePDF = async () => {
+    if (!businessId) return;
+    setGeneratingPdf(true);
+    try {
+      const data = await fetchReportData(businessId, exchangeRate, pdfFrom, pdfTo);
+      const html = generatePDFHTML(data);
+      downloadPDF(html, `report-${format(pdfFrom, "yyyyMMdd")}-${format(pdfTo, "yyyyMMdd")}`);
+      toast.success("PDF report generated!");
+    } catch (err: any) {
+      toast.error("Failed to generate PDF");
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
   const [plStatement, setPlStatement] = useState<PLStatement>({
     totalRevenue: 0, costOfGoods: 0, grossProfit: 0,
     totalExpenses: 0, netProfit: 0, margin: 0, expenseBreakdown: [],
@@ -362,6 +388,66 @@ const Reports = () => {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* PDF Report Generator */}
+          <div className="bg-card rounded-xl border border-border overflow-hidden">
+            <div className="p-4 lg:p-6 border-b border-border">
+              <h5 className="text-lg font-bold flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">picture_as_pdf</span>
+                Download Business Report
+              </h5>
+              <p className="text-xs text-muted-foreground mt-0.5">Select a date range to generate a PDF summary</p>
+            </div>
+            <div className="p-4 lg:p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+                <div className="flex-1 space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase">From</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !pdfFrom && "text-muted-foreground")}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {pdfFrom ? format(pdfFrom, "PPP") : "Pick start date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={pdfFrom} onSelect={(d) => d && setPdfFrom(d)} initialFocus className={cn("p-3 pointer-events-auto")} />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="flex-1 space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase">To</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !pdfTo && "text-muted-foreground")}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {pdfTo ? format(pdfTo, "PPP") : "Pick end date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={pdfTo} onSelect={(d) => d && setPdfTo(d)} initialFocus className={cn("p-3 pointer-events-auto")} />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <Button onClick={handleGeneratePDF} disabled={generatingPdf} className="bg-primary text-primary-foreground font-bold px-6">
+                  <span className="material-symbols-outlined text-[18px] mr-1.5">download</span>
+                  {generatingPdf ? "Generating..." : "Generate PDF"}
+                </Button>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[
+                  { label: "This Month", from: startOfMonth(new Date()), to: new Date() },
+                  { label: "Last Month", from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) },
+                  { label: "Last 3 Months", from: startOfMonth(subMonths(new Date(), 2)), to: new Date() },
+                  { label: "This Year", from: new Date(new Date().getFullYear(), 0, 1), to: new Date() },
+                ].map((preset) => (
+                  <button key={preset.label} onClick={() => { setPdfFrom(preset.from); setPdfTo(preset.to); }}
+                    className="px-3 py-1 text-xs font-medium rounded-full bg-muted border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Partner Profit Share */}
