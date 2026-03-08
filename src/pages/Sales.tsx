@@ -68,6 +68,7 @@ const Sales = () => {
   const total = quantity * (parseFloat(unitPrice) || 0);
   const due = total - (parseFloat(receivedAmount) || 0);
   const profit = ((parseFloat(unitPrice) || 0) - landedCost) * quantity;
+  const selectedItem = items.find((i) => i.id === selectedItemId);
 
   const handleSave = async () => {
     if (!businessId || !user) return;
@@ -282,118 +283,151 @@ const Sales = () => {
       <div className="p-3 lg:p-8 flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Sale Form */}
-          <div className={`lg:col-span-2 space-y-4 lg:space-y-6 ${mobileTab !== "form" ? "hidden lg:block" : ""}`}>
-            {/* Item Information */}
-            <div className="bg-card p-3 lg:p-6 rounded-xl border border-border">
-              <h3 className="text-sm lg:text-lg font-bold mb-3 lg:mb-4 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-[18px] lg:text-[24px]">shopping_basket</span> Item Info
-              </h3>
-              <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
-                <div className="lg:col-span-2">
-                  <label className="block text-xs font-semibold mb-1">Select Item</label>
-                  <select className="w-full h-10 lg:h-11 bg-muted border border-border rounded-lg px-3 text-sm text-foreground"
+          <div className={`lg:col-span-2 space-y-3 lg:space-y-5 ${mobileTab !== "form" ? "hidden lg:block" : ""}`}>
+            
+            {/* Item Selection & Pricing — single card */}
+            <div className="bg-card rounded-xl border border-border overflow-hidden">
+              <div className="px-4 pt-4 pb-2 lg:px-6 lg:pt-5 lg:pb-3 border-b border-border">
+                <h3 className="text-xs lg:text-sm font-bold text-foreground flex items-center gap-2">
+                  <span className="w-5 h-5 lg:w-6 lg:h-6 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary text-[14px] lg:text-[16px]">shopping_basket</span>
+                  </span>
+                  Item & Pricing
+                </h3>
+              </div>
+              <div className="p-4 lg:p-6 space-y-3">
+                {/* Item Select */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Item</label>
+                  <select className="w-full h-10 lg:h-11 bg-muted border border-border rounded-lg px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-shadow"
                     value={selectedItemId} onChange={(e) => setSelectedItemId(e.target.value)}>
                     <option value="">Choose item...</option>
                     {items.map((item) => (
-                      <option key={item.id} value={item.id}>{item.name} ({item.current_stock})</option>
+                      <option key={item.id} value={item.id}>{item.name} (Stock: {item.current_stock})</option>
                     ))}
                   </select>
+                  {selectedItem && (
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Available: <span className="font-bold text-foreground">{selectedItem.current_stock}</span>
+                      {landedCost > 0 && <> • Cost: <span className="font-bold text-foreground">৳{landedCost.toFixed(2)}</span>/unit</>}
+                    </p>
+                  )}
                 </div>
-                <div className="grid grid-cols-2 gap-3 lg:contents">
+
+                {/* Quantity & Unit Price */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold mb-1">Quantity</label>
+                    <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Quantity</label>
                     <input type="number" value={quantity} min={1}
                       onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
-                      className="w-full h-10 lg:h-11 bg-muted border border-border rounded-lg px-3 text-sm text-foreground" />
+                      className="w-full h-10 lg:h-11 bg-muted border border-border rounded-lg px-3 text-sm font-semibold text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-shadow" />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold mb-1">Unit Price (৳)</label>
+                    <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Unit Price (৳)</label>
                     <input type="number" placeholder="0.00" value={unitPrice}
                       onChange={(e) => setUnitPrice(e.target.value)}
-                      className="w-full h-10 lg:h-11 bg-muted border border-border rounded-lg px-3 text-sm text-foreground" />
+                      className="w-full h-10 lg:h-11 bg-muted border border-border rounded-lg px-3 text-sm font-semibold text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-shadow" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3 lg:contents">
+
+                {/* Total & Received */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold mb-1">Total</label>
-                    <div className="w-full h-10 lg:h-11 bg-muted/80 border border-border rounded-lg px-3 flex items-center text-sm font-bold text-foreground">
+                    <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Total</label>
+                    <div className="w-full h-10 lg:h-11 bg-primary/5 border border-primary/20 rounded-lg px-3 flex items-center text-sm font-black text-foreground">
                       ৳{total.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold mb-1">Received (৳)</label>
+                    <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Received (৳)</label>
                     <input type="number" placeholder="Paid now" value={receivedAmount}
                       onChange={(e) => setReceivedAmount(e.target.value)}
-                      className="w-full h-10 lg:h-11 bg-muted border border-border rounded-lg px-3 text-sm text-foreground" />
+                      className="w-full h-10 lg:h-11 bg-muted border border-border rounded-lg px-3 text-sm font-semibold text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-shadow" />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Customer */}
-            <div className="bg-card p-3 lg:p-6 rounded-xl border border-border">
-              <h3 className="text-sm lg:text-lg font-bold mb-3 lg:mb-4 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-[18px] lg:text-[24px]">person</span> Customer
-              </h3>
-              {!showNewCustomer ? (
-                <div className="space-y-2">
-                  <select className="w-full h-10 lg:h-11 bg-muted border border-border rounded-lg px-3 text-sm text-foreground"
-                    value={selectedCustomerId} onChange={(e) => setSelectedCustomerId(e.target.value)}>
-                    <option value="">Select customer (optional)</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name} {c.total_due > 0 ? `(Due: ৳${c.total_due})` : ""}</option>
-                    ))}
-                  </select>
-                  <button onClick={() => setShowNewCustomer(true)}
-                    className="text-primary text-xs font-semibold hover:underline flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[16px]">add</span> New Customer
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold mb-1">Name</label>
-                    <input type="text" placeholder="Full name" value={newCustomerName}
-                      onChange={(e) => setNewCustomerName(e.target.value)}
-                      className="w-full h-10 bg-muted border border-border rounded-lg px-3 text-sm text-foreground" />
+            {/* Customer Selection */}
+            <div className="bg-card rounded-xl border border-border overflow-hidden">
+              <div className="px-4 pt-4 pb-2 lg:px-6 lg:pt-5 lg:pb-3 border-b border-border">
+                <h3 className="text-xs lg:text-sm font-bold text-foreground flex items-center gap-2">
+                  <span className="w-5 h-5 lg:w-6 lg:h-6 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary text-[14px] lg:text-[16px]">person</span>
+                  </span>
+                  Customer
+                  <span className="text-[10px] font-normal text-muted-foreground">(optional)</span>
+                </h3>
+              </div>
+              <div className="p-4 lg:p-6">
+                {!showNewCustomer ? (
+                  <div className="space-y-2">
+                    <select className="w-full h-10 lg:h-11 bg-muted border border-border rounded-lg px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-shadow"
+                      value={selectedCustomerId} onChange={(e) => setSelectedCustomerId(e.target.value)}>
+                      <option value="">Walk-in customer</option>
+                      {customers.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name} {c.total_due > 0 ? `(Due: ৳${c.total_due})` : ""}</option>
+                      ))}
+                    </select>
+                    <button onClick={() => setShowNewCustomer(true)}
+                      className="text-primary text-[11px] font-semibold hover:underline flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]">add</span> Add new customer
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold mb-1">Phone</label>
-                    <input type="tel" placeholder="Phone" value={newCustomerPhone}
-                      onChange={(e) => setNewCustomerPhone(e.target.value)}
-                      className="w-full h-10 bg-muted border border-border rounded-lg px-3 text-sm text-foreground" />
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Name</label>
+                        <input type="text" placeholder="Full name" value={newCustomerName}
+                          onChange={(e) => setNewCustomerName(e.target.value)}
+                          className="w-full h-10 bg-muted border border-border rounded-lg px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 outline-none" />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Phone</label>
+                        <input type="tel" placeholder="Phone" value={newCustomerPhone}
+                          onChange={(e) => setNewCustomerPhone(e.target.value)}
+                          className="w-full h-10 bg-muted border border-border rounded-lg px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 outline-none" />
+                      </div>
+                    </div>
+                    <button onClick={() => { setShowNewCustomer(false); setNewCustomerName(""); setNewCustomerPhone(""); }}
+                      className="text-muted-foreground text-[11px] hover:text-foreground transition-colors">← Back to customer list</button>
                   </div>
-                  <button onClick={() => { setShowNewCustomer(false); setNewCustomerName(""); setNewCustomerPhone(""); }}
-                    className="text-muted-foreground text-xs hover:underline col-span-2">Cancel</button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Mobile: Summary + Save */}
-            <div className="lg:hidden bg-primary text-primary-foreground p-4 rounded-xl space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="opacity-80">Total</span>
-                <span className="font-black text-lg">৳{total.toFixed(2)}</span>
+            <div className="lg:hidden rounded-xl overflow-hidden">
+              <div className="bg-card border border-border rounded-xl p-4 space-y-2.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">Total Amount</span>
+                  <span className="text-lg font-black text-foreground">৳{total.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">Amount Due</span>
+                  <span className={`text-sm font-bold ${due > 0 ? "text-destructive" : "text-foreground"}`}>৳{Math.max(0, due).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-border">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">trending_up</span> Profit
+                  </span>
+                  <span className={`text-sm font-bold ${profit > 0 ? "text-emerald-500" : "text-muted-foreground"}`}>
+                    ৳{profit > 0 ? profit.toFixed(2) : "0.00"}
+                  </span>
+                </div>
+                <button onClick={handleSave} disabled={saving}
+                  className="w-full mt-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-all">
+                  <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                  {saving ? "Saving..." : "Confirm Sale"}
+                </button>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="opacity-80">Due</span>
-                <span className="font-bold">৳{Math.max(0, due).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm border-t border-primary-foreground/20 pt-2">
-                <span className="opacity-80">Profit</span>
-                <span className="font-bold">৳{profit > 0 ? profit.toFixed(2) : "0.00"}</span>
-              </div>
-              <button onClick={handleSave} disabled={saving}
-                className="w-full mt-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-all">
-                <span className="material-symbols-outlined">check_circle</span>
-                {saving ? "Saving..." : "Save Sale"}
-              </button>
             </div>
 
             {/* Recent Sales — desktop & mobile history tab */}
             <div className={`${mobileTab !== "history" ? "hidden lg:block" : ""}`}>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm lg:text-lg font-bold">Recent Sales</h3>
+                <h3 className="text-xs lg:text-sm font-bold text-foreground">Recent Sales</h3>
                 {recentSales.length > 0 && (
                   <button onClick={() => exportToCSV(recentSales.map(s => ({
                     Item: (s as any).inventory_items?.name || "Item",
@@ -402,79 +436,95 @@ const Sales = () => {
                     Due: s.due, Customer: (s as any).customers?.name || "Walk-in",
                     Date: format(new Date(s.created_at), "yyyy-MM-dd"),
                   })), "sales-export", { name: businessName, phone: businessPhone, address: businessAddress })}
-                    className="flex items-center gap-1 px-2.5 py-1 text-[10px] lg:text-xs font-bold text-muted-foreground hover:text-foreground bg-muted rounded-lg border border-border">
+                    className="flex items-center gap-1 px-2.5 py-1 text-[10px] lg:text-xs font-bold text-muted-foreground hover:text-foreground bg-muted rounded-lg border border-border transition-colors">
                     <span className="material-symbols-outlined text-[14px]">download</span> Export
                   </button>
                 )}
               </div>
               {recentSales.length === 0 ? (
-                <div className="bg-card border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center text-center">
-                  <span className="material-symbols-outlined text-2xl text-muted-foreground mb-1">history</span>
-                  <p className="font-bold text-sm">No recent sales yet</p>
+                <div className="bg-card border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center text-center">
+                  <span className="material-symbols-outlined text-3xl text-muted-foreground/50 mb-2">receipt_long</span>
+                  <p className="font-bold text-sm text-foreground">No sales yet</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Your sales will appear here</p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   {recentSales.map((sale) => (
-                    <div key={sale.id} className="bg-card rounded-lg border border-border overflow-hidden">
+                    <div key={sale.id} className="bg-card rounded-xl border border-border overflow-hidden hover:border-primary/20 transition-colors">
                       {editingSale?.id === sale.id ? (
-                        <div className="p-3 space-y-2">
-                          <p className="font-semibold text-xs">{(sale as any).inventory_items?.name || "Item"}</p>
+                        <div className="p-3 lg:p-4 space-y-3">
+                          <p className="font-bold text-xs text-foreground">{(sale as any).inventory_items?.name || "Item"}</p>
                           <div className="grid grid-cols-3 gap-2">
                             <div>
-                              <label className="text-[9px] font-semibold text-muted-foreground">Qty</label>
+                              <label className="text-[9px] font-bold text-muted-foreground uppercase">Qty</label>
                               <input type="number" min={1} value={editForm.quantity}
                                 onChange={(e) => setEditForm({ ...editForm, quantity: parseInt(e.target.value) || 0 })}
-                                className="w-full h-8 bg-muted border border-border rounded-lg px-2 text-xs text-foreground" />
+                                className="w-full h-8 bg-muted border border-border rounded-lg px-2 text-xs font-semibold text-foreground focus:ring-2 focus:ring-primary/20 outline-none" />
                             </div>
                             <div>
-                              <label className="text-[9px] font-semibold text-muted-foreground">Price</label>
+                              <label className="text-[9px] font-bold text-muted-foreground uppercase">Price</label>
                               <input type="number" value={editForm.unit_price_bdt}
                                 onChange={(e) => setEditForm({ ...editForm, unit_price_bdt: parseFloat(e.target.value) || 0 })}
-                                className="w-full h-8 bg-muted border border-border rounded-lg px-2 text-xs text-foreground" />
+                                className="w-full h-8 bg-muted border border-border rounded-lg px-2 text-xs font-semibold text-foreground focus:ring-2 focus:ring-primary/20 outline-none" />
                             </div>
                             <div>
-                              <label className="text-[9px] font-semibold text-muted-foreground">Received</label>
+                              <label className="text-[9px] font-bold text-muted-foreground uppercase">Received</label>
                               <input type="number" value={editForm.received_now_bdt}
                                 onChange={(e) => setEditForm({ ...editForm, received_now_bdt: parseFloat(e.target.value) || 0 })}
-                                className="w-full h-8 bg-muted border border-border rounded-lg px-2 text-xs text-foreground" />
+                                className="w-full h-8 bg-muted border border-border rounded-lg px-2 text-xs font-semibold text-foreground focus:ring-2 focus:ring-primary/20 outline-none" />
                             </div>
                           </div>
-                          <div className="flex justify-end gap-2">
-                            <button onClick={() => setEditingSale(null)} className="px-2.5 py-1 text-[10px] text-muted-foreground">Cancel</button>
+                          <div className="flex justify-end gap-2 pt-1">
+                            <button onClick={() => setEditingSale(null)} className="px-3 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground rounded-lg transition-colors">Cancel</button>
                             <button onClick={handleEditSave} disabled={saving}
-                              className="px-2.5 py-1 text-[10px] font-bold bg-primary text-primary-foreground rounded-lg">
+                              className="px-3 py-1.5 text-[11px] font-bold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50">
                               {saving ? "..." : "Save"}
                             </button>
                           </div>
                         </div>
                       ) : (
-                        <div className="p-2.5 lg:p-3 flex items-center justify-between">
+                        <div className="p-3 lg:p-4 flex items-center gap-3">
+                          {/* Item info */}
                           <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-xs lg:text-sm truncate">{(sale as any).inventory_items?.name || "Item"}</p>
-                            <p className="text-[10px] lg:text-xs text-muted-foreground truncate">
-                              {sale.quantity} × ৳{sale.unit_price_bdt} • {(sale as any).customers?.name || "Walk-in"}
-                              <span className="hidden sm:inline"> • {format(new Date(sale.created_at), "MMM d, h:mm a")}</span>
+                            <p className="font-bold text-xs lg:text-sm text-foreground truncate">{(sale as any).inventory_items?.name || "Item"}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[10px] lg:text-xs text-muted-foreground">
+                                {sale.quantity} × ৳{sale.unit_price_bdt}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground/40">•</span>
+                              <span className="text-[10px] lg:text-xs text-muted-foreground truncate">
+                                {(sale as any).customers?.name || "Walk-in"}
+                              </span>
+                            </div>
+                            <p className="text-[9px] lg:text-[10px] text-muted-foreground/60 mt-0.5">
+                              {format(new Date(sale.created_at), "MMM d, h:mm a")}
                             </p>
                           </div>
-                          <div className="flex items-center gap-1 lg:gap-2 shrink-0 ml-2">
-                            <div className="text-right mr-0.5">
-                              <p className="font-bold text-xs lg:text-sm">৳{(sale.quantity * sale.unit_price_bdt).toFixed(0)}</p>
-                              {sale.due > 0 && <p className="text-[10px] text-destructive">Due: ৳{sale.due}</p>}
-                            </div>
+
+                          {/* Amount */}
+                          <div className="text-right shrink-0">
+                            <p className="font-black text-sm lg:text-base text-foreground">৳{(sale.quantity * sale.unit_price_bdt).toLocaleString()}</p>
+                            {sale.due > 0 && (
+                              <p className="text-[10px] font-semibold text-destructive">Due: ৳{sale.due}</p>
+                            )}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-0.5 shrink-0">
                             <button onClick={() => startEdit(sale)}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground active:scale-95">
-                              <span className="material-symbols-outlined text-[16px]">edit</span>
+                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground active:scale-95 transition-all">
+                              <span className="material-symbols-outlined text-[15px]">edit</span>
                             </button>
                             <button onClick={() => setInvoiceData({
                                 sale, itemName: (sale as any).inventory_items?.name || "Item",
                                 customerName: (sale as any).customers?.name || "Walk-in", business: businessInfo,
                               })}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground active:scale-95">
-                              <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground active:scale-95 transition-all">
+                              <span className="material-symbols-outlined text-[15px]">receipt_long</span>
                             </button>
                             <button onClick={() => handleDelete(sale)} disabled={deletingSaleId === sale.id}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground active:scale-95 disabled:opacity-50">
-                              <span className="material-symbols-outlined text-[16px]">
+                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground active:scale-95 disabled:opacity-50 transition-all">
+                              <span className="material-symbols-outlined text-[15px]">
                                 {deletingSaleId === sale.id ? "hourglass_empty" : "delete"}
                               </span>
                             </button>
@@ -489,33 +539,47 @@ const Sales = () => {
           </div>
 
           {/* Desktop Summary Sidebar */}
-          <div className="hidden lg:block space-y-6">
-            <div className="bg-primary text-primary-foreground p-6 rounded-xl shadow-lg sticky top-24">
-              <h3 className="text-sm font-bold uppercase tracking-wider opacity-80 mb-6">Sale Summary</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center pb-4 border-b border-white/10">
-                  <span className="text-sm opacity-90">Total Amount</span>
-                  <span className="text-xl font-black">৳{total.toFixed(2)}</span>
+          <div className="hidden lg:block">
+            <div className="bg-card border border-border rounded-xl overflow-hidden sticky top-24">
+              <div className="bg-primary/5 px-6 py-4 border-b border-border">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-primary">Sale Summary</h3>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Total Amount</span>
+                  <span className="text-xl font-black text-foreground">৳{total.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between items-center pb-4 border-b border-white/10">
-                  <span className="text-sm opacity-90">Amount Due</span>
-                  <span className="text-xl font-black">৳{Math.max(0, due).toFixed(2)}</span>
+                <div className="h-px bg-border" />
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Received</span>
+                  <span className="text-sm font-bold text-foreground">৳{(parseFloat(receivedAmount) || 0).toFixed(2)}</span>
                 </div>
-                <div className="bg-white/10 rounded-lg p-4 mt-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Amount Due</span>
+                  <span className={`text-lg font-black ${due > 0 ? "text-destructive" : "text-foreground"}`}>
+                    ৳{Math.max(0, due).toFixed(2)}
+                  </span>
+                </div>
+                <div className="h-px bg-border" />
+                <div className="bg-muted/50 rounded-lg p-4">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sm">trending_up</span>
-                      <span className="text-sm font-medium">Expected Profit</span>
+                      <span className="material-symbols-outlined text-[16px] text-muted-foreground">trending_up</span>
+                      <span className="text-sm font-medium text-muted-foreground">Est. Profit</span>
                     </div>
-                    <span className="text-lg font-bold">৳{profit > 0 ? profit.toFixed(2) : "0.00"}</span>
+                    <span className={`text-lg font-black ${profit > 0 ? "text-emerald-500" : "text-muted-foreground"}`}>
+                      ৳{profit > 0 ? profit.toFixed(2) : "0.00"}
+                    </span>
                   </div>
                 </div>
               </div>
-              <button onClick={handleSave} disabled={saving}
-                className="w-full mt-6 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                <span className="material-symbols-outlined">check_circle</span>
-                {saving ? "Saving..." : "Save Sale"}
-              </button>
+              <div className="px-6 pb-6">
+                <button onClick={handleSave} disabled={saving}
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98]">
+                  <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                  {saving ? "Saving..." : "Confirm Sale"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
