@@ -276,8 +276,8 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
     if (qty <= 0) { toast.error("Quantity must be greater than 0"); return; }
     if (qty <= 0) { toast.error("Quantity must be greater than 0"); return; }
 
-    // Wallet balance check — only when there's a purchase cost
-    if (totalLanded > 0) {
+    // Wallet balance check — only for new purchases (not existing items)
+    if (itemMode === "new" && totalLanded > 0) {
       if (walletBdt < totalLanded) {
         toast.error(`Insufficient wallet balance. Need ৳${totalLanded.toFixed(0)} but only ৳${Math.max(0, walletBdt).toFixed(0)} available.`);
         return;
