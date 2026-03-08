@@ -58,6 +58,7 @@ const Index = () => {
             {quickActions.map((action) => (
               <button
                 key={action.label}
+                onClick={() => navigate(action.path)}
                 className="flex flex-col items-center justify-center p-5 lg:p-8 bg-card rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all group"
               >
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-muted rounded-full flex items-center justify-center mb-2 lg:mb-3 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
