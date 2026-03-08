@@ -1,126 +1,184 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useBusiness } from "@/contexts/BusinessContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import ExchangeRateHeader from "@/components/ExchangeRateHeader";
+import { format } from "date-fns";
 
 const Expenses = () => {
-  const [form, setForm] = useState({ title: "", amount: "", category: "Food & Dining" });
+  const { businessId } = useBusiness();
+  const { user } = useAuth();
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [form, setForm] = useState({ title: "", amount: "", category: "Shipping" });
+  const [currency, setCurrency] = useState<"BDT" | "RMB">("BDT");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!businessId) return;
+    fetchExpenses();
+  }, [businessId]);
+
+  const fetchExpenses = async () => {
+    const { data } = await supabase.from("expenses").select("*")
+      .eq("business_id", businessId!).order("created_at", { ascending: false });
+    setExpenses(data || []);
+  };
+
+  // Monthly total
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthlyTotal = expenses
+    .filter((e) => new Date(e.created_at) >= monthStart)
+    .reduce((sum, e) => sum + (e.currency === "BDT" ? e.amount : 0), 0);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!businessId || !user) return;
+    if (!form.title.trim()) { toast.error("Enter expense title"); return; }
+    const amt = parseFloat(form.amount);
+    if (!amt || amt <= 0) { toast.error("Enter a valid amount"); return; }
+
+    setSaving(true);
+    try {
+      await supabase.from("expenses").insert({
+        title: form.title.trim(), amount: amt, currency, category: form.category,
+        business_id: businessId, user_id: user.id,
+      });
+      await supabase.from("activity_log").insert({
+        action: "Added expense", details: { title: form.title, amount: amt, currency },
+        business_id: businessId, user_id: user.id,
+      });
+      toast.success("Expense saved!");
+      setForm({ title: "", amount: "", category: "Shipping" });
+      fetchExpenses();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await supabase.from("expenses").delete().eq("id", id);
+      toast.success("Expense deleted");
+      fetchExpenses();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
 
   return (
-    <div className="flex-1 overflow-y-auto p-8 lg:p-12">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-          <div>
-            <h2 className="text-3xl font-black tracking-tight">Expenses</h2>
-            <p className="text-muted-foreground mt-1">Track and manage your daily expenditures.</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg font-medium shadow-card hover:bg-muted transition-colors">
-              <span className="material-symbols-outlined text-xl">file_download</span>
-              Export
-            </button>
-          </div>
-        </header>
+    <div className="flex-1 flex flex-col min-w-0">
+      <ExchangeRateHeader title="Expenses" />
+      <div className="p-4 lg:p-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column */}
+            <div className="lg:col-span-1 space-y-4">
+              {/* Monthly Total */}
+              <div className="bg-primary rounded-xl p-4 lg:p-6 text-primary-foreground shadow-lg relative overflow-hidden">
+                <div className="relative z-10">
+                  <p className="text-primary-foreground/80 text-sm font-medium">Total Spent This Month</p>
+                  <h3 className="text-3xl font-bold mt-1">৳{monthlyTotal.toFixed(0)}</h3>
+                </div>
+                <div className="absolute -right-6 -bottom-6 opacity-20">
+                  <span className="material-symbols-outlined text-[100px]">payments</span>
+                </div>
+              </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Total Spent Summary */}
-            <div className="bg-primary rounded-xl p-6 text-primary-foreground shadow-lg shadow-primary/20 relative overflow-hidden">
-              <div className="relative z-10">
-                <p className="text-primary-foreground/80 text-sm font-medium">Total Spent This Month</p>
-                <h3 className="text-4xl font-bold mt-2">$3,450.00</h3>
-                <div className="mt-4 flex items-center gap-2 bg-primary-foreground/10 w-fit px-3 py-1 rounded-full text-xs">
-                  <span className="material-symbols-outlined text-sm">trending_up</span>
-                  <span>12% from last month</span>
-                </div>
-              </div>
-              <div className="absolute -right-6 -bottom-6 opacity-20 transform rotate-12">
-                <span className="material-symbols-outlined text-[120px]">payments</span>
-              </div>
-            </div>
-
-            {/* Add Expense Card */}
-            <div className="bg-card rounded-xl shadow-card border border-border p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                  <span className="material-symbols-outlined text-lg">add</span>
-                </div>
-                <h3 className="text-lg font-bold">Add New Expense</h3>
-              </div>
-              <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Expense Title</label>
-                  <Input
-                    placeholder="e.g. Grocery Shopping"
-                    value={form.title}
-                    onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    className="bg-muted border-border"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">Amount</label>
-                    <Input
-                      placeholder="0.00"
-                      type="number"
-                      value={form.amount}
-                      onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                      className="bg-muted border-border"
-                    />
+              {/* Add Expense */}
+              <div className="bg-card rounded-xl border border-border p-4 lg:p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                    <span className="material-symbols-outlined text-lg">add</span>
                   </div>
+                  <h3 className="text-lg font-bold">Add New Expense</h3>
+                </div>
+                <form className="space-y-3" onSubmit={handleSave}>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">Currency</label>
-                    <div className="flex p-1 bg-muted rounded-lg">
-                      <button className="flex-1 py-1.5 text-xs font-bold rounded-md bg-card shadow-sm" type="button">BDT</button>
-                      <button className="flex-1 py-1.5 text-xs font-medium text-muted-foreground" type="button">RMB</button>
+                    <label className="block text-sm font-medium mb-1">Title</label>
+                    <Input placeholder="e.g. Customs Duty" value={form.title}
+                      onChange={(e) => setForm({ ...form, title: e.target.value })} className="bg-muted" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Amount</label>
+                      <Input placeholder="0.00" type="number" value={form.amount}
+                        onChange={(e) => setForm({ ...form, amount: e.target.value })} className="bg-muted" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Currency</label>
+                      <div className="flex p-1 bg-muted rounded-lg">
+                        {(["BDT", "RMB"] as const).map((c) => (
+                          <button key={c} type="button" onClick={() => setCurrency(c)}
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-md ${currency === c ? "bg-card shadow-sm" : "text-muted-foreground"}`}>
+                            {c}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Category</label>
-                  <select
-                    className="w-full px-4 py-2.5 rounded-lg border border-border bg-muted focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none text-sm"
-                    value={form.category}
-                    onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  >
-                    <option>Shipping</option>
-                    <option>Customs Duty</option>
-                    <option>Operations</option>
-                    <option>Transport</option>
-                    <option>Office Supplies</option>
-                    <option>Other</option>
-                  </select>
-                </div>
-                <Button className="w-full bg-primary text-primary-foreground font-bold py-3 h-12 shadow-lg shadow-primary/30 hover:bg-primary/90" type="submit">
-                  <span className="material-symbols-outlined text-xl mr-1">save</span>
-                  Save Expense
-                </Button>
-              </form>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Category</label>
+                    <select className="w-full px-4 py-2 rounded-lg border border-border bg-muted text-sm text-foreground"
+                      value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+                      <option>Shipping</option><option>Customs Duty</option><option>Operations</option>
+                      <option>Transport</option><option>Office Supplies</option><option>Other</option>
+                    </select>
+                  </div>
+                  <Button disabled={saving} className="w-full bg-primary text-primary-foreground font-bold h-11" type="submit">
+                    <span className="material-symbols-outlined text-xl mr-1">save</span>
+                    {saving ? "Saving..." : "Save Expense"}
+                  </Button>
+                </form>
+              </div>
             </div>
-          </div>
 
-          {/* Right Column: Expense History */}
-          <div className="lg:col-span-2">
-            <div className="bg-card rounded-xl shadow-card border border-border h-full flex flex-col">
-              <div className="p-6 border-b border-border flex items-center justify-between">
-                <h3 className="text-lg font-bold">Expense History</h3>
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Recent Transactions</span>
-              </div>
-              {/* Empty State */}
-              <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
-                <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6">
-                  <span className="material-symbols-outlined text-muted-foreground/40 text-5xl">receipt</span>
+            {/* Right: History */}
+            <div className="lg:col-span-2">
+              <div className="bg-card rounded-xl border border-border h-full flex flex-col">
+                <div className="p-4 border-b border-border flex items-center justify-between">
+                  <h3 className="text-lg font-bold">Expense History</h3>
+                  <span className="text-xs font-medium text-muted-foreground">{expenses.length} records</span>
                 </div>
-                <h4 className="text-xl font-bold mb-2">No expenses yet</h4>
-                <p className="text-muted-foreground max-w-xs mx-auto mb-8">
-                  Start tracking your finances by adding your first expense using the form on the left.
-                </p>
-              </div>
-              <div className="p-4 bg-muted/50 border-t border-border">
-                <p className="text-xs text-center text-muted-foreground font-medium italic">
-                  Your expense data is encrypted and secure.
-                </p>
+                {expenses.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                    <span className="material-symbols-outlined text-4xl text-muted-foreground/40 mb-3">receipt</span>
+                    <h4 className="font-bold">No expenses yet</h4>
+                    <p className="text-muted-foreground text-sm mt-1">Add your first expense to see it here.</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border overflow-y-auto max-h-[600px]">
+                    {expenses.map((exp) => (
+                      <div key={exp.id} className="p-3 flex items-center justify-between hover:bg-muted/50">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-destructive/10 text-destructive flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[18px]">remove</span>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm">{exp.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {exp.category} • {format(new Date(exp.created_at), "MMM d, yyyy")}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold text-sm text-destructive">
+                            {exp.currency === "BDT" ? "৳" : "¥"}{exp.amount}
+                          </span>
+                          <button onClick={() => handleDelete(exp.id)}
+                            className="text-muted-foreground hover:text-destructive transition-colors">
+                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
