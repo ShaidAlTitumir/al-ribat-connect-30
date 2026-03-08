@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,13 +9,10 @@ import ExchangeRateHeader from "@/components/ExchangeRateHeader";
 const Settings = () => {
   const { user } = useAuth();
   const { businessId, userRole } = useBusiness();
-  const navigate = useNavigate();
   const [business, setBusiness] = useState({ name: "", default_currency: "BDT" });
   const [saving, setSaving] = useState("");
   const [showCleanConfirm, setShowCleanConfirm] = useState(false);
   const [cleanConfirmText, setCleanConfirmText] = useState("");
-  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
-  const [deleteAccountText, setDeleteAccountText] = useState("");
 
   useEffect(() => {
     if (!businessId) return;
