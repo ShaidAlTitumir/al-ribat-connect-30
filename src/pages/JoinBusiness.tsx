@@ -67,12 +67,21 @@ const JoinBusiness = () => {
 
       if (updateError) throw updateError;
 
-      // Update user's profile to link to this business
+      // Update user's profile and add to business_members
       if (partner.business_id) {
         await supabase
           .from("profiles")
           .update({ business_id: partner.business_id, role: partner.role || "working" })
           .eq("user_id", user.id);
+
+        // Add to business_members so they can see this business in the Business page
+        await supabase
+          .from("business_members")
+          .upsert({
+            user_id: user.id,
+            business_id: partner.business_id,
+            role: partner.role || "member",
+          }, { onConflict: "user_id,business_id" });
       }
 
       toast.success(`Welcome to the business, ${partner.name}!`);
