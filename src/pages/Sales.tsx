@@ -23,8 +23,14 @@ const Sales = () => {
   const [newCustomerPhone, setNewCustomerPhone] = useState("");
   const [showNewCustomer, setShowNewCustomer] = useState(false);
 
+  // Edit/Delete state
+  const [editingSale, setEditingSale] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ quantity: 0, unit_price_bdt: 0, received_now_bdt: 0 });
+  const [deletingSaleId, setDeletingSaleId] = useState<string | null>(null);
+
   // Data
   const [items, setItems] = useState<any[]>([]);
+  const [allItems, setAllItems] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [recentSales, setRecentSales] = useState<any[]>([]);
   const [landedCost, setLandedCost] = useState(0);
