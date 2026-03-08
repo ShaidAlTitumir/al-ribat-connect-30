@@ -114,9 +114,24 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Nullify user_id references in all tables to avoid FK constraints on auth.users
+    await adminClient.from("customers").update({ user_id: null }).eq("user_id", userId);
+    await adminClient.from("sales").update({ user_id: null }).eq("user_id", userId);
+    await adminClient.from("returns").update({ user_id: null }).eq("user_id", userId);
+    await adminClient.from("purchase_transactions").update({ user_id: null }).eq("user_id", userId);
+    await adminClient.from("expenses").update({ user_id: null }).eq("user_id", userId);
+    await adminClient.from("exchanges").update({ user_id: null }).eq("user_id", userId);
+    await adminClient.from("capital_contributions").update({ user_id: null }).eq("user_id", userId);
+    await adminClient.from("partner_transfers").update({ user_id: null }).eq("user_id", userId);
+    await adminClient.from("inventory_items").update({ user_id: null }).eq("user_id", userId);
+    await adminClient.from("sample_orders").update({ user_id: null }).eq("user_id", userId);
+    await adminClient.from("activity_log").update({ user_id: null }).eq("user_id", userId);
+    await adminClient.from("customer_ledger").update({ user_id: null }).eq("user_id", userId);
+
     // Delete remaining user data
     await adminClient.from("notifications").delete().eq("user_id", userId);
     await adminClient.from("business_members").delete().eq("user_id", userId);
+    await adminClient.from("partners").delete().eq("user_id", userId);
     await adminClient.from("profiles").delete().eq("user_id", userId);
 
     // Finally, delete the auth user
