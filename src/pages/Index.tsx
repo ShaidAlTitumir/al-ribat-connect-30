@@ -328,6 +328,13 @@ const Index = () => {
                   case "Deleted customer":
                     subtitle = details.customer_name || "";
                     break;
+                  case "Updated capital contribution":
+                    subtitle = details.partner_name || "";
+                    subtitle += ` • ${details.old_currency === "RMB" ? "¥" : "৳"}${details.old_amount} → ${details.new_currency === "RMB" ? "¥" : "৳"}${details.new_amount}`;
+                    break;
+                  case "Deleted capital contribution":
+                    subtitle = `${details.partner_name || ""} • ${details.currency === "RMB" ? "¥" : "৳"}${details.amount}`;
+                    break;
                   case "Added new partner":
                     subtitle = `${details.partner_name || ""} • ${details.role || ""}`;
                     break;
