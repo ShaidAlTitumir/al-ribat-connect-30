@@ -39,17 +39,14 @@ const AppLayout = () => {
 
       <main ref={mainRef} className="flex-1 lg:ml-64 flex flex-col overflow-y-auto min-w-0">
         {/* Mobile top bar */}
-        <div className="sticky top-0 z-30 lg:hidden flex items-center gap-3 h-14 px-4 bg-card/95 backdrop-blur-md border-b border-border">
+        <div className="sticky top-0 z-30 lg:hidden flex items-center gap-3 h-16 px-4 bg-card/95 backdrop-blur-md border-b border-border">
           <button
             onClick={() => setSidebarOpen(true)}
             className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted transition-all duration-200 active:scale-95"
           >
             <span className="material-symbols-outlined">menu</span>
           </button>
-          <h1 className="text-base font-bold tracking-tight text-foreground">
-            Al-Ribat Manager
-            {businessName && <span className="text-xs font-medium text-muted-foreground ml-1.5">· {businessName}</span>}
-          </h1>
+          <h1 className="text-lg font-bold tracking-tight text-foreground">Al-Ribat Manager</h1>
         </div>
         <div
           className="flex-1 flex flex-col transition-opacity duration-300 ease-out"
