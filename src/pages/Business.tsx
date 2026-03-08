@@ -766,7 +766,10 @@ const Business = () => {
                         </button>
                       )}
                       {!isActive && (
-                        <span className="text-[10px] text-muted-foreground italic">Use dropdown above to switch</span>
+                        <button onClick={() => handleSelect(b.id)}
+                          className="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-primary/90">
+                          Select
+                        </button>
                       )}
                     </div>
                   </div>
