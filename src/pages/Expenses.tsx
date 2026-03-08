@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { exportToCSV } from "@/lib/exportUtils";
 
 const Expenses = () => {
-  const { businessId, exchangeRate } = useBusiness();
+  const { businessId, exchangeRate, businessName, businessPhone, businessAddress } = useBusiness();
   const { user } = useAuth();
   const [expenses, setExpenses] = useState<any[]>([]);
   const [form, setForm] = useState({ title: "", amount: "", category: "Shipping" });
