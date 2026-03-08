@@ -698,6 +698,90 @@ const Partners = () => {
             )}
           </section>
 
+          {/* Leave Business & Pending Leave Requests */}
+          <section className="bg-card p-4 lg:p-6 rounded-xl border border-border space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-destructive">exit_to_app</span>
+              <h3 className="font-bold text-lg">Leave Business</h3>
+            </div>
+
+            {acceptedPartners.length <= 1 ? (
+              <p className="text-sm text-muted-foreground">You are the only partner. To leave, delete the business from the Business page.</p>
+            ) : (
+              <>
+                {getMyLeaveRequest() ? (
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="material-symbols-outlined text-amber-500 text-[18px]">hourglass_top</span>
+                      <p className="text-sm font-bold text-foreground">Leave request pending</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Waiting for other partners to approve your request to leave.</p>
+                    {leaveVotes[getMyLeaveRequest()!.id] && (
+                      <div className="mt-2 space-y-1">
+                        {leaveVotes[getMyLeaveRequest()!.id].map((v: any) => {
+                          const voter = acceptedPartners.find(p => p.user_id === v.user_id);
+                          return (
+                            <div key={v.id} className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground">{voter?.name || "Partner"}</span>
+                              <span className={`font-bold capitalize ${v.vote === "approved" ? "text-green-500" : v.vote === "rejected" ? "text-destructive" : "text-amber-500"}`}>
+                                {v.vote}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button onClick={handleRequestLeave}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-destructive/10 text-destructive font-bold text-sm hover:bg-destructive/20 transition-colors">
+                    <LogOut className="w-4 h-4" />
+                    Request to Leave Business
+                  </button>
+                )}
+              </>
+            )}
+
+            {/* Show other partners' pending leave requests for voting */}
+            {leaveRequests.filter(r => r.requested_by !== user?.id).length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-border">
+                <p className="text-xs font-bold uppercase text-muted-foreground">Pending Leave Requests</p>
+                {leaveRequests
+                  .filter(r => r.requested_by !== user?.id)
+                  .map(r => {
+                    const leavingPartner = acceptedPartners.find(p => p.id === r.partner_id);
+                    const myVote = (leaveVotes[r.id] || []).find((v: any) => v.user_id === user?.id);
+                    return (
+                      <div key={r.id} className="p-3 rounded-lg bg-muted border border-border">
+                        <p className="text-sm font-bold mb-1">
+                          {leavingPartner?.name || "Partner"} wants to leave
+                        </p>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Requested {format(new Date(r.created_at), "MMM d, yyyy")}
+                        </p>
+                        {myVote && myVote.vote !== "pending" ? (
+                          <p className={`text-xs font-bold capitalize ${myVote.vote === "approved" ? "text-green-500" : "text-destructive"}`}>
+                            You {myVote.vote}
+                          </p>
+                        ) : (
+                          <div className="flex gap-2">
+                            <button onClick={() => handleLeaveVote(r.id, "approved")}
+                              className="flex-1 py-1.5 rounded-lg bg-green-500/10 text-green-600 text-xs font-bold hover:bg-green-500/20 transition-colors">
+                              Approve
+                            </button>
+                            <button onClick={() => handleLeaveVote(r.id, "rejected")}
+                              className="flex-1 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-bold hover:bg-destructive/20 transition-colors">
+                              Reject
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </section>
+
           {/* Partner Equity */}
           <section className="bg-card p-4 lg:p-6 rounded-xl border border-border">
             <div className="flex items-center gap-2 mb-4">
