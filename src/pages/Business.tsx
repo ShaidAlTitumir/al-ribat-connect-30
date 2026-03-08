@@ -467,11 +467,25 @@ const Business = () => {
             await (supabase.from("notifications") as any).insert(memberNotifs);
           }
 
-          // Delete the business
-          await supabase.from("businesses").delete().eq("id", req.business_id);
-          await (supabase.from("business_deletion_requests") as any)
-            .update({ status: "completed" })
-            .eq("id", requestId);
+          // Clean up related data then delete the business
+          const bid = req.business_id;
+          await supabase.from("profiles").update({ business_id: null }).eq("business_id", bid);
+          await supabase.from("business_members").delete().eq("business_id", bid);
+          await supabase.from("customer_ledger").delete().eq("business_id", bid);
+          await supabase.from("returns").delete().eq("business_id", bid);
+          await supabase.from("sales").delete().eq("business_id", bid);
+          await supabase.from("purchase_transactions").delete().eq("business_id", bid);
+          await supabase.from("exchanges").delete().eq("business_id", bid);
+          await supabase.from("partner_transfers").delete().eq("business_id", bid);
+          await supabase.from("capital_contributions").delete().eq("business_id", bid);
+          await supabase.from("expenses").delete().eq("business_id", bid);
+          await supabase.from("activity_log").delete().eq("business_id", bid);
+          await supabase.from("customers").delete().eq("business_id", bid);
+          await supabase.from("inventory_items").delete().eq("business_id", bid);
+          await supabase.from("partners").delete().eq("business_id", bid);
+          await supabase.from("notifications").delete().eq("business_id", bid);
+          await supabase.from("business_deletion_requests").delete().eq("business_id", bid);
+          await supabase.from("businesses").delete().eq("id", bid);
 
           if (req.business_id === businessId && user) {
             await supabase.from("profiles").update({ business_id: null }).eq("user_id", user.id);
