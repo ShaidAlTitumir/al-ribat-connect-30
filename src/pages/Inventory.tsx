@@ -282,7 +282,7 @@ const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamp
 
 /* ─── Add / Restock Item View ─── */
 const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void }) => {
-  const { businessId, exchangeRate } = useBusiness();
+  const { businessId, exchangeRate, isSolo } = useBusiness();
   const { user } = useAuth();
   const [itemMode, setItemMode] = useState<"new" | "existing">("new");
   const [shippingMethod, setShippingMethod] = useState("sea");
