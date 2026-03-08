@@ -355,7 +355,7 @@ const Partners = () => {
               )}
               <button onClick={handleAddCapital}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2.5 rounded-lg flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-base">add_card</span> Inject Capital
+                <span className="material-symbols-outlined text-base">add_card</span> Add Capital
               </button>
             </div>
           </section>
