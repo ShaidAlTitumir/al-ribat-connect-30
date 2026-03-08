@@ -128,6 +128,9 @@ const InventoryList = ({ onAdd, onSamples }: { onAdd: () => void; onSamples: () 
               {f.label}
             </button>
           ))}
+          <button onClick={onSamples} className="flex items-center gap-1 bg-accent text-foreground px-4 py-1.5 rounded-full text-sm font-bold border border-border">
+            <span className="material-symbols-outlined text-[18px]">science</span> Samples
+          </button>
           <button onClick={onAdd} className="flex items-center gap-1 bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-bold">
             <span className="material-symbols-outlined text-[18px]">add</span> Add
           </button>
