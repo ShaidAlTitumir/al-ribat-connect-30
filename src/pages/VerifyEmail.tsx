@@ -1,7 +1,25 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const VerifyEmail = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") {
+        // User verified email and got signed in — sign them out and redirect to login
+        supabase.auth.signOut().then(() => {
+          toast.success("Email verified! Please sign in.");
+          navigate("/login", { replace: true });
+        });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
   return (
     <div>
       <div className="px-8 pt-10 pb-6 text-center">
