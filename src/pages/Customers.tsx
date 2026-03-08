@@ -11,7 +11,7 @@ import { format } from "date-fns";
 import { ChevronDown, ChevronUp, Phone, MapPin, Store, Edit2, Trash2, X, Check } from "lucide-react";
 
 const Customers = () => {
-  const { businessId } = useBusiness();
+  const { businessId, businessName, businessPhone, businessAddress } = useBusiness();
   const { user } = useAuth();
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
