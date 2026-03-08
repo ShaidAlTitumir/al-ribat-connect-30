@@ -32,6 +32,7 @@ const Customers = () => {
   const [editForm, setEditForm] = useState({ name: "", phone: "", address: "", shop_name: "" });
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
+  const [showBulkInvoice, setShowBulkInvoice] = useState(false);
 
   useEffect(() => {
     if (!businessId) return;
