@@ -1,31 +1,46 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
+interface AppSidebarProps {
+  open: boolean;
+  onClose: () => void;
+}
+
 const navItems = [
-  { icon: "home", activeIcon: "home", label: "Home", path: "/" },
-  { icon: "inventory_2", activeIcon: "inventory_2", label: "Inventory", path: "/inventory" },
-  { icon: "receipt_long", activeIcon: "receipt_long", label: "Sales", path: "/sales" },
-  { icon: "account_balance_wallet", activeIcon: "account_balance_wallet", label: "Expenses", path: "/expenses" },
-  { icon: "group", activeIcon: "group", label: "Partners", path: "/partners" },
-  { icon: "description", activeIcon: "description", label: "Reports", path: "/reports" },
+  { icon: "home", label: "Home", path: "/" },
+  { icon: "inventory_2", label: "Inventory", path: "/inventory" },
+  { icon: "receipt_long", label: "Sales", path: "/sales" },
+  { icon: "account_balance_wallet", label: "Expenses", path: "/expenses" },
+  { icon: "group", label: "Partners", path: "/partners" },
+  { icon: "description", label: "Reports", path: "/reports" },
+  { icon: "currency_exchange", label: "Wallet", path: "/wallet" },
+  { icon: "person_search", label: "Customers", path: "/customers" },
 ];
 
-const AppSidebar = () => {
+const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
   const location = useLocation();
   const { signOut } = useAuth();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col bg-sidebar border-r border-sidebar-border">
-      {/* Logo */}
-      <div className="p-6 flex items-center gap-3">
-        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
-          <span className="material-symbols-outlined text-lg">dashboard</span>
+    <aside
+      className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col bg-sidebar border-r border-sidebar-border transition-transform duration-200 ease-in-out
+        ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+    >
+      {/* Logo + close button */}
+      <div className="p-4 sm:p-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
+            <span className="material-symbols-outlined text-lg">dashboard</span>
+          </div>
+          <h1 className="text-base font-bold tracking-tight text-foreground">Al-Ribat Manager</h1>
         </div>
-        <h1 className="text-lg font-bold tracking-tight text-foreground">Al-Ribat Manager</h1>
+        <button onClick={onClose} className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted">
+          <span className="material-symbols-outlined text-[20px]">close</span>
+        </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 space-y-1">
+      <nav className="flex-1 px-3 sm:px-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -35,7 +50,7 @@ const AppSidebar = () => {
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground hover:bg-muted transition-colors"
+                  : "text-sidebar-foreground hover:bg-muted"
               }`}
             >
               <span
@@ -51,7 +66,7 @@ const AppSidebar = () => {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="p-3 sm:p-4 border-t border-sidebar-border">
         <NavLink
           to="/settings"
           className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
