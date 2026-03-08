@@ -46,13 +46,16 @@ const InventoryList = ({ onAdd }: { onAdd: () => void }) => {
 
   const filtered = items.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
-    if (filter === "low") return matchesSearch && item.current_stock > 0 && item.current_stock <= 5;
+    const threshold = item.low_stock_threshold ?? 5;
+    if (filter === "low") return matchesSearch && item.current_stock > 0 && item.current_stock <= threshold;
+    if (filter === "out") return matchesSearch && item.current_stock === 0;
     return matchesSearch;
   });
 
   const totalItems = items.length;
-  const lowStock = items.filter((i) => i.current_stock > 0 && i.current_stock <= 5).length;
+  const lowStock = items.filter((i) => i.current_stock > 0 && i.current_stock <= (i.low_stock_threshold ?? 5)).length;
   const outOfStock = items.filter((i) => i.current_stock === 0).length;
+  const lowStockItems = items.filter((i) => i.current_stock > 0 && i.current_stock <= (i.low_stock_threshold ?? 5));
 
   return (
     <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
