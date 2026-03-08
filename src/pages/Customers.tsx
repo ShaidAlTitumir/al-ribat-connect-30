@@ -99,6 +99,11 @@ const Customers = () => {
         address: newAddress.trim() || null,
         shop_name: newShopName.trim() || null,
       } as any);
+      await supabase.from("activity_log").insert({
+        action: "Added new customer",
+        details: { customer_name: newName.trim() },
+        business_id: businessId, user_id: user.id,
+      });
       toast.success("Customer added!");
       setNewName(""); setNewPhone(""); setNewAddress(""); setNewShopName("");
       setShowAddCustomer(false);
