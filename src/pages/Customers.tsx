@@ -88,7 +88,7 @@ const Customers = () => {
         created_at: paymentDate.toISOString(),
       });
       await supabase.from("activity_log").insert({
-        action: "Collected due payment", details: { customer: selectedCustomer?.name, amount: amt },
+        action: "Collected due payment", details: { customer: selectedCustomer?.name, amount: amt, payment_date: format(paymentDate, "dd MMM yyyy") },
         business_id: businessId, user_id: user.id,
       });
       toast.success(`৳${amt} collected from ${selectedCustomer?.name}`);
