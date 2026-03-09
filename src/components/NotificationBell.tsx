@@ -97,6 +97,10 @@ const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
       setLeaveDialogBusinessId((n as any).business_id || null);
       setLeaveDialogOpen(true);
       setOpen(false);
+    } else if (n.type === "join_request") {
+      setJoinDialogBusinessId((n as any).business_id || null);
+      setJoinDialogOpen(true);
+      setOpen(false);
     }
   };
 
