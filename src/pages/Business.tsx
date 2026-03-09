@@ -87,46 +87,44 @@ const Business = () => {
 
   const fetchBusinesses = async () => {
     setLoading(true);
-    const { data: memberOf } = await (supabase
-      .from("business_members")
-      .select("business_id") as any)
-      .eq("user_id", user!.id);
+
+    // Step 1: Fetch memberships and owned businesses in parallel
+    const [{ data: memberOf }, { data: ownedBiz }] = await Promise.all([
+      (supabase.from("business_members").select("business_id") as any).eq("user_id", user!.id),
+      (supabase.from("businesses").select("*") as any).eq("owner_id", user!.id),
+    ]);
 
     const memberIds = (memberOf || []).map((m: any) => m.business_id);
-    const allIds = new Set<string>();
-    if (businessId) allIds.add(businessId);
-    memberIds.forEach((id: string) => allIds.add(id));
+    const ownedIds = new Set((ownedBiz || []).map((b: any) => b.id));
 
-    const { data } = await (supabase
-      .from("businesses")
-      .select("*") as any)
-      .or(`owner_id.eq.${user!.id}${allIds.size > 0 ? `,id.in.(${Array.from(allIds).join(",")})` : ""}`);
+    // If user is a member of businesses they don't own, fetch those too
+    const extraIds = memberIds.filter((id: string) => !ownedIds.has(id));
+    if (businessId && !ownedIds.has(businessId) && !extraIds.includes(businessId)) {
+      extraIds.push(businessId);
+    }
 
-    const bizList = (data as BusinessData[]) || [];
+    let bizList: BusinessData[] = (ownedBiz as BusinessData[]) || [];
+    if (extraIds.length > 0) {
+      const { data: extraBiz } = await (supabase.from("businesses").select("*") as any)
+        .in("id", extraIds);
+      bizList = [...bizList, ...((extraBiz as BusinessData[]) || [])];
+    }
+
     setBusinesses(bizList);
 
-    // Fetch partner counts and deletion requests for each business
+    // Step 2: Fetch partner counts and deletion requests in parallel
     const bizIds = bizList.map(b => b.id);
     if (bizIds.length > 0) {
-      // Partner counts
-      const { data: partners } = await (supabase
-        .from("partners")
-        .select("business_id") as any)
-        .in("business_id", bizIds)
-        .eq("status", "accepted");
-      
+      const [{ data: partners }, { data: requests }] = await Promise.all([
+        (supabase.from("partners").select("business_id") as any).in("business_id", bizIds).eq("status", "accepted"),
+        (supabase.from("business_deletion_requests").select("*") as any).in("business_id", bizIds).eq("status", "pending"),
+      ]);
+
       const counts: Record<string, number> = {};
       (partners || []).forEach((p: any) => {
         counts[p.business_id] = (counts[p.business_id] || 0) + 1;
       });
       setPartnerCounts(counts);
-
-      // Deletion requests
-      const { data: requests } = await (supabase
-        .from("business_deletion_requests")
-        .select("*") as any)
-        .in("business_id", bizIds)
-        .eq("status", "pending");
 
       const reqMap: Record<string, DeletionRequest> = {};
       (requests || []).forEach((r: any) => {
@@ -134,12 +132,10 @@ const Business = () => {
       });
       setDeletionRequests(reqMap);
 
-      // Votes for pending requests
+      // Fetch votes if there are pending requests
       const requestIds = (requests || []).map((r: any) => r.id);
       if (requestIds.length > 0) {
-        const { data: votes } = await (supabase
-          .from("business_deletion_votes")
-          .select("*") as any)
+        const { data: votes } = await (supabase.from("business_deletion_votes").select("*") as any)
           .in("request_id", requestIds);
 
         const voteMap: Record<string, DeletionVote[]> = {};
