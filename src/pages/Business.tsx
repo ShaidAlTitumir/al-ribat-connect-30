@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
+import OnboardingWizard from "@/components/OnboardingWizard";
 
 interface BusinessData {
   id: string;
