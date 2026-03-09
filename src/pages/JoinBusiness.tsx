@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
 const codeSchema = z.object({
-  code: z.string().trim().min(1, "Invitation code is required").max(50),
+  code: z.string().trim().min(1, "Join code is required").max(10),
 });
 
 const JoinBusiness = () => {
@@ -36,58 +36,63 @@ const JoinBusiness = () => {
 
     setLoading(true);
     try {
-      // Find pending partner with this code
-      const { data: partner, error: lookupError } = await supabase
-        .from("partners")
-        .select("*")
-        .eq("invitation_code", code.trim())
-        .eq("status", "pending")
-        .maybeSingle();
+      // Look up business by join code using RPC (bypasses RLS)
+      const { data: biz, error: lookupError } = await (supabase.rpc as any)(
+        "lookup_business_by_join_code",
+        { _join_code: code.trim().toUpperCase() }
+      );
 
       if (lookupError) throw lookupError;
 
-      if (!partner) {
-        setError("Invalid or already used invitation code");
+      if (!biz || biz.length === 0) {
+        setError("Invalid join code. Please check and try again.");
         setLoading(false);
         return;
       }
 
-      // Check expiration
-      if (partner.expires_at && new Date(partner.expires_at) < new Date()) {
-        setError("This invitation code has expired");
+      const business = biz[0];
+
+      // Check if already a member
+      const { data: existing } = await (supabase.from("business_members").select("id") as any)
+        .eq("user_id", user.id).eq("business_id", business.id).maybeSingle();
+      if (existing) {
+        setError("You are already a member of this business");
         setLoading(false);
         return;
       }
 
-      // Update partner record to link user
-      const { error: updateError } = await supabase
-        .from("partners")
-        .update({ user_id: user.id, status: "accepted" })
-        .eq("id", partner.id);
-
-      if (updateError) throw updateError;
-
-      // Update user's profile and add to business_members
-      if (partner.business_id) {
-        await supabase
-          .from("profiles")
-          .update({ business_id: partner.business_id, role: partner.role || "working" })
-          .eq("user_id", user.id);
-
-        // Add to business_members so they can see this business in the Business page
-        await supabase
-          .from("business_members")
-          .upsert({
-            user_id: user.id,
-            business_id: partner.business_id,
-            role: partner.role || "member",
-          }, { onConflict: "user_id,business_id" });
+      // Check if already has a pending request
+      const { data: pendingReq } = await (supabase.from("join_requests").select("id") as any)
+        .eq("user_id", user.id).eq("business_id", business.id).eq("status", "pending").maybeSingle();
+      if (pendingReq) {
+        setError("You already have a pending join request for this business");
+        setLoading(false);
+        return;
       }
 
-      toast.success(`Welcome to the business, ${partner.name}!`);
+      // Create join request
+      await (supabase.from("join_requests") as any).insert({
+        user_id: user.id, business_id: business.id,
+      });
+
+      // Get user's name for notification
+      const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle();
+
+      // Notify the business owner
+      if (business.owner_id) {
+        await (supabase.from("notifications") as any).insert({
+          user_id: business.owner_id,
+          business_id: business.id,
+          title: "New Join Request",
+          message: `${profile?.full_name || "Someone"} wants to join "${business.name}". Tap to approve or reject.`,
+          type: "join_request",
+        });
+      }
+
+      toast.success(`Join request sent to "${business.name}". Waiting for admin approval.`);
       navigate("/");
     } catch (err: any) {
-      toast.error(err.message || "Failed to join business");
+      toast.error(err.message || "Failed to send join request");
     } finally {
       setLoading(false);
     }
@@ -114,22 +119,23 @@ const JoinBusiness = () => {
       {/* Form */}
       <div className="p-8">
         <div className="text-center mb-8">
-          <h2 className="text-foreground text-2xl font-bold leading-tight mb-2">Welcome</h2>
-          <p className="text-muted-foreground text-base">You've been invited to join a partnership.</p>
+          <h2 className="text-foreground text-2xl font-bold leading-tight mb-2">Join a Business</h2>
+          <p className="text-muted-foreground text-base">Enter the 6-digit code shared by the business admin.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label className="block text-foreground text-sm font-semibold">Invitation Code</label>
+            <label className="block text-foreground text-sm font-semibold">Join Code</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <span className="material-symbols-outlined text-muted-foreground text-sm">vpn_key</span>
               </div>
               <Input
-                placeholder="e.g., INVITE-7X9K2P"
+                placeholder="e.g., NBW62J"
                 value={code}
-                onChange={(e) => { setCode(e.target.value); setError(""); }}
-                className="pl-10 py-4 h-14 bg-muted border-border focus-visible:ring-primary text-base"
+                onChange={(e) => { setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6)); setError(""); }}
+                className="pl-10 py-4 h-14 bg-muted border-border focus-visible:ring-primary text-base uppercase tracking-widest font-mono"
+                maxLength={6}
               />
             </div>
             {error && <p className="text-xs text-destructive text-center">{error}</p>}
@@ -138,7 +144,7 @@ const JoinBusiness = () => {
           <Button
             type="submit"
             className="w-full py-4 h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/20"
-            disabled={loading}
+            disabled={loading || code.length !== 6}
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Join Business
@@ -150,7 +156,7 @@ const JoinBusiness = () => {
           <p className="text-muted-foreground text-sm">
             Don't have a code?{" "}
             <a className="text-primary hover:underline font-medium cursor-pointer">
-              Request from your partner.
+              Request from the business admin.
             </a>
           </p>
           <button
