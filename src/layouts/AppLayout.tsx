@@ -50,6 +50,7 @@ const AppLayout = () => {
                 >
                   <span className="material-symbols-outlined text-[26px]">menu</span>
                 </button>
+                <img src={appLogo} alt="Al-Ribat Manager" className="w-9 h-9 rounded-lg object-contain shrink-0" />
                 <div className="min-w-0">
                   <h1 className="text-[15px] font-bold tracking-tight text-foreground leading-tight">Al-Ribat Manager</h1>
                   {businessName && (

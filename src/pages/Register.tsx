@@ -88,9 +88,7 @@ const Register = () => {
       {/* Header */}
       <div className="px-8 pt-8 pb-6 text-center">
         <div className="flex justify-center items-center gap-2 mb-6">
-          <div className="bg-primary text-primary-foreground p-2 rounded-lg">
-            <span className="material-symbols-outlined text-2xl">account_balance</span>
-          </div>
+          <img src={appLogo} alt="Al-Ribat Manager" className="w-12 h-12 object-contain" />
           <h2 className="text-foreground text-xl font-bold tracking-tight">Al-Ribat Manager</h2>
         </div>
         <h1 className="text-2xl font-bold text-foreground mb-2">Create Account</h1>
