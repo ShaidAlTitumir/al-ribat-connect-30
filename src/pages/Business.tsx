@@ -71,6 +71,7 @@ const Business = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [businessStats, setBusinessStats] = useState<Record<string, BusinessStats>>({});
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingIsPartnership, setOnboardingIsPartnership] = useState(false);
 
   // Form state
   const [formName, setFormName] = useState("");
