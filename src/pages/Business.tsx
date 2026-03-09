@@ -640,6 +640,31 @@ const Business = () => {
           )}
         </div>
 
+        {/* Join a Business */}
+        <section className="bg-card p-4 rounded-xl border border-border">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="material-symbols-outlined text-primary">group_add</span>
+            <h3 className="font-bold text-sm">Join a Business</h3>
+          </div>
+          <div className="flex gap-2">
+            <input
+              className="flex-1 bg-muted rounded-lg px-4 py-2.5 text-sm border-none text-foreground uppercase tracking-widest font-mono"
+              placeholder="Enter 6-digit code"
+              maxLength={6}
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+            />
+            <button
+              onClick={handleJoinBusiness}
+              disabled={joiningBusiness || joinCode.length !== 6}
+              className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-bold text-sm hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            >
+              {joiningBusiness ? "Joining..." : "Join"}
+            </button>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-2">Ask the business admin for the 6-digit join code.</p>
+        </section>
+
         {/* Create / Edit Form */}
         {showCreate && (
           <section className="bg-card p-5 rounded-xl border border-border space-y-4">
