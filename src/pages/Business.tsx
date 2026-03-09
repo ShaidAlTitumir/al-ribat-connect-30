@@ -579,6 +579,45 @@ const Business = () => {
     fetchBusinesses();
   };
 
+  const handleJoinBusiness = async () => {
+    if (!user || !joinCode.trim()) { toast.error("Enter a join code"); return; }
+    setJoiningBusiness(true);
+    try {
+      const { data: biz, error } = await (supabase.from("businesses").select("id, name, business_type") as any)
+        .eq("join_code", joinCode.trim().toUpperCase())
+        .maybeSingle();
+      if (error) throw error;
+      if (!biz) { toast.error("Invalid join code"); setJoiningBusiness(false); return; }
+
+      const { data: existing } = await (supabase.from("business_members").select("id") as any)
+        .eq("user_id", user.id).eq("business_id", biz.id).maybeSingle();
+      if (existing) { toast.error("You are already a member of this business"); setJoiningBusiness(false); return; }
+
+      await (supabase.from("business_members") as any).insert({
+        user_id: user.id, business_id: biz.id, role: "member",
+      });
+
+      const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle();
+      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+      await supabase.from("partners").insert({
+        name: profile?.full_name || "Partner",
+        role: "working", invitation_code: code, status: "accepted",
+        business_id: biz.id, user_id: user.id, invited_by: user.id,
+      });
+
+      await supabase.from("profiles").update({ business_id: biz.id, role: "member" }).eq("user_id", user.id);
+      switchBusiness(biz.id);
+
+      toast.success(`Joined "${biz.name}" successfully!`);
+      setJoinCode("");
+      fetchBusinesses();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to join business");
+    } finally {
+      setJoiningBusiness(false);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <OnboardingWizard open={showOnboarding} onClose={() => setShowOnboarding(false)} isPartnership={onboardingIsPartnership} />
