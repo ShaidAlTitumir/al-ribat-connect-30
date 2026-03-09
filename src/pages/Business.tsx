@@ -298,6 +298,7 @@ const Business = () => {
       }
 
       toast.success("Business created!");
+      setShowOnboarding(true);
     }
     resetForm();
     fetchBusinesses();
