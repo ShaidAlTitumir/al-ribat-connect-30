@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import appLogo from "@/assets/logo.png";
 import { z } from "zod";
 
 const loginSchema = z.object({
