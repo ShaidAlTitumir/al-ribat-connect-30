@@ -86,6 +86,9 @@ const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
     leave_request: "logout",
     removal_request: "person_remove",
     partner_removed: "person_remove",
+    join_request: "group_add",
+    join_approved: "check_circle",
+    join_rejected: "cancel",
   };
 
   const handleNotificationClick = (n: Notification) => {
