@@ -81,6 +81,22 @@ const Partners = () => {
     const { data: c } = await supabase.from("capital_contributions").select("*, partners(name)").eq("business_id", businessId!);
     setContributions(c || []);
 
+    // Fetch pending join requests
+    const { data: jr } = await (supabase.from("join_requests").select("*") as any)
+      .eq("business_id", businessId!)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+    if (jr && jr.length > 0) {
+      const userIds = jr.map((r: any) => r.user_id);
+      const { data: profiles } = await (supabase.from("profiles").select("user_id, full_name") as any)
+        .in("user_id", userIds);
+      const profileMap: Record<string, string> = {};
+      (profiles || []).forEach((p: any) => { profileMap[p.user_id] = p.full_name; });
+      setJoinRequests(jr.map((r: any) => ({ ...r, user_name: profileMap[r.user_id] || "Unknown" })));
+    } else {
+      setJoinRequests([]);
+    }
+
     // Fetch pending leave requests
     const { data: lr } = await (supabase
       .from("partner_leave_requests")
