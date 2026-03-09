@@ -532,6 +532,70 @@ const Partners = () => {
     return leaveRequests.find(r => r.partner_id === myPartner.id);
   };
 
+  const handleApproveJoinRequest = async (req: any) => {
+    if (!user || !businessId) return;
+    setProcessingJoinReq(req.id);
+    try {
+      await (supabase.from("join_requests") as any)
+        .update({ status: "approved", reviewed_by: user.id, reviewed_at: new Date().toISOString() })
+        .eq("id", req.id);
+
+      await (supabase.from("business_members") as any).insert({
+        user_id: req.user_id, business_id: req.business_id, role: "member",
+      });
+
+      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+      await supabase.from("partners").upsert({
+        name: req.user_name || "Partner",
+        role: "working", invitation_code: code, status: "accepted",
+        business_id: req.business_id, user_id: req.user_id, invited_by: user.id,
+      }, { onConflict: "business_id,user_id", ignoreDuplicates: true });
+
+      await supabase.from("profiles")
+        .update({ business_id: req.business_id, role: "member" })
+        .eq("user_id", req.user_id);
+
+      await (supabase.from("notifications") as any).insert({
+        user_id: req.user_id, business_id: req.business_id,
+        title: "Join Request Approved",
+        message: `Your request to join the business has been approved! You can now access it.`,
+        type: "join_approved",
+      });
+
+      toast.success(`${req.user_name} has been added to the business!`);
+      setJoinRequests(prev => prev.filter(r => r.id !== req.id));
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to approve");
+    } finally {
+      setProcessingJoinReq(null);
+    }
+  };
+
+  const handleRejectJoinRequest = async (req: any) => {
+    if (!user) return;
+    setProcessingJoinReq(req.id);
+    try {
+      await (supabase.from("join_requests") as any)
+        .update({ status: "rejected", reviewed_by: user.id, reviewed_at: new Date().toISOString() })
+        .eq("id", req.id);
+
+      await (supabase.from("notifications") as any).insert({
+        user_id: req.user_id, business_id: req.business_id,
+        title: "Join Request Rejected",
+        message: `Your request to join the business was not approved.`,
+        type: "join_rejected",
+      });
+
+      toast.info(`Rejected ${req.user_name}'s request`);
+      setJoinRequests(prev => prev.filter(r => r.id !== req.id));
+    } catch (err: any) {
+      toast.error(err.message || "Failed to reject");
+    } finally {
+      setProcessingJoinReq(null);
+    }
+  };
+
   const acceptedPartners = partners.filter(p => p.status === "accepted");
 
   // Calculate equity
