@@ -299,6 +299,7 @@ const Business = () => {
       }
 
       toast.success("Business created!");
+      setOnboardingIsPartnership(formType.toLowerCase() !== "solo");
       setShowOnboarding(true);
     }
     resetForm();
