@@ -7,7 +7,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { BusinessProvider } from "@/contexts/BusinessContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NoBusinessGuard from "@/components/NoBusinessGuard";
 import AppLayout from "./layouts/AppLayout";
 import AuthLayout from "./layouts/AuthLayout";
 import Index from "./pages/Index";
@@ -55,18 +54,18 @@ const App = () => (
 
             {/* Protected app routes */}
             <Route element={<AppLayout />}>
-              <Route path="/" element={<ProtectedRoute><NoBusinessGuard><Index /></NoBusinessGuard></ProtectedRoute>} />
+              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="/business" element={<ProtectedRoute><Business /></ProtectedRoute>} />
-              <Route path="/inventory" element={<ProtectedRoute><NoBusinessGuard><Inventory /></NoBusinessGuard></ProtectedRoute>} />
-              <Route path="/sales" element={<ProtectedRoute><NoBusinessGuard><Sales /></NoBusinessGuard></ProtectedRoute>} />
-              <Route path="/expenses" element={<ProtectedRoute><NoBusinessGuard><Expenses /></NoBusinessGuard></ProtectedRoute>} />
-              <Route path="/partners" element={<ProtectedRoute><NoBusinessGuard><Partners /></NoBusinessGuard></ProtectedRoute>} />
-              <Route path="/reports" element={<ProtectedRoute><NoBusinessGuard><Reports /></NoBusinessGuard></ProtectedRoute>} />
-              <Route path="/wallet" element={<ProtectedRoute><NoBusinessGuard><Wallet /></NoBusinessGuard></ProtectedRoute>} />
-              <Route path="/transactions" element={<ProtectedRoute><NoBusinessGuard><Transactions /></NoBusinessGuard></ProtectedRoute>} />
-              <Route path="/customers" element={<ProtectedRoute><NoBusinessGuard><Customers /></NoBusinessGuard></ProtectedRoute>} />
+              <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
+              <Route path="/sales" element={<ProtectedRoute><Sales /></ProtectedRoute>} />
+              <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
+              <Route path="/partners" element={<ProtectedRoute><Partners /></ProtectedRoute>} />
+              <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+              <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
+              <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
+              <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/returns" element={<ProtectedRoute><NoBusinessGuard><Returns /></NoBusinessGuard></ProtectedRoute>} />
+              <Route path="/returns" element={<ProtectedRoute><Returns /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             </Route>
 
