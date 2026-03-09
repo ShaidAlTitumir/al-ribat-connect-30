@@ -287,6 +287,14 @@ const Business = () => {
         role: "owner",
       });
 
+      // If user has no business yet, auto-select the new one
+      if (!businessId) {
+        await supabase.from("profiles")
+          .update({ business_id: data.id })
+          .eq("user_id", user.id);
+        switchBusiness(data.id);
+      }
+
       toast.success("Business created!");
     }
     resetForm();
