@@ -28,6 +28,8 @@ const Partners = () => {
   const [editingContribution, setEditingContribution] = useState<any>(null);
   const [editContribForm, setEditContribForm] = useState({ amount: "", currency: "BDT" as "BDT" | "RMB" });
   const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
+  const [joinRequests, setJoinRequests] = useState<any[]>([]);
+  const [processingJoinReq, setProcessingJoinReq] = useState<string | null>(null);
   const [leaveVotes, setLeaveVotes] = useState<Record<string, any[]>>({});
   const [showLeaveForm, setShowLeaveForm] = useState(false);
   const [settlementAmount, setSettlementAmount] = useState("");
@@ -78,6 +80,22 @@ const Partners = () => {
     setPartners(partnersList);
     const { data: c } = await supabase.from("capital_contributions").select("*, partners(name)").eq("business_id", businessId!);
     setContributions(c || []);
+
+    // Fetch pending join requests
+    const { data: jr } = await (supabase.from("join_requests").select("*") as any)
+      .eq("business_id", businessId!)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+    if (jr && jr.length > 0) {
+      const userIds = jr.map((r: any) => r.user_id);
+      const { data: profiles } = await (supabase.from("profiles").select("user_id, full_name") as any)
+        .in("user_id", userIds);
+      const profileMap: Record<string, string> = {};
+      (profiles || []).forEach((p: any) => { profileMap[p.user_id] = p.full_name; });
+      setJoinRequests(jr.map((r: any) => ({ ...r, user_name: profileMap[r.user_id] || "Unknown" })));
+    } else {
+      setJoinRequests([]);
+    }
 
     // Fetch pending leave requests
     const { data: lr } = await (supabase
@@ -512,6 +530,70 @@ const Partners = () => {
     const myPartner = acceptedPartners.find(p => p.user_id === user.id);
     if (!myPartner) return null;
     return leaveRequests.find(r => r.partner_id === myPartner.id);
+  };
+
+  const handleApproveJoinRequest = async (req: any) => {
+    if (!user || !businessId) return;
+    setProcessingJoinReq(req.id);
+    try {
+      await (supabase.from("join_requests") as any)
+        .update({ status: "approved", reviewed_by: user.id, reviewed_at: new Date().toISOString() })
+        .eq("id", req.id);
+
+      await (supabase.from("business_members") as any).insert({
+        user_id: req.user_id, business_id: req.business_id, role: "member",
+      });
+
+      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+      await supabase.from("partners").upsert({
+        name: req.user_name || "Partner",
+        role: "working", invitation_code: code, status: "accepted",
+        business_id: req.business_id, user_id: req.user_id, invited_by: user.id,
+      }, { onConflict: "business_id,user_id", ignoreDuplicates: true });
+
+      await supabase.from("profiles")
+        .update({ business_id: req.business_id, role: "member" })
+        .eq("user_id", req.user_id);
+
+      await (supabase.from("notifications") as any).insert({
+        user_id: req.user_id, business_id: req.business_id,
+        title: "Join Request Approved",
+        message: `Your request to join the business has been approved! You can now access it.`,
+        type: "join_approved",
+      });
+
+      toast.success(`${req.user_name} has been added to the business!`);
+      setJoinRequests(prev => prev.filter(r => r.id !== req.id));
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to approve");
+    } finally {
+      setProcessingJoinReq(null);
+    }
+  };
+
+  const handleRejectJoinRequest = async (req: any) => {
+    if (!user) return;
+    setProcessingJoinReq(req.id);
+    try {
+      await (supabase.from("join_requests") as any)
+        .update({ status: "rejected", reviewed_by: user.id, reviewed_at: new Date().toISOString() })
+        .eq("id", req.id);
+
+      await (supabase.from("notifications") as any).insert({
+        user_id: req.user_id, business_id: req.business_id,
+        title: "Join Request Rejected",
+        message: `Your request to join the business was not approved.`,
+        type: "join_rejected",
+      });
+
+      toast.info(`Rejected ${req.user_name}'s request`);
+      setJoinRequests(prev => prev.filter(r => r.id !== req.id));
+    } catch (err: any) {
+      toast.error(err.message || "Failed to reject");
+    } finally {
+      setProcessingJoinReq(null);
+    }
   };
 
   const acceptedPartners = partners.filter(p => p.status === "accepted");
@@ -1030,6 +1112,54 @@ const Partners = () => {
               </div>
             )}
           </section>
+
+          {/* Join Requests */}
+          {joinRequests.length > 0 && (
+            <section className="bg-card p-4 lg:p-6 rounded-xl border border-border lg:col-span-2">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="material-symbols-outlined text-primary">group_add</span>
+                <h3 className="font-bold text-lg">Join Requests ({joinRequests.length})</h3>
+                <span className="ml-auto bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
+                  {joinRequests.length} pending
+                </span>
+              </div>
+              <div className="space-y-2">
+                {joinRequests.map((req) => (
+                  <div key={req.id} className="bg-muted rounded-lg p-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0">
+                        {req.user_name?.charAt(0).toUpperCase() || "?"}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-sm text-foreground truncate">{req.user_name}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          Requested {format(new Date(req.created_at), "MMM d, yyyy")}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        onClick={() => handleApproveJoinRequest(req)}
+                        disabled={processingJoinReq === req.id}
+                        className="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-primary/90 disabled:opacity-50 flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-sm">check</span>
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleRejectJoinRequest(req)}
+                        disabled={processingJoinReq === req.id}
+                        className="bg-muted border border-border text-foreground px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-accent disabled:opacity-50 flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-sm">close</span>
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
 
         {/* Capital Contributions History */}
