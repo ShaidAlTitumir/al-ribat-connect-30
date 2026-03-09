@@ -276,6 +276,7 @@ const Business = () => {
       if (error) { toast.error(error.message); return; }
       toast.success("Business updated!");
     } else {
+      const isPartnership = formType.trim().toLowerCase() !== "solo";
       const { data, error } = await (supabase.from("businesses") as any)
         .insert({
           name: formName.trim(),
@@ -285,6 +286,7 @@ const Business = () => {
           phone: formPhone.trim() || null,
           manual_value: formManualValue ? parseFloat(formManualValue) : null,
           owner_id: user.id,
+          join_code: isPartnership ? generateJoinCode() : null,
         })
         .select("id")
         .single();
