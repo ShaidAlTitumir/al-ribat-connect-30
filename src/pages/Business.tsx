@@ -57,6 +57,13 @@ interface BusinessStats {
   monthlyData: MonthlyData[];
 }
 
+const generateJoinCode = () => {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+};
+
 const Business = () => {
   const { user } = useAuth();
   const { businessId, switchBusiness } = useBusiness();
@@ -73,6 +80,8 @@ const Business = () => {
   const [businessStats, setBusinessStats] = useState<Record<string, BusinessStats>>({});
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingIsPartnership, setOnboardingIsPartnership] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
+  const [joiningBusiness, setJoiningBusiness] = useState(false);
 
   // Form state
   const [formName, setFormName] = useState("");
