@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import LeaveRequestDialog from "@/components/LeaveRequestDialog";
+import JoinRequestDialog from "@/components/JoinRequestDialog";
 
 interface Notification {
   id: string;
