@@ -2,6 +2,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import appLogo from "@/assets/logo.png";
 
 interface AppSidebarProps {
   open: boolean;
