@@ -207,6 +207,11 @@ const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
         onClose={() => setLeaveDialogOpen(false)}
         notificationBusinessId={leaveDialogBusinessId}
       />
+      <JoinRequestDialog
+        open={joinDialogOpen}
+        onClose={() => setJoinDialogOpen(false)}
+        notificationBusinessId={joinDialogBusinessId}
+      />
     </div>
   );
 };
