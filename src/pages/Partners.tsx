@@ -536,25 +536,48 @@ const Partners = () => {
     if (!user || !businessId) return;
     setProcessingJoinReq(req.id);
     try {
+      // Update join request status
       await (supabase.from("join_requests") as any)
         .update({ status: "approved", reviewed_by: user.id, reviewed_at: new Date().toISOString() })
         .eq("id", req.id);
 
+      // Add to business_members
       await (supabase.from("business_members") as any).insert({
         user_id: req.user_id, business_id: req.business_id, role: "member",
       });
 
+      // Add as partner with accepted status
       const code = Math.random().toString(36).substring(2, 10).toUpperCase();
       await supabase.from("partners").upsert({
         name: req.user_name || "Partner",
-        role: "working", invitation_code: code, status: "accepted",
-        business_id: req.business_id, user_id: req.user_id, invited_by: user.id,
+        role: "working", 
+        invitation_code: code, 
+        status: "accepted",
+        business_id: req.business_id, 
+        user_id: req.user_id, 
+        invited_by: user.id,
       }, { onConflict: "business_id,user_id", ignoreDuplicates: true });
 
-      await supabase.from("profiles")
-        .update({ business_id: req.business_id, role: "member" })
-        .eq("user_id", req.user_id);
+      // Use RPC to update user profile properly (bypasses RLS)
+      try {
+        await supabase.rpc("add_partner_to_business" as any, {
+          _target_user_id: req.user_id,
+          _business_id: req.business_id,
+          _role: "member",
+        });
+      } catch (rpcError) {
+        console.warn("RPC failed, profile update skipped:", rpcError);
+      }
 
+      // Log activity
+      await supabase.from("activity_log").insert({
+        action: "Partner joined business (approved)",
+        details: { partner_name: req.user_name || "Unknown", approved_by: user.email || user.id },
+        business_id: req.business_id, 
+        user_id: user.id,
+      });
+
+      // Send notification to new partner
       await (supabase.from("notifications") as any).insert({
         user_id: req.user_id, business_id: req.business_id,
         title: "Join Request Approved",
@@ -566,6 +589,7 @@ const Partners = () => {
       setJoinRequests(prev => prev.filter(r => r.id !== req.id));
       fetchData();
     } catch (err: any) {
+      console.error("Join approval error:", err);
       toast.error(err.message || "Failed to approve");
     } finally {
       setProcessingJoinReq(null);
