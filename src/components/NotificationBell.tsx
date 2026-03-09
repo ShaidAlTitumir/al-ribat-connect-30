@@ -21,6 +21,8 @@ const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
   const [open, setOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [leaveDialogBusinessId, setLeaveDialogBusinessId] = useState<string | null>(null);
+  const [joinDialogOpen, setJoinDialogOpen] = useState(false);
+  const [joinDialogBusinessId, setJoinDialogBusinessId] = useState<string | null>(null);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
