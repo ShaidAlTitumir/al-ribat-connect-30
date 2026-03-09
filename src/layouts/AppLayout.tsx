@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, createContext, useContext, ReactNode } from "react";
+import appLogo from "@/assets/logo.png";
 import { Outlet, useLocation } from "react-router-dom";
 import AppSidebar from "@/components/AppSidebar";
 import { useBusiness } from "@/contexts/BusinessContext";
