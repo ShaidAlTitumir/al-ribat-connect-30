@@ -7,17 +7,18 @@ import { useBusiness } from "@/contexts/BusinessContext";
 interface OnboardingWizardProps {
   open: boolean;
   onClose: () => void;
+  isPartnership?: boolean;
 }
 
-const steps = [
+const soloSteps = [
   {
     icon: "celebration",
     title: "Welcome to Al-Ribat Manager!",
     subtitle: "Your business is ready. Let's take a quick tour of what you can do.",
     features: [
       { icon: "rocket_launch", text: "Manage inventory, sales, and expenses" },
-      { icon: "group", text: "Invite partners and share profits" },
       { icon: "bar_chart", text: "Track performance with smart reports" },
+      { icon: "account_balance_wallet", text: "Monitor your cash flow and wallet" },
     ],
   },
   {
@@ -56,10 +57,71 @@ const steps = [
   },
 ];
 
-const OnboardingWizard = ({ open, onClose }: OnboardingWizardProps) => {
+const partnershipSteps = [
+  {
+    icon: "celebration",
+    title: "Welcome to Al-Ribat Manager!",
+    subtitle: "Your partnership business is ready. Let's explore all the powerful features available to you.",
+    features: [
+      { icon: "rocket_launch", text: "Manage inventory, sales, and expenses" },
+      { icon: "group", text: "Invite partners and share profits" },
+      { icon: "currency_exchange", text: "Currency exchange and China imports" },
+    ],
+  },
+  {
+    icon: "group",
+    title: "Invite Your Partners",
+    subtitle: "Add business partners by their @username. Set profit-sharing ratios, track capital contributions, and manage partner transfers.",
+    tip: "Go to Partners → Invite Partner to add your first partner.",
+    navPath: "/partners",
+    navLabel: "Go to Partners",
+  },
+  {
+    icon: "inventory_2",
+    title: "Stock Your Inventory",
+    subtitle: "Add products with purchase costs (RMB), shipping rates, and weights. The system auto-calculates landed costs in BDT using your exchange rate.",
+    tip: "Go to Inventory → Add Item to get started.",
+    navPath: "/inventory",
+    navLabel: "Go to Inventory",
+  },
+  {
+    icon: "point_of_sale",
+    title: "Record Your Sales",
+    subtitle: "Log every sale with customer details, quantities, and payments. Track dues and profits automatically. Profits are split among partners.",
+    tip: "Go to Sales → New Sale to record your first transaction.",
+    navPath: "/sales",
+    navLabel: "Go to Sales",
+  },
+  {
+    icon: "currency_exchange",
+    title: "Exchange & Wallet",
+    subtitle: "Convert between currencies (BDT ↔ RMB), track your cash balance, and manage partner-to-partner transfers — all in one place.",
+    features: [
+      { icon: "swap_horiz", text: "Exchange currencies at your set rate" },
+      { icon: "send_money", text: "Transfer funds between partners" },
+      { icon: "account_balance", text: "Track overall business wallet" },
+    ],
+    navPath: "/wallet",
+    navLabel: "Go to Wallet",
+  },
+  {
+    icon: "insights",
+    title: "You're All Set!",
+    subtitle: "Your dashboard will show KPIs, charts, and recent activity as you add data. Start by inviting your partners!",
+    features: [
+      { icon: "lightbulb", text: "Tip: Set your exchange rate from the home page" },
+      { icon: "lightbulb", text: "Tip: Each partner can log in and see shared data" },
+      { icon: "lightbulb", text: "Tip: Use Reports for detailed profit & partner analysis" },
+    ],
+  },
+];
+
+const OnboardingWizard = ({ open, onClose, isPartnership = false }: OnboardingWizardProps) => {
   const [step, setStep] = useState(0);
   const navigate = useNavigate();
-  const { businessName, isSolo } = useBusiness();
+  const { businessName } = useBusiness();
+
+  const steps = isPartnership ? partnershipSteps : soloSteps;
   const current = steps[step];
   const isFirst = step === 0;
   const isLast = step === steps.length - 1;
@@ -68,6 +130,7 @@ const OnboardingWizard = ({ open, onClose }: OnboardingWizardProps) => {
   const handleNext = () => {
     if (isLast) {
       onClose();
+      setStep(0);
       return;
     }
     setStep(s => s + 1);
@@ -77,11 +140,17 @@ const OnboardingWizard = ({ open, onClose }: OnboardingWizardProps) => {
 
   const handleNavigate = (path: string) => {
     onClose();
+    setStep(0);
     navigate(path);
   };
 
+  const handleClose = () => {
+    onClose();
+    setStep(0);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden border-border rounded-2xl">
         {/* Progress bar */}
         <div className="h-1 bg-muted">
@@ -153,7 +222,7 @@ const OnboardingWizard = ({ open, onClose }: OnboardingWizardProps) => {
                 Back
               </Button>
             ) : (
-              <Button variant="ghost" size="sm" onClick={onClose} className="text-muted-foreground">
+              <Button variant="ghost" size="sm" onClick={handleClose} className="text-muted-foreground">
                 Skip
               </Button>
             )}
