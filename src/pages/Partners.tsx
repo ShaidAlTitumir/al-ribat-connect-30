@@ -1112,6 +1112,54 @@ const Partners = () => {
               </div>
             )}
           </section>
+
+          {/* Join Requests */}
+          {joinRequests.length > 0 && (
+            <section className="bg-card p-4 lg:p-6 rounded-xl border border-border lg:col-span-2">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="material-symbols-outlined text-primary">group_add</span>
+                <h3 className="font-bold text-lg">Join Requests ({joinRequests.length})</h3>
+                <span className="ml-auto bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
+                  {joinRequests.length} pending
+                </span>
+              </div>
+              <div className="space-y-2">
+                {joinRequests.map((req) => (
+                  <div key={req.id} className="bg-muted rounded-lg p-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0">
+                        {req.user_name?.charAt(0).toUpperCase() || "?"}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-sm text-foreground truncate">{req.user_name}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          Requested {format(new Date(req.created_at), "MMM d, yyyy")}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        onClick={() => handleApproveJoinRequest(req)}
+                        disabled={processingJoinReq === req.id}
+                        className="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-primary/90 disabled:opacity-50 flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-sm">check</span>
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleRejectJoinRequest(req)}
+                        disabled={processingJoinReq === req.id}
+                        className="bg-muted border border-border text-foreground px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-accent disabled:opacity-50 flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-sm">close</span>
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
 
         {/* Capital Contributions History */}
