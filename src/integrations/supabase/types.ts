@@ -1078,6 +1078,7 @@ export type Database = {
         Args: { _business_id: string; _role: string; _target_user_id: string }
         Returns: undefined
       }
+      create_join_request: { Args: { _join_code: string }; Returns: Json }
       get_user_business_id: { Args: { _user_id: string }; Returns: string }
       lookup_business_by_join_code: {
         Args: { _join_code: string }

@@ -36,60 +36,20 @@ const JoinBusiness = () => {
 
     setLoading(true);
     try {
-      // Look up business by join code using RPC (bypasses RLS)
-      const { data: biz, error: lookupError } = await (supabase.rpc as any)(
-        "lookup_business_by_join_code",
+      const { data, error: rpcError } = await (supabase.rpc as any)(
+        "create_join_request",
         { _join_code: code.trim().toUpperCase() }
       );
 
-      if (lookupError) throw lookupError;
+      if (rpcError) throw rpcError;
 
-      if (!biz || biz.length === 0) {
-        setError("Invalid join code. Please check and try again.");
+      if (data?.error) {
+        setError(data.error);
         setLoading(false);
         return;
       }
 
-      const business = biz[0];
-
-      // Check if already a member
-      const { data: existing } = await (supabase.from("business_members").select("id") as any)
-        .eq("user_id", user.id).eq("business_id", business.id).maybeSingle();
-      if (existing) {
-        setError("You are already a member of this business");
-        setLoading(false);
-        return;
-      }
-
-      // Check if already has a pending request
-      const { data: pendingReq } = await (supabase.from("join_requests").select("id") as any)
-        .eq("user_id", user.id).eq("business_id", business.id).eq("status", "pending").maybeSingle();
-      if (pendingReq) {
-        setError("You already have a pending join request for this business");
-        setLoading(false);
-        return;
-      }
-
-      // Create join request
-      await (supabase.from("join_requests") as any).insert({
-        user_id: user.id, business_id: business.id,
-      });
-
-      // Get user's name for notification
-      const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle();
-
-      // Notify the business owner
-      if (business.owner_id) {
-        await (supabase.from("notifications") as any).insert({
-          user_id: business.owner_id,
-          business_id: business.id,
-          title: "New Join Request",
-          message: `${profile?.full_name || "Someone"} wants to join "${business.name}". Tap to approve or reject.`,
-          type: "join_request",
-        });
-      }
-
-      toast.success(`Join request sent to "${business.name}". Waiting for admin approval.`);
+      toast.success(`Join request sent to "${data.business_name}". Waiting for admin approval.`);
       navigate("/");
     } catch (err: any) {
       toast.error(err.message || "Failed to send join request");
