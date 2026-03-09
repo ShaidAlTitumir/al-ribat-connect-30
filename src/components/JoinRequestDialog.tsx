@@ -80,13 +80,13 @@ const JoinRequestDialog = ({ open, onClose, notificationBusinessId }: JoinReques
         user_id: req.user_id, business_id: req.business_id, role: "member",
       });
 
-      // Add as partner
+      // Add as partner (upsert to prevent duplicates)
       const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-      await supabase.from("partners").insert({
+      await supabase.from("partners").upsert({
         name: req.user_name || "Partner",
         role: "working", invitation_code: code, status: "accepted",
         business_id: req.business_id, user_id: req.user_id, invited_by: user.id,
-      });
+      }, { onConflict: "business_id,user_id", ignoreDuplicates: true });
 
       // Update their profile
       await supabase.from("profiles")
