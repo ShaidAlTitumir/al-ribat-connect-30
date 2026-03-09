@@ -28,6 +28,8 @@ const Partners = () => {
   const [editingContribution, setEditingContribution] = useState<any>(null);
   const [editContribForm, setEditContribForm] = useState({ amount: "", currency: "BDT" as "BDT" | "RMB" });
   const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
+  const [joinRequests, setJoinRequests] = useState<any[]>([]);
+  const [processingJoinReq, setProcessingJoinReq] = useState<string | null>(null);
   const [leaveVotes, setLeaveVotes] = useState<Record<string, any[]>>({});
   const [showLeaveForm, setShowLeaveForm] = useState(false);
   const [settlementAmount, setSettlementAmount] = useState("");
