@@ -134,6 +134,13 @@ const JoinRequestDialog = ({ open, onClose, notificationBusinessId }: JoinReques
         type: "join_rejected",
       });
 
+      // Mark related join_request notifications as read
+      await (supabase.from("notifications") as any)
+        .update({ is_read: true })
+        .eq("business_id", req.business_id)
+        .eq("type", "join_request")
+        .eq("is_read", false);
+
       toast.info(`Rejected ${req.user_name}'s request`);
       setRequests(prev => prev.filter(r => r.id !== req.id));
     } catch (err: any) {
