@@ -583,11 +583,13 @@ const Business = () => {
     if (!user || !joinCode.trim()) { toast.error("Enter a join code"); return; }
     setJoiningBusiness(true);
     try {
-      const { data: biz, error } = await (supabase.from("businesses").select("id, name, owner_id") as any)
-        .eq("join_code", joinCode.trim().toUpperCase())
-        .maybeSingle();
+      const { data: bizArr, error } = await (supabase.rpc as any)(
+        "lookup_business_by_join_code",
+        { _join_code: joinCode.trim().toUpperCase() }
+      );
       if (error) throw error;
-      if (!biz) { toast.error("Invalid join code"); setJoiningBusiness(false); return; }
+      if (!bizArr || bizArr.length === 0) { toast.error("Invalid join code"); setJoiningBusiness(false); return; }
+      const biz = bizArr[0];
 
       // Check if already a member
       const { data: existing } = await (supabase.from("business_members").select("id") as any)

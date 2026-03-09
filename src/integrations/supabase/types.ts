@@ -1079,6 +1079,14 @@ export type Database = {
         Returns: undefined
       }
       get_user_business_id: { Args: { _user_id: string }; Returns: string }
+      lookup_business_by_join_code: {
+        Args: { _join_code: string }
+        Returns: {
+          id: string
+          name: string
+          owner_id: string
+        }[]
+      }
       user_can_access_business: {
         Args: { _business_id: string }
         Returns: boolean
