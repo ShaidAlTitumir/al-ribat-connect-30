@@ -11,6 +11,7 @@ const Partners = () => {
   const { businessId, exchangeRate } = useBusiness();
   const { user } = useAuth();
   const [partners, setPartners] = useState<any[]>([]);
+  const [businessJoinCode, setBusinessJoinCode] = useState<string | null>(null);
   const [expandedPartnerId, setExpandedPartnerId] = useState<string | null>(null);
   const [contributions, setContributions] = useState<any[]>([]);
   const [currency, setCurrency] = useState<"BDT" | "RMB">("BDT");
