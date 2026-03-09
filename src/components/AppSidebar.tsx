@@ -2,6 +2,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import appLogo from "@/assets/logo.png";
 
 interface AppSidebarProps {
   open: boolean;
@@ -55,9 +56,7 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
       <div className="p-4 sm:p-6 flex flex-col gap-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
-              <span className="material-symbols-outlined text-lg">dashboard</span>
-            </div>
+            <img src={appLogo} alt="Al-Ribat Manager" className="w-8 h-8 rounded-lg object-contain" />
             <h1 className="text-base font-bold tracking-tight text-foreground">Al-Ribat Manager</h1>
           </div>
           <button onClick={onClose} className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted">

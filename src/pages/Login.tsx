@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import appLogo from "@/assets/logo.png";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -59,9 +60,7 @@ const Login = () => {
     <div>
       {/* Header */}
       <div className="pt-10 pb-6 px-8 flex flex-col items-center text-center">
-        <div className="mb-6 flex items-center justify-center w-16 h-16 bg-primary/10 rounded-xl">
-          <span className="material-symbols-outlined text-primary text-4xl">domain</span>
-        </div>
+        <img src={appLogo} alt="Al-Ribat Manager" className="w-20 h-20 object-contain mb-2" />
         <h2 className="text-foreground text-3xl font-black tracking-tight mb-2">Welcome Back</h2>
         <p className="text-muted-foreground text-sm">Al-Ribat Manager: Access your dashboard</p>
       </div>
