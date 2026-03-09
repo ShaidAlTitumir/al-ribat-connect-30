@@ -19,6 +19,7 @@ interface BusinessData {
   owner_id: string | null;
   exchange_rate: number;
   created_at: string;
+  join_code: string | null;
 }
 
 interface DeletionRequest {
@@ -56,6 +57,13 @@ interface BusinessStats {
   monthlyData: MonthlyData[];
 }
 
+const generateJoinCode = () => {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+};
+
 const Business = () => {
   const { user } = useAuth();
   const { businessId, switchBusiness } = useBusiness();
@@ -72,6 +80,8 @@ const Business = () => {
   const [businessStats, setBusinessStats] = useState<Record<string, BusinessStats>>({});
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingIsPartnership, setOnboardingIsPartnership] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
+  const [joiningBusiness, setJoiningBusiness] = useState(false);
 
   // Form state
   const [formName, setFormName] = useState("");
@@ -266,6 +276,7 @@ const Business = () => {
       if (error) { toast.error(error.message); return; }
       toast.success("Business updated!");
     } else {
+      const isPartnership = formType.trim().toLowerCase() !== "solo";
       const { data, error } = await (supabase.from("businesses") as any)
         .insert({
           name: formName.trim(),
@@ -275,6 +286,7 @@ const Business = () => {
           phone: formPhone.trim() || null,
           manual_value: formManualValue ? parseFloat(formManualValue) : null,
           owner_id: user.id,
+          join_code: isPartnership ? generateJoinCode() : null,
         })
         .select("id")
         .single();
@@ -567,6 +579,45 @@ const Business = () => {
     fetchBusinesses();
   };
 
+  const handleJoinBusiness = async () => {
+    if (!user || !joinCode.trim()) { toast.error("Enter a join code"); return; }
+    setJoiningBusiness(true);
+    try {
+      const { data: biz, error } = await (supabase.from("businesses").select("id, name, business_type") as any)
+        .eq("join_code", joinCode.trim().toUpperCase())
+        .maybeSingle();
+      if (error) throw error;
+      if (!biz) { toast.error("Invalid join code"); setJoiningBusiness(false); return; }
+
+      const { data: existing } = await (supabase.from("business_members").select("id") as any)
+        .eq("user_id", user.id).eq("business_id", biz.id).maybeSingle();
+      if (existing) { toast.error("You are already a member of this business"); setJoiningBusiness(false); return; }
+
+      await (supabase.from("business_members") as any).insert({
+        user_id: user.id, business_id: biz.id, role: "member",
+      });
+
+      const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle();
+      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+      await supabase.from("partners").insert({
+        name: profile?.full_name || "Partner",
+        role: "working", invitation_code: code, status: "accepted",
+        business_id: biz.id, user_id: user.id, invited_by: user.id,
+      });
+
+      await supabase.from("profiles").update({ business_id: biz.id, role: "member" }).eq("user_id", user.id);
+      switchBusiness(biz.id);
+
+      toast.success(`Joined "${biz.name}" successfully!`);
+      setJoinCode("");
+      fetchBusinesses();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to join business");
+    } finally {
+      setJoiningBusiness(false);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <OnboardingWizard open={showOnboarding} onClose={() => setShowOnboarding(false)} isPartnership={onboardingIsPartnership} />
@@ -588,6 +639,31 @@ const Business = () => {
             </button>
           )}
         </div>
+
+        {/* Join a Business */}
+        <section className="bg-card p-4 rounded-xl border border-border">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="material-symbols-outlined text-primary">group_add</span>
+            <h3 className="font-bold text-sm">Join a Business</h3>
+          </div>
+          <div className="flex gap-2">
+            <input
+              className="flex-1 bg-muted rounded-lg px-4 py-2.5 text-sm border-none text-foreground uppercase tracking-widest font-mono"
+              placeholder="Enter 6-digit code"
+              maxLength={6}
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+            />
+            <button
+              onClick={handleJoinBusiness}
+              disabled={joiningBusiness || joinCode.length !== 6}
+              className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-bold text-sm hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            >
+              {joiningBusiness ? "Joining..." : "Join"}
+            </button>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-2">Ask the business admin for the 6-digit join code.</p>
+        </section>
 
         {/* Create / Edit Form */}
         {showCreate && (
@@ -728,6 +804,21 @@ const Business = () => {
                         }`}>
                           {b.business_type?.toLowerCase() === "solo" ? "SOLO" : "PARTNERSHIP"}
                         </span>
+                        {b.join_code && isOwner && (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className="text-[10px] text-muted-foreground">Join Code:</span>
+                            <span className="text-[11px] font-mono font-bold tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded">
+                              {b.join_code}
+                            </span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(b.join_code!); toast.success("Join code copied!"); }}
+                              className="p-0.5 rounded hover:bg-muted"
+                              title="Copy code"
+                            >
+                              <span className="material-symbols-outlined text-[14px] text-muted-foreground">content_copy</span>
+                            </button>
+                          </div>
+                        )}
                         {b.description && (
                           <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{b.description}</p>
                         )}

@@ -1,0 +1,1 @@
+ALTER TABLE public.businesses ADD COLUMN join_code text UNIQUE DEFAULT NULL;

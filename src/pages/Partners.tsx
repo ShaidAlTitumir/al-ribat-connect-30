@@ -11,6 +11,7 @@ const Partners = () => {
   const { businessId, exchangeRate } = useBusiness();
   const { user } = useAuth();
   const [partners, setPartners] = useState<any[]>([]);
+  const [businessJoinCode, setBusinessJoinCode] = useState<string | null>(null);
   const [expandedPartnerId, setExpandedPartnerId] = useState<string | null>(null);
   const [contributions, setContributions] = useState<any[]>([]);
   const [currency, setCurrency] = useState<"BDT" | "RMB">("BDT");
@@ -41,6 +42,13 @@ const Partners = () => {
   }, [businessId]);
 
   const fetchData = async () => {
+    // Fetch business join code
+    if (businessId) {
+      const { data: bizData } = await (supabase.from("businesses").select("join_code") as any)
+        .eq("id", businessId).maybeSingle();
+      setBusinessJoinCode(bizData?.join_code || null);
+    }
+
     const { data: p } = await supabase.from("partners").select("*").eq("business_id", businessId!);
     let partnersList = p || [];
 
@@ -520,6 +528,31 @@ const Partners = () => {
     <div className="flex-1 flex flex-col min-w-0">
       <ExchangeRateHeader title="Partners" />
       <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6 w-full">
+        {/* Join Code Banner */}
+        {businessJoinCode && (
+          <section className="bg-card p-4 rounded-xl border border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary">vpn_key</span>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase text-muted-foreground">Business Join Code</p>
+                  <p className="text-lg font-mono font-bold tracking-[0.3em] text-primary">{businessJoinCode}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { navigator.clipboard.writeText(businessJoinCode); toast.success("Join code copied!"); }}
+                className="bg-primary/10 text-primary px-3 py-2 rounded-lg text-xs font-bold hover:bg-primary/20 flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-sm">content_copy</span>
+                Copy
+              </button>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-2">Share this code with new partners so they can join from the Business page.</p>
+          </section>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Add Partner */}
           <section className="bg-card p-4 lg:p-6 rounded-xl border border-border">

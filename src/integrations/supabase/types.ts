@@ -158,6 +158,7 @@ export type Database = {
           description: string | null
           exchange_rate: number
           id: string
+          join_code: string | null
           manual_value: number | null
           name: string
           owner_id: string | null
@@ -173,6 +174,7 @@ export type Database = {
           description?: string | null
           exchange_rate?: number
           id?: string
+          join_code?: string | null
           manual_value?: number | null
           name?: string
           owner_id?: string | null
@@ -188,6 +190,7 @@ export type Database = {
           description?: string | null
           exchange_rate?: number
           id?: string
+          join_code?: string | null
           manual_value?: number | null
           name?: string
           owner_id?: string | null
