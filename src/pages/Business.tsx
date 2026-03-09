@@ -573,7 +573,7 @@ const Business = () => {
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
-      <OnboardingWizard open={showOnboarding} onClose={() => setShowOnboarding(false)} />
+      <OnboardingWizard open={showOnboarding} onClose={() => setShowOnboarding(false)} isPartnership={onboardingIsPartnership} />
       <ExchangeRateHeader title="My Businesses" />
       <div className="p-4 lg:p-8 max-w-4xl mx-auto space-y-6 w-full">
         {/* Header */}
