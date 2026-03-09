@@ -19,6 +19,7 @@ interface BusinessData {
   owner_id: string | null;
   exchange_rate: number;
   created_at: string;
+  join_code: string | null;
 }
 
 interface DeletionRequest {
