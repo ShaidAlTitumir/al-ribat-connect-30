@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import LeaveRequestDialog from "@/components/LeaveRequestDialog";
+import JoinRequestDialog from "@/components/JoinRequestDialog";
 
 interface Notification {
   id: string;
@@ -20,6 +21,8 @@ const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
   const [open, setOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [leaveDialogBusinessId, setLeaveDialogBusinessId] = useState<string | null>(null);
+  const [joinDialogOpen, setJoinDialogOpen] = useState(false);
+  const [joinDialogBusinessId, setJoinDialogBusinessId] = useState<string | null>(null);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
@@ -83,6 +86,9 @@ const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
     leave_request: "logout",
     removal_request: "person_remove",
     partner_removed: "person_remove",
+    join_request: "group_add",
+    join_approved: "check_circle",
+    join_rejected: "cancel",
   };
 
   const handleNotificationClick = (n: Notification) => {
@@ -90,6 +96,10 @@ const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
     if (n.type === "leave_request" || n.type === "removal_request") {
       setLeaveDialogBusinessId((n as any).business_id || null);
       setLeaveDialogOpen(true);
+      setOpen(false);
+    } else if (n.type === "join_request") {
+      setJoinDialogBusinessId((n as any).business_id || null);
+      setJoinDialogOpen(true);
       setOpen(false);
     }
   };
@@ -196,6 +206,11 @@ const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => {
         open={leaveDialogOpen}
         onClose={() => setLeaveDialogOpen(false)}
         notificationBusinessId={leaveDialogBusinessId}
+      />
+      <JoinRequestDialog
+        open={joinDialogOpen}
+        onClose={() => setJoinDialogOpen(false)}
+        notificationBusinessId={joinDialogBusinessId}
       />
     </div>
   );
