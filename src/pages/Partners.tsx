@@ -42,6 +42,13 @@ const Partners = () => {
   }, [businessId]);
 
   const fetchData = async () => {
+    // Fetch business join code
+    if (businessId) {
+      const { data: bizData } = await (supabase.from("businesses").select("join_code") as any)
+        .eq("id", businessId).maybeSingle();
+      setBusinessJoinCode(bizData?.join_code || null);
+    }
+
     const { data: p } = await supabase.from("partners").select("*").eq("business_id", businessId!);
     let partnersList = p || [];
 
