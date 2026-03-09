@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import ExchangeRateHeader from "@/components/ExchangeRateHeader";
+import OnboardingWizard from "@/components/OnboardingWizard";
 
 interface BusinessData {
   id: string;
@@ -69,6 +70,7 @@ const Business = () => {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [businessStats, setBusinessStats] = useState<Record<string, BusinessStats>>({});
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Form state
   const [formName, setFormName] = useState("");
@@ -296,6 +298,7 @@ const Business = () => {
       }
 
       toast.success("Business created!");
+      setShowOnboarding(true);
     }
     resetForm();
     fetchBusinesses();
@@ -568,6 +571,7 @@ const Business = () => {
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
+      <OnboardingWizard open={showOnboarding} onClose={() => setShowOnboarding(false)} />
       <ExchangeRateHeader title="My Businesses" />
       <div className="p-4 lg:p-8 max-w-4xl mx-auto space-y-6 w-full">
         {/* Header */}
