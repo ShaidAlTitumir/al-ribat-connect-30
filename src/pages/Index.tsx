@@ -290,18 +290,6 @@ const Index = () => {
           ))}
         </div>
 
-        {/* P&L Mini Strip */}
-        <div className="bg-card rounded-xl border border-border p-3 lg:p-4 animate-fade-in">
-          <div className="flex items-center gap-4 lg:gap-6 text-[11px] lg:text-xs overflow-x-auto scrollbar-hide">
-            <span className="text-muted-foreground whitespace-nowrap">Revenue <span className="font-bold text-foreground ml-1">{fmt(kpis.revenue)}</span></span>
-            <span className="text-muted-foreground">−</span>
-            <span className="text-muted-foreground whitespace-nowrap">COGS <span className="font-bold text-destructive ml-1">{fmt(kpis.totalCOGS ?? 0)}</span></span>
-            <span className="text-muted-foreground">=</span>
-            <span className={`font-bold whitespace-nowrap ${kpis.netProfit >= 0 ? "text-emerald-600" : "text-destructive"}`}>
-              Net Profit {fmt(kpis.netProfit)}
-            </span>
-          </div>
-        </div>
 
         {/* Mobile Tabs: Overview / Activity */}
         <div className="flex gap-1 bg-muted rounded-xl p-1 lg:hidden">
