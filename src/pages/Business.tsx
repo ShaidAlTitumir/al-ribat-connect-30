@@ -804,6 +804,21 @@ const Business = () => {
                         }`}>
                           {b.business_type?.toLowerCase() === "solo" ? "SOLO" : "PARTNERSHIP"}
                         </span>
+                        {b.join_code && isOwner && (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className="text-[10px] text-muted-foreground">Join Code:</span>
+                            <span className="text-[11px] font-mono font-bold tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded">
+                              {b.join_code}
+                            </span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(b.join_code!); toast.success("Join code copied!"); }}
+                              className="p-0.5 rounded hover:bg-muted"
+                              title="Copy code"
+                            >
+                              <span className="material-symbols-outlined text-[14px] text-muted-foreground">content_copy</span>
+                            </button>
+                          </div>
+                        )}
                         {b.description && (
                           <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{b.description}</p>
                         )}
