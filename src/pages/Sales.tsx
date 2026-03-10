@@ -757,6 +757,16 @@ const Sales = () => {
                             <span className="text-[10px] lg:text-xs text-muted-foreground truncate">
                               {(sale as any).customers?.name || "Walk-in"}
                             </span>
+                            {(sale as any).payment_method && (sale as any).payment_method !== "cash" && (
+                              <span className="text-[9px] font-semibold bg-accent/50 text-accent-foreground px-1.5 py-0.5 rounded capitalize">
+                                {(sale as any).payment_method}
+                              </span>
+                            )}
+                            {(sale as any).discount > 0 && (
+                              <span className="text-[9px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 px-1.5 py-0.5 rounded">
+                                -৳{(sale as any).discount}
+                              </span>
+                            )}
                           </div>
                           <p className="text-[9px] lg:text-[10px] text-muted-foreground/60 mt-0.5">
                             {format(new Date(sale.created_at), "MMM d, h:mm a")}
