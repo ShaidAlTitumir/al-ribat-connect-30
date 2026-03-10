@@ -955,10 +955,13 @@ export type Database = {
           cost_rate: number
           created_at: string
           customer_id: string | null
+          discount: number | null
           due: number
           expected_profit: number
           id: string
           item_id: string
+          notes: string | null
+          payment_method: string | null
           quantity: number
           received_now_bdt: number
           unit_price_bdt: number
@@ -969,10 +972,13 @@ export type Database = {
           cost_rate?: number
           created_at?: string
           customer_id?: string | null
+          discount?: number | null
           due?: number
           expected_profit?: number
           id?: string
           item_id: string
+          notes?: string | null
+          payment_method?: string | null
           quantity: number
           received_now_bdt?: number
           unit_price_bdt: number
@@ -983,10 +989,13 @@ export type Database = {
           cost_rate?: number
           created_at?: string
           customer_id?: string | null
+          discount?: number | null
           due?: number
           expected_profit?: number
           id?: string
           item_id?: string
+          notes?: string | null
+          payment_method?: string | null
           quantity?: number
           received_now_bdt?: number
           unit_price_bdt?: number

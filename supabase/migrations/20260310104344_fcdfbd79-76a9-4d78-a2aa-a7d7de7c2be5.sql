@@ -1,0 +1,5 @@
+
+ALTER TABLE public.sales 
+ADD COLUMN IF NOT EXISTS payment_method text DEFAULT 'cash',
+ADD COLUMN IF NOT EXISTS discount numeric DEFAULT 0,
+ADD COLUMN IF NOT EXISTS notes text DEFAULT NULL;
