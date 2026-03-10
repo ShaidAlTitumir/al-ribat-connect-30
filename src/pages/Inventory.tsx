@@ -226,6 +226,26 @@ const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamp
                 {/* Expandable details */}
                 {isExpanded && (
                   <div className="px-3 pb-3 lg:px-4 lg:pb-4 space-y-2 border-t border-border pt-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                    {/* Extra info row */}
+                    {((item as any).supplier || (item as any).sku || (item as any).description) && (
+                      <div className="space-y-1.5 text-xs mb-2">
+                        {(item as any).supplier && (
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <span className="material-symbols-outlined text-[14px]">local_shipping</span>
+                            <span>Supplier: <span className="text-foreground font-medium">{(item as any).supplier}</span></span>
+                          </div>
+                        )}
+                        {(item as any).sku && (
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <span className="material-symbols-outlined text-[14px]">qr_code</span>
+                            <span>SKU: <span className="text-foreground font-medium">{(item as any).sku}</span></span>
+                          </div>
+                        )}
+                        {(item as any).description && (
+                          <p className="text-muted-foreground text-[11px] line-clamp-2">{(item as any).description}</p>
+                        )}
+                      </div>
+                    )}
                     <div className="grid grid-cols-3 gap-2 text-xs">
                       <div>
                         <span className="text-muted-foreground text-[10px]">Weight</span>
