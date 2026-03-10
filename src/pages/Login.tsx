@@ -60,7 +60,7 @@ const Login = () => {
     <div>
       {/* Header */}
       <div className="pt-10 pb-6 px-8 flex flex-col items-center text-center">
-        <img src={appLogo} alt="Al-Ribat Manager" className="w-20 h-20 object-contain mb-2" />
+        <img src={appLogo} alt="Al-Ribat Manager" className="w-24 h-24 object-contain mb-2" />
         <h2 className="text-foreground text-3xl font-black tracking-tight mb-2">Welcome Back</h2>
         <p className="text-muted-foreground text-sm">Al-Ribat Manager: Access your dashboard</p>
       </div>
