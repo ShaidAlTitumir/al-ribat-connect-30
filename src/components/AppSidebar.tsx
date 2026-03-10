@@ -56,7 +56,7 @@ const AppSidebar = ({ open, onClose }: AppSidebarProps) => {
       <div className="p-4 sm:p-6 flex flex-col gap-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={appLogo} alt="Al-Ribat Manager" className="w-8 h-8 rounded-lg object-contain" />
+            <img src={appLogo} alt="Al-Ribat Manager" className="w-10 h-10 rounded-lg object-contain" />
             <h1 className="text-base font-bold tracking-tight text-foreground">Al-Ribat Manager</h1>
           </div>
           <button onClick={onClose} className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted">
