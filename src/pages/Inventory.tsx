@@ -473,6 +473,8 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
         weight_per_unit: 0, current_stock: soloQty, default_selling_price: soloSellPrice,
         low_stock_threshold: parseInt(soloForm.lowStockThreshold) || 5,
         business_id: businessId, user_id: user.id,
+        sku: soloForm.sku.trim() || null, supplier: soloForm.supplier.trim() || null,
+        unit: soloForm.unit || "pcs", description: soloForm.description.trim() || null,
       } as any).select().single();
       if (error) throw error;
 
