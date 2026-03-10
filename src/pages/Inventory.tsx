@@ -455,7 +455,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const updateForm = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
   // Solo mode: simple form
-  const [soloForm, setSoloForm] = useState({ name: "", category: "", quantity: "", totalCost: "", sellingPrice: "", lowStockThreshold: "5" });
+  const [soloForm, setSoloForm] = useState({ name: "", category: "", quantity: "", totalCost: "", sellingPrice: "", lowStockThreshold: "5", sku: "", supplier: "", unit: "pcs", description: "" });
   const soloQty = parseInt(soloForm.quantity) || 0;
   const soloCost = parseFloat(soloForm.totalCost) || 0;
   const soloSellPrice = parseFloat(soloForm.sellingPrice) || 0;
