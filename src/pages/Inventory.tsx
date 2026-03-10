@@ -218,7 +218,7 @@ const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamp
                     item.current_stock <= threshold ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
                     "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                   }`}>
-                    {item.current_stock} pcs
+                    {item.current_stock} {(item as any).unit || "pcs"}
                   </span>
                   <span className={`material-symbols-outlined text-muted-foreground text-[18px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
                 </button>
