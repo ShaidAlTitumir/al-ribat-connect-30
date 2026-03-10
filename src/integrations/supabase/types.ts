@@ -434,9 +434,13 @@ export type Database = {
           created_at: string
           current_stock: number
           default_selling_price: number | null
+          description: string | null
           id: string
           low_stock_threshold: number
           name: string
+          sku: string | null
+          supplier: string | null
+          unit: string | null
           updated_at: string
           user_id: string | null
           weight_per_unit: number
@@ -447,9 +451,13 @@ export type Database = {
           created_at?: string
           current_stock?: number
           default_selling_price?: number | null
+          description?: string | null
           id?: string
           low_stock_threshold?: number
           name: string
+          sku?: string | null
+          supplier?: string | null
+          unit?: string | null
           updated_at?: string
           user_id?: string | null
           weight_per_unit?: number
@@ -460,9 +468,13 @@ export type Database = {
           created_at?: string
           current_stock?: number
           default_selling_price?: number | null
+          description?: string | null
           id?: string
           low_stock_threshold?: number
           name?: string
+          sku?: string | null
+          supplier?: string | null
+          unit?: string | null
           updated_at?: string
           user_id?: string | null
           weight_per_unit?: number
