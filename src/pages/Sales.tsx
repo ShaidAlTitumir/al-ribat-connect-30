@@ -207,6 +207,7 @@ const Sales = () => {
       toast.success("Sale recorded!");
       setSelectedItemId(""); setQuantity(1); setUnitPrice(""); setReceivedAmount("");
       setSelectedCustomerId(""); setNewCustomerName(""); setNewCustomerPhone(""); setShowNewCustomer(false); setShowCustomerSection(false);
+      setPaymentMethod("cash"); setDiscount(""); setSaleNotes("");
       setMobileTab("history");
       await refreshData();
     } catch (err: any) {
