@@ -564,6 +564,34 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
             </div>
           </section>
 
+          {/* Additional Info */}
+          <section className="bg-card rounded-xl p-4 border border-border">
+            <h3 className="text-base font-bold mb-3.5 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-[20px]">more_horiz</span> Additional Info
+              <span className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded">optional</span>
+            </h3>
+            <div className="space-y-3.5">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-foreground">Supplier</label>
+                  <input className="h-10 rounded-lg border border-border bg-muted px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    placeholder="e.g. ABC Trading" value={soloForm.supplier} onChange={(e) => setSoloForm(f => ({ ...f, supplier: e.target.value }))} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-foreground">SKU / Barcode</label>
+                  <input className="h-10 rounded-lg border border-border bg-muted px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    placeholder="e.g. SKU-001" value={soloForm.sku} onChange={(e) => setSoloForm(f => ({ ...f, sku: e.target.value }))} />
+                </div>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-foreground">Description</label>
+                <textarea className="rounded-lg border border-border bg-muted px-3 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
+                  placeholder="Product details, color, size, material..." rows={2}
+                  value={soloForm.description} onChange={(e) => setSoloForm(f => ({ ...f, description: e.target.value }))} />
+              </div>
+            </div>
+          </section>
+
           {/* Profit Preview */}
           {soloQty > 0 && soloSellPrice > 0 && (
             <section className="bg-primary text-primary-foreground rounded-xl p-4 shadow-md">
