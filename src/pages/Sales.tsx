@@ -446,7 +446,64 @@ const Sales = () => {
               </div>
             </div>
 
-            {/* Customer Selection — collapsed by default in solo mode */}
+            {/* Payment Details & Notes */}
+            <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+              <div className="px-4 pt-4 pb-2 lg:px-6 lg:pt-5 lg:pb-3 border-b border-border bg-muted/30">
+                <h3 className="text-xs lg:text-sm font-bold text-foreground flex items-center gap-2">
+                  <span className="w-6 h-6 lg:w-7 lg:h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary text-[16px] lg:text-[18px]">receipt</span>
+                  </span>
+                  Payment Details
+                  <span className="text-[10px] font-normal text-muted-foreground ml-1 bg-muted px-1.5 py-0.5 rounded">optional</span>
+                </h3>
+              </div>
+              <div className="p-4 lg:p-6 space-y-4">
+                {/* Payment Method */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Payment Method</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { key: "cash", label: "Cash", icon: "payments" },
+                      { key: "bkash", label: "bKash", icon: "phone_android" },
+                      { key: "nagad", label: "Nagad", icon: "smartphone" },
+                      { key: "bank", label: "Bank", icon: "account_balance" },
+                    ].map((m) => (
+                      <button key={m.key} type="button" onClick={() => setPaymentMethod(m.key)}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border transition-all active:scale-95 ${
+                          paymentMethod === m.key
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                            : "bg-muted/50 text-muted-foreground border-border hover:border-primary/30 hover:text-foreground"
+                        }`}>
+                        <span className="material-symbols-outlined text-[14px]">{m.icon}</span>
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Discount */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Discount (৳)</label>
+                  <input type="number" placeholder="0" value={discount} min={0}
+                    onChange={(e) => setDiscount(e.target.value)}
+                    className="w-full h-11 lg:h-12 bg-muted/50 border border-border rounded-xl px-3 text-sm font-semibold text-foreground focus:ring-2 focus:ring-primary/30 focus:border-primary/40 outline-none transition-all" />
+                  {discountAmount > 0 && subtotal > 0 && (
+                    <p className="text-[10px] text-muted-foreground mt-1 px-1">
+                      {((discountAmount / subtotal) * 100).toFixed(1)}% off · Net total: ৳{total.toLocaleString()}
+                    </p>
+                  )}
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Sale Notes</label>
+                  <textarea placeholder="Any notes about this sale..." value={saleNotes}
+                    onChange={(e) => setSaleNotes(e.target.value)} rows={2}
+                    className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-primary/30 focus:border-primary/40 outline-none transition-all resize-none" />
+                </div>
+              </div>
+            </div>
+
             {(!isSolo || showCustomerSection || selectedCustomerId) ? (
               <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
                 <div className="px-4 pt-4 pb-2 lg:px-6 lg:pt-5 lg:pb-3 border-b border-border bg-muted/30">
