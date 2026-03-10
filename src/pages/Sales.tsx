@@ -30,7 +30,6 @@ const Sales = () => {
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [discount, setDiscount] = useState("");
   const [saleNotes, setSaleNotes] = useState("");
-  const [showCustomerSection, setShowCustomerSection] = useState(false);
 
   const [editingSale, setEditingSale] = useState<any>(null);
   const [editForm, setEditForm] = useState({ quantity: 0, unit_price_bdt: 0, received_now_bdt: 0 });
