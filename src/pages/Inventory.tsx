@@ -218,7 +218,7 @@ const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamp
                     item.current_stock <= threshold ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
                     "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                   }`}>
-                    {item.current_stock} pcs
+                    {item.current_stock} {(item as any).unit || "pcs"}
                   </span>
                   <span className={`material-symbols-outlined text-muted-foreground text-[18px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
                 </button>
@@ -226,6 +226,26 @@ const InventoryList = ({ onAdd, onSamples, onEdit }: { onAdd: () => void; onSamp
                 {/* Expandable details */}
                 {isExpanded && (
                   <div className="px-3 pb-3 lg:px-4 lg:pb-4 space-y-2 border-t border-border pt-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                    {/* Extra info row */}
+                    {((item as any).supplier || (item as any).sku || (item as any).description) && (
+                      <div className="space-y-1.5 text-xs mb-2">
+                        {(item as any).supplier && (
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <span className="material-symbols-outlined text-[14px]">local_shipping</span>
+                            <span>Supplier: <span className="text-foreground font-medium">{(item as any).supplier}</span></span>
+                          </div>
+                        )}
+                        {(item as any).sku && (
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <span className="material-symbols-outlined text-[14px]">qr_code</span>
+                            <span>SKU: <span className="text-foreground font-medium">{(item as any).sku}</span></span>
+                          </div>
+                        )}
+                        {(item as any).description && (
+                          <p className="text-muted-foreground text-[11px] line-clamp-2">{(item as any).description}</p>
+                        )}
+                      </div>
+                    )}
                     <div className="grid grid-cols-3 gap-2 text-xs">
                       <div>
                         <span className="text-muted-foreground text-[10px]">Weight</span>
@@ -455,7 +475,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const updateForm = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
   // Solo mode: simple form
-  const [soloForm, setSoloForm] = useState({ name: "", category: "", quantity: "", totalCost: "", sellingPrice: "", lowStockThreshold: "5" });
+  const [soloForm, setSoloForm] = useState({ name: "", category: "", quantity: "", totalCost: "", sellingPrice: "", lowStockThreshold: "5", sku: "", supplier: "", unit: "pcs", description: "" });
   const soloQty = parseInt(soloForm.quantity) || 0;
   const soloCost = parseFloat(soloForm.totalCost) || 0;
   const soloSellPrice = parseFloat(soloForm.sellingPrice) || 0;
@@ -473,6 +493,8 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
         weight_per_unit: 0, current_stock: soloQty, default_selling_price: soloSellPrice,
         low_stock_threshold: parseInt(soloForm.lowStockThreshold) || 5,
         business_id: businessId, user_id: user.id,
+        sku: soloForm.sku.trim() || null, supplier: soloForm.supplier.trim() || null,
+        unit: soloForm.unit || "pcs", description: soloForm.description.trim() || null,
       } as any).select().single();
       if (error) throw error;
 
@@ -530,8 +552,16 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-foreground">Quantity *</label>
-                <input className="h-10 rounded-lg border border-border bg-muted px-3 text-sm text-foreground" type="number" placeholder="0"
-                  value={soloForm.quantity} onChange={(e) => setSoloForm(f => ({ ...f, quantity: e.target.value }))} />
+                <div className="flex gap-2">
+                  <input className="h-10 rounded-lg border border-border bg-muted px-3 text-sm text-foreground flex-1" type="number" placeholder="0"
+                    value={soloForm.quantity} onChange={(e) => setSoloForm(f => ({ ...f, quantity: e.target.value }))} />
+                  <select className="h-10 rounded-lg border border-border bg-muted px-2 text-sm text-foreground w-24"
+                    value={soloForm.unit} onChange={(e) => setSoloForm(f => ({ ...f, unit: e.target.value }))}>
+                    {["pcs", "kg", "dozen", "box", "pair", "set", "pack", "liter", "meter"].map(u => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-foreground">Total Cost (৳)</label>
@@ -550,6 +580,34 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                 <label className="text-xs font-semibold text-foreground">Low Stock Alert</label>
                 <input className="h-10 rounded-lg border border-border bg-muted px-3 text-sm text-foreground" type="number" placeholder="5"
                   value={soloForm.lowStockThreshold} onChange={(e) => setSoloForm(f => ({ ...f, lowStockThreshold: e.target.value }))} />
+              </div>
+            </div>
+          </section>
+
+          {/* Additional Info */}
+          <section className="bg-card rounded-xl p-4 border border-border">
+            <h3 className="text-base font-bold mb-3.5 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-[20px]">more_horiz</span> Additional Info
+              <span className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded">optional</span>
+            </h3>
+            <div className="space-y-3.5">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-foreground">Supplier</label>
+                  <input className="h-10 rounded-lg border border-border bg-muted px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    placeholder="e.g. ABC Trading" value={soloForm.supplier} onChange={(e) => setSoloForm(f => ({ ...f, supplier: e.target.value }))} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-foreground">SKU / Barcode</label>
+                  <input className="h-10 rounded-lg border border-border bg-muted px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    placeholder="e.g. SKU-001" value={soloForm.sku} onChange={(e) => setSoloForm(f => ({ ...f, sku: e.target.value }))} />
+                </div>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-foreground">Description</label>
+                <textarea className="rounded-lg border border-border bg-muted px-3 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
+                  placeholder="Product details, color, size, material..." rows={2}
+                  value={soloForm.description} onChange={(e) => setSoloForm(f => ({ ...f, description: e.target.value }))} />
               </div>
             </div>
           </section>
