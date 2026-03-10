@@ -83,9 +83,11 @@ const Sales = () => {
     if (item?.default_selling_price) setUnitPrice(String(item.default_selling_price));
   }, [selectedItemId, items]);
 
-  const total = quantity * (parseFloat(unitPrice) || 0);
+  const discountAmount = parseFloat(discount) || 0;
+  const subtotal = quantity * (parseFloat(unitPrice) || 0);
+  const total = Math.max(0, subtotal - discountAmount);
   const due = total - (parseFloat(receivedAmount) || 0);
-  const profit = ((parseFloat(unitPrice) || 0) - landedCost) * quantity;
+  const profit = ((parseFloat(unitPrice) || 0) - landedCost) * quantity - discountAmount;
   const selectedItem = items.find((i) => i.id === selectedItemId);
 
   // Filtered sales
