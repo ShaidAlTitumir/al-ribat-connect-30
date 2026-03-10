@@ -532,8 +532,16 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-foreground">Quantity *</label>
-                <input className="h-10 rounded-lg border border-border bg-muted px-3 text-sm text-foreground" type="number" placeholder="0"
-                  value={soloForm.quantity} onChange={(e) => setSoloForm(f => ({ ...f, quantity: e.target.value }))} />
+                <div className="flex gap-2">
+                  <input className="h-10 rounded-lg border border-border bg-muted px-3 text-sm text-foreground flex-1" type="number" placeholder="0"
+                    value={soloForm.quantity} onChange={(e) => setSoloForm(f => ({ ...f, quantity: e.target.value }))} />
+                  <select className="h-10 rounded-lg border border-border bg-muted px-2 text-sm text-foreground w-24"
+                    value={soloForm.unit} onChange={(e) => setSoloForm(f => ({ ...f, unit: e.target.value }))}>
+                    {["pcs", "kg", "dozen", "box", "pair", "set", "pack", "liter", "meter"].map(u => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-foreground">Total Cost (৳)</label>
