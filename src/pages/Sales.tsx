@@ -153,7 +153,9 @@ const Sales = () => {
         received_now_bdt: parseFloat(receivedAmount) || 0, due: dueAmount,
         expected_profit: profit, customer_id: custId, cost_rate: landedCost,
         business_id: businessId, user_id: user.id,
-      }).select().single();
+        payment_method: paymentMethod, discount: discountAmount,
+        notes: saleNotes.trim() || null,
+      } as any).select().single();
       if (saleError) throw saleError;
 
       const newStock = (item?.current_stock || 0) - quantity;
