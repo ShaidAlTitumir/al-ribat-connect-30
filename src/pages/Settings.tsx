@@ -98,9 +98,12 @@ const Settings = () => {
                   value={business.phone} onChange={(e) => setBusiness({ ...business, phone: e.target.value })} placeholder="+880..." />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Business Type</label>
-                <input className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 sm:px-4 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
-                  value={business.business_type} onChange={(e) => setBusiness({ ...business, business_type: e.target.value })} placeholder="e.g. Export & Shipping" />
+                <label className="text-xs sm:text-sm font-semibold text-muted-foreground">Business Mode</label>
+                <select className="w-full h-10 sm:h-11 rounded-lg border border-border bg-background px-3 sm:px-4 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                  value={business.business_type} onChange={(e) => setBusiness({ ...business, business_type: e.target.value })}>
+                  <option value="solo">Solo (Single Owner)</option>
+                  <option value="partnership">Partnership (Multiple Partners)</option>
+                </select>
               </div>
             </div>
             <div className="space-y-1.5">
