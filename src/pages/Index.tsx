@@ -25,7 +25,10 @@ interface PartnerEquity {
   profitShare: number;
 }
 
-const fmt = (n: number) => "৳" + Math.round(n).toLocaleString("en-IN");
+const fmt = (n: number) => {
+  const abs = Math.abs(Math.round(n));
+  return (n < 0 ? "-" : "") + "৳" + abs.toLocaleString("en-IN");
+};
 
 const Index = () => {
   const navigate = useNavigate();
@@ -142,13 +145,16 @@ const Index = () => {
       partnerCapMap[c.partner_id] = (partnerCapMap[c.partner_id] || 0) + bdtVal;
     });
     const totalCap = Object.values(partnerCapMap).reduce((s, v) => s + v, 0);
+    const equalSplit = totalCap === 0 && partnersList.length > 0;
     const partnerEquities: PartnerEquity[] = partnersList
       .map((p) => {
         const invested = partnerCapMap[p.id] || 0;
-        const pct = totalCap > 0 ? (invested / totalCap) * 100 : 0;
+        const pct = equalSplit
+          ? 100 / partnersList.length
+          : (totalCap > 0 ? (invested / totalCap) * 100 : 0);
         return { name: p.name, role: (p as any).role || "working", totalBdt: invested, percentage: pct, profitShare: netProfit > 0 ? (pct / 100) * netProfit : 0 };
       })
-      .sort((a, b) => b.totalBdt - a.totalBdt);
+      .sort((a, b) => b.percentage - a.percentage);
     setPartners(partnerEquities);
     setActivities(actsRes.data || []);
 
