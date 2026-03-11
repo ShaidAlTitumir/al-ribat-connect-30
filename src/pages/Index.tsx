@@ -25,7 +25,10 @@ interface PartnerEquity {
   profitShare: number;
 }
 
-const fmt = (n: number) => "৳" + Math.round(n).toLocaleString("en-IN");
+const fmt = (n: number) => {
+  const abs = Math.abs(Math.round(n));
+  return (n < 0 ? "-" : "") + "৳" + abs.toLocaleString("en-IN");
+};
 
 const Index = () => {
   const navigate = useNavigate();
