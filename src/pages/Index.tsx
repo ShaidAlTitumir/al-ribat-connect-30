@@ -117,8 +117,6 @@ const Index = () => {
       else { rmb -= e.amount_from; bdt += e.amount_to; }
     });
 
-    const totalValueBdt = bdt + rmb * exchangeRate;
-
     let inventoryCost = 0;
     if (invItems.length > 0) {
       for (const item of invItems) {
@@ -129,6 +127,7 @@ const Index = () => {
     }
 
     const totalDues = custs.reduce((s, c) => s + c.total_due, 0);
+    const totalValueBdt = bdt + rmb * exchangeRate + inventoryCost + totalDues;
     const totalRevenue = sales.reduce((s, r) => s + r.unit_price_bdt * r.quantity, 0);
     const totalCOGS = totalRevenue - sales.reduce((s, r) => s + r.expected_profit, 0);
     const totalExpenses = exps.reduce((s, e) => s + (e.currency === "RMB" ? e.amount * exchangeRate : e.amount), 0);
