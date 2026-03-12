@@ -154,11 +154,10 @@ const Index = () => {
     // Business Value = Cash Balance + Inventory Value (at cost) + Dues
     const totalValueBdt = cashBalanceCalc + inventoryCost + totalDues;
 
-    // Break-even: how much more revenue needed to recover investment
-    const avgSellingPrice = sales.length > 0 ? totalRevenue / sales.reduce((s, r) => s + r.quantity, 0) : 0;
-    const breakEvenGap = totalInvestment - totalRevenue;
-    const breakEvenRemaining = avgSellingPrice > 0 && breakEvenGap > 0 ? Math.ceil(breakEvenGap / avgSellingPrice) : 0;
-    const breakEvenProgress = totalInvestment > 0 ? Math.min(100, (totalRevenue / totalInvestment) * 100) : 0;
+    // Break-even: based on cash balance (how close inflow is to covering outflow)
+    const totalOutflow = totalPurchaseCosts + totalExpenses;
+    const breakEvenProgress = totalOutflow > 0 ? Math.min(100, (totalReceived / totalOutflow) * 100) : 100;
+    const breakEvenRemaining = cashBalanceCalc < 0 ? Math.abs(cashBalanceCalc) : 0;
 
     setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, revenue: totalRevenue, realizedProfit, totalExpenses, totalCOGS, cashBalance: cashBalanceCalc, breakEvenRemaining, breakEvenProgress, totalInvestment });
     setCalculatedCash(cashBalanceCalc);
