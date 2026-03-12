@@ -78,7 +78,7 @@ const Index = () => {
     const sevenDaysAgo = startOfDay(subDays(new Date(), 6)).toISOString();
     const [capsRes, salesRes, paymentsRes, expsRes, purchasesRes, invRes, custsRes, exchRes, partnersRes, actsRes, recentSalesRes, bizRes] = await Promise.all([
       supabase.from("capital_contributions").select("amount, currency, partner_id").eq("business_id", businessId!),
-      supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity, item_id, cost_rate").eq("business_id", businessId!),
+      supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity, item_id, cost_rate, due").eq("business_id", businessId!),
       supabase.from("customer_ledger").select("amount").eq("business_id", businessId!).eq("transaction_type", "payment"),
       supabase.from("expenses").select("amount, currency").eq("business_id", businessId!),
       supabase.from("purchase_transactions").select("total_landed_cost_bdt, buying_cost_per_unit_rmb, quantity, exchange_rate_used").eq("business_id", businessId!),
@@ -138,7 +138,10 @@ const Index = () => {
       return s + sale.quantity * (sale.unit_price_bdt - costPerUnit);
     }, 0);
 
-    const totalDues = custs.reduce((s, c) => s + c.total_due, 0);
+    // Use the higher of: sum of customers.total_due OR sum of sales.due (to catch walk-in/unlinked dues)
+    const customerDues = custs.reduce((s, c) => s + (c.total_due || 0), 0);
+    const salesDues = sales.reduce((s, sale: any) => s + ((sale as any).due || 0), 0);
+    const totalDues = Math.max(customerDues, salesDues);
     const totalRevenue = sales.reduce((s, r) => s + r.unit_price_bdt * r.quantity, 0);
     const totalCOGS = sales.reduce((s, sale: any) => s + sale.quantity * (sale.cost_rate || 0), 0);
     const totalExpenses = exps.reduce((s, e) => s + (e.currency === "RMB" ? e.amount * exchangeRate : e.amount), 0);
