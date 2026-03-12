@@ -301,11 +301,12 @@ const Index = () => {
           )}
         </div>
 
-        {/* KPI Grid — 2×2 on mobile, single row on desktop */}
+        {/* KPI Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
           {[
             { label: "Revenue", value: fmt(kpis.revenue), icon: "point_of_sale", accent: "text-sky-600 bg-sky-100 dark:bg-sky-950/40" },
-            { label: "Net Profit", value: fmt(kpis.netProfit), icon: kpis.netProfit >= 0 ? "trending_up" : "trending_down", accent: kpis.netProfit >= 0 ? "text-emerald-600 bg-emerald-100 dark:bg-emerald-950/40" : "text-destructive bg-destructive/10" },
+            { label: "Realized Profit", value: fmt(kpis.realizedProfit), icon: kpis.realizedProfit >= 0 ? "trending_up" : "trending_down", accent: kpis.realizedProfit >= 0 ? "text-emerald-600 bg-emerald-100 dark:bg-emerald-950/40" : "text-destructive bg-destructive/10" },
+            { label: "Cash Balance", value: fmt(kpis.cashBalance), icon: "account_balance_wallet", accent: kpis.cashBalance >= 0 ? "text-teal-600 bg-teal-100 dark:bg-teal-950/40" : "text-destructive bg-destructive/10" },
             { label: "Inventory", value: fmt(kpis.inventory), icon: "inventory_2", accent: "text-purple-600 bg-purple-100 dark:bg-purple-950/40" },
             { label: "Dues", value: fmt(kpis.dues), icon: "person_search", accent: "text-amber-600 bg-amber-100 dark:bg-amber-950/40" },
           ].map((k, i) => (
@@ -316,10 +317,41 @@ const Index = () => {
                 </span>
                 <span className="text-[10px] lg:text-xs font-medium text-muted-foreground">{k.label}</span>
               </div>
-              <p className={`text-lg lg:text-xl font-black ${k.label === "Net Profit" && kpis.netProfit < 0 ? "text-destructive" : "text-foreground"}`}>{k.value}</p>
+              <p className={`text-lg lg:text-xl font-black ${
+                (k.label === "Realized Profit" && kpis.realizedProfit < 0) || (k.label === "Cash Balance" && kpis.cashBalance < 0) ? "text-destructive" : "text-foreground"
+              }`}>{k.value}</p>
             </div>
           ))}
         </div>
+
+        {/* Break-Even Tracker */}
+        {kpis.totalInvestment > 0 && (
+          <div className="bg-card rounded-xl border border-border p-3 lg:p-4 animate-fade-in">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[10px] lg:text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px] text-primary">flag</span>
+                Break-Even Tracker
+              </h3>
+              <span className={`text-[10px] lg:text-xs font-bold px-2 py-0.5 rounded-full ${
+                kpis.breakEvenProgress >= 100
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                  : "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+              }`}>
+                {kpis.breakEvenProgress >= 100 ? "Break-even reached ✓" : `${kpis.breakEvenRemaining} units to go`}
+              </span>
+            </div>
+            <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${kpis.breakEvenProgress >= 100 ? "bg-emerald-500" : "bg-primary"}`}
+                style={{ width: `${Math.min(100, kpis.breakEvenProgress)}%` }}
+              />
+            </div>
+            <div className="flex justify-between mt-1.5">
+              <span className="text-[9px] text-muted-foreground">Invested: {fmt(kpis.totalInvestment)}</span>
+              <span className="text-[9px] text-muted-foreground">Recovered: {fmt(kpis.revenue)} ({kpis.breakEvenProgress.toFixed(0)}%)</span>
+            </div>
+          </div>
+        )}
 
 
         {/* Mobile Tabs: Overview / Activity */}
