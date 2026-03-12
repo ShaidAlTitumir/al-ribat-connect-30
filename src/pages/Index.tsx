@@ -78,7 +78,7 @@ const Index = () => {
     const sevenDaysAgo = startOfDay(subDays(new Date(), 6)).toISOString();
     const [capsRes, salesRes, paymentsRes, expsRes, purchasesRes, invRes, custsRes, exchRes, partnersRes, actsRes, recentSalesRes, bizRes] = await Promise.all([
       supabase.from("capital_contributions").select("amount, currency, partner_id").eq("business_id", businessId!),
-      supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity, item_id, cost_rate").eq("business_id", businessId!),
+      supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity, item_id, cost_rate, due").eq("business_id", businessId!),
       supabase.from("customer_ledger").select("amount").eq("business_id", businessId!).eq("transaction_type", "payment"),
       supabase.from("expenses").select("amount, currency").eq("business_id", businessId!),
       supabase.from("purchase_transactions").select("total_landed_cost_bdt, buying_cost_per_unit_rmb, quantity, exchange_rate_used").eq("business_id", businessId!),
