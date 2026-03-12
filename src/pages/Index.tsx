@@ -177,7 +177,7 @@ const Index = () => {
         const pct = equalSplit
           ? 100 / partnersList.length
           : (totalCap > 0 ? (invested / totalCap) * 100 : 0);
-        return { name: p.name, role: (p as any).role || "working", totalBdt: invested, percentage: pct, profitShare: netProfit > 0 ? (pct / 100) * netProfit : 0 };
+        return { name: p.name, role: (p as any).role || "working", totalBdt: invested, percentage: pct, profitShare: realizedProfit > 0 ? (pct / 100) * realizedProfit : 0 };
       })
       .sort((a, b) => b.percentage - a.percentage);
     setPartners(partnerEquities);
