@@ -118,25 +118,50 @@ const Index = () => {
       else { rmb -= e.amount_from; bdt += e.amount_to; }
     });
 
+    // Inventory value at cost (last purchase landed cost)
     let inventoryCost = 0;
+    const itemCostMap: Record<string, number> = {};
     if (invItems.length > 0) {
       for (const item of invItems) {
         const { data: lastPurchase } = await supabase.from("purchase_transactions").select("landed_cost_per_unit_bdt")
           .eq("item_id", item.id).eq("business_id", businessId!).order("created_at", { ascending: false }).limit(1);
-        if (lastPurchase?.[0]) inventoryCost += item.current_stock * lastPurchase[0].landed_cost_per_unit_bdt;
+        const unitCost = lastPurchase?.[0]?.landed_cost_per_unit_bdt || 0;
+        itemCostMap[item.id] = unitCost;
+        inventoryCost += item.current_stock * unitCost;
       }
     }
 
-    const totalDues = custs.reduce((s, c) => s + c.total_due, 0);
-    const totalValueBdt = bdt + rmb * exchangeRate + inventoryCost + totalDues;
-    const totalRevenue = sales.reduce((s, r) => s + r.unit_price_bdt * r.quantity, 0);
-    const totalCOGS = totalRevenue - sales.reduce((s, r) => s + r.expected_profit, 0);
-    const totalExpenses = exps.reduce((s, e) => s + (e.currency === "RMB" ? e.amount * exchangeRate : e.amount), 0);
-    const netProfit = totalRevenue - totalCOGS;
-    const totalProfit = sales.reduce((s, r) => s + r.expected_profit, 0);
+    // Realized Profit = sum(sales.quantity * (sales.unit_price - unit_cost_at_time_of_sale))
+    // We use cost_rate stored on each sale as the landed cost per unit at time of sale
+    const realizedProfit = sales.reduce((s, sale: any) => {
+      const costPerUnit = sale.cost_rate || 0;
+      return s + sale.quantity * (sale.unit_price_bdt - costPerUnit);
+    }, 0);
 
-    setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, revenue: totalRevenue, netProfit, totalProfit, totalExpenses, totalCOGS });
-    setCalculatedCash(bdt);
+    const totalDues = custs.reduce((s, c) => s + c.total_due, 0);
+    const totalRevenue = sales.reduce((s, r) => s + r.unit_price_bdt * r.quantity, 0);
+    const totalCOGS = sales.reduce((s, sale: any) => s + sale.quantity * (sale.cost_rate || 0), 0);
+    const totalExpenses = exps.reduce((s, e) => s + (e.currency === "RMB" ? e.amount * exchangeRate : e.amount), 0);
+
+    // Total investment = all purchase costs
+    const totalInvestment = purchases.reduce((s, p) => s + (p.total_landed_cost_bdt || 0), 0);
+
+    // Cash Balance = total revenue received - total purchase costs - total expenses (can be negative)
+    const totalReceived = sales.reduce((s, r) => s + r.received_now_bdt, 0) + payments.reduce((s, p) => s + p.amount, 0);
+    const totalPurchaseCosts = purchases.reduce((s, p) => s + (p.total_landed_cost_bdt || 0), 0);
+    const cashBalanceCalc = totalReceived - totalPurchaseCosts - totalExpenses;
+
+    // Business Value = Cash Balance + Inventory Value (at cost) + Dues
+    const totalValueBdt = cashBalanceCalc + inventoryCost + totalDues;
+
+    // Break-even: how much more revenue needed to recover investment
+    const avgSellingPrice = sales.length > 0 ? totalRevenue / sales.reduce((s, r) => s + r.quantity, 0) : 0;
+    const breakEvenGap = totalInvestment - totalRevenue;
+    const breakEvenRemaining = avgSellingPrice > 0 && breakEvenGap > 0 ? Math.ceil(breakEvenGap / avgSellingPrice) : 0;
+    const breakEvenProgress = totalInvestment > 0 ? Math.min(100, (totalRevenue / totalInvestment) * 100) : 0;
+
+    setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, revenue: totalRevenue, realizedProfit, totalExpenses, totalCOGS, cashBalance: cashBalanceCalc, breakEvenRemaining, breakEvenProgress, totalInvestment });
+    setCalculatedCash(cashBalanceCalc);
     setCashBalance(bizRes.data?.cash_balance ?? null);
 
     const partnerCapMap: Record<string, number> = {};
