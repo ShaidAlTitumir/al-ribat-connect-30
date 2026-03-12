@@ -325,7 +325,7 @@ const Index = () => {
         </div>
 
         {/* Break-Even Tracker */}
-        {kpis.totalInvestment > 0 && (
+        {kpis.cashBalance < 0 && (
           <div className="bg-card rounded-xl border border-border p-3 lg:p-4 animate-fade-in">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-[10px] lg:text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
@@ -333,11 +333,11 @@ const Index = () => {
                 Break-Even Tracker
               </h3>
               <span className={`text-[10px] lg:text-xs font-bold px-2 py-0.5 rounded-full ${
-                kpis.breakEvenProgress >= 100
+                kpis.cashBalance >= 0
                   ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
-                  : "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+                  : "bg-destructive/10 text-destructive"
               }`}>
-                {kpis.breakEvenProgress >= 100 ? "Break-even reached ✓" : `${kpis.breakEvenRemaining} units to go`}
+                {kpis.cashBalance >= 0 ? "Break-even reached ✓" : `Need ${fmt(Math.abs(kpis.cashBalance))} more revenue`}
               </span>
             </div>
             <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted">
@@ -347,8 +347,8 @@ const Index = () => {
               />
             </div>
             <div className="flex justify-between mt-1.5">
-              <span className="text-[9px] text-muted-foreground">Invested: {fmt(kpis.totalInvestment)}</span>
-              <span className="text-[9px] text-muted-foreground">Recovered: {fmt(kpis.revenue)} ({kpis.breakEvenProgress.toFixed(0)}%)</span>
+              <span className="text-[9px] text-muted-foreground">Total Outflow: {fmt(kpis.totalInvestment + kpis.totalExpenses)}</span>
+              <span className="text-[9px] text-muted-foreground">Total Inflow: {fmt(kpis.revenue)} ({kpis.breakEvenProgress.toFixed(0)}%)</span>
             </div>
           </div>
         )}
