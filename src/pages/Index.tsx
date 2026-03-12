@@ -35,8 +35,9 @@ const Index = () => {
   const { businessId, exchangeRate, isSolo } = useBusiness();
   const [kpis, setKpis] = useState({
     bdtBalance: 0, rmbBalance: 0, totalValueBdt: 0,
-    inventory: 0, dues: 0, revenue: 0, netProfit: 0,
-    totalProfit: 0, totalExpenses: 0, totalCOGS: 0,
+    inventory: 0, dues: 0, revenue: 0, realizedProfit: 0,
+    totalExpenses: 0, totalCOGS: 0, cashBalance: 0,
+    breakEvenRemaining: 0, breakEvenProgress: 0, totalInvestment: 0,
   });
   const [cashBalance, setCashBalance] = useState<number | null>(null);
   const [calculatedCash, setCalculatedCash] = useState(0);
@@ -77,7 +78,7 @@ const Index = () => {
     const sevenDaysAgo = startOfDay(subDays(new Date(), 6)).toISOString();
     const [capsRes, salesRes, paymentsRes, expsRes, purchasesRes, invRes, custsRes, exchRes, partnersRes, actsRes, recentSalesRes, bizRes] = await Promise.all([
       supabase.from("capital_contributions").select("amount, currency, partner_id").eq("business_id", businessId!),
-      supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity").eq("business_id", businessId!),
+      supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity, item_id, cost_rate").eq("business_id", businessId!),
       supabase.from("customer_ledger").select("amount").eq("business_id", businessId!).eq("transaction_type", "payment"),
       supabase.from("expenses").select("amount, currency").eq("business_id", businessId!),
       supabase.from("purchase_transactions").select("total_landed_cost_bdt, buying_cost_per_unit_rmb, quantity, exchange_rate_used").eq("business_id", businessId!),
@@ -117,25 +118,50 @@ const Index = () => {
       else { rmb -= e.amount_from; bdt += e.amount_to; }
     });
 
+    // Inventory value at cost (last purchase landed cost)
     let inventoryCost = 0;
+    const itemCostMap: Record<string, number> = {};
     if (invItems.length > 0) {
       for (const item of invItems) {
         const { data: lastPurchase } = await supabase.from("purchase_transactions").select("landed_cost_per_unit_bdt")
           .eq("item_id", item.id).eq("business_id", businessId!).order("created_at", { ascending: false }).limit(1);
-        if (lastPurchase?.[0]) inventoryCost += item.current_stock * lastPurchase[0].landed_cost_per_unit_bdt;
+        const unitCost = lastPurchase?.[0]?.landed_cost_per_unit_bdt || 0;
+        itemCostMap[item.id] = unitCost;
+        inventoryCost += item.current_stock * unitCost;
       }
     }
 
-    const totalDues = custs.reduce((s, c) => s + c.total_due, 0);
-    const totalValueBdt = bdt + rmb * exchangeRate + inventoryCost + totalDues;
-    const totalRevenue = sales.reduce((s, r) => s + r.unit_price_bdt * r.quantity, 0);
-    const totalCOGS = totalRevenue - sales.reduce((s, r) => s + r.expected_profit, 0);
-    const totalExpenses = exps.reduce((s, e) => s + (e.currency === "RMB" ? e.amount * exchangeRate : e.amount), 0);
-    const netProfit = totalRevenue - totalCOGS;
-    const totalProfit = sales.reduce((s, r) => s + r.expected_profit, 0);
+    // Realized Profit = sum(sales.quantity * (sales.unit_price - unit_cost_at_time_of_sale))
+    // We use cost_rate stored on each sale as the landed cost per unit at time of sale
+    const realizedProfit = sales.reduce((s, sale: any) => {
+      const costPerUnit = sale.cost_rate || 0;
+      return s + sale.quantity * (sale.unit_price_bdt - costPerUnit);
+    }, 0);
 
-    setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, revenue: totalRevenue, netProfit, totalProfit, totalExpenses, totalCOGS });
-    setCalculatedCash(bdt);
+    const totalDues = custs.reduce((s, c) => s + c.total_due, 0);
+    const totalRevenue = sales.reduce((s, r) => s + r.unit_price_bdt * r.quantity, 0);
+    const totalCOGS = sales.reduce((s, sale: any) => s + sale.quantity * (sale.cost_rate || 0), 0);
+    const totalExpenses = exps.reduce((s, e) => s + (e.currency === "RMB" ? e.amount * exchangeRate : e.amount), 0);
+
+    // Total investment = all purchase costs
+    const totalInvestment = purchases.reduce((s, p) => s + (p.total_landed_cost_bdt || 0), 0);
+
+    // Cash Balance = total revenue received - total purchase costs - total expenses (can be negative)
+    const totalReceived = sales.reduce((s, r) => s + r.received_now_bdt, 0) + payments.reduce((s, p) => s + p.amount, 0);
+    const totalPurchaseCosts = purchases.reduce((s, p) => s + (p.total_landed_cost_bdt || 0), 0);
+    const cashBalanceCalc = totalReceived - totalPurchaseCosts - totalExpenses;
+
+    // Business Value = Cash Balance + Inventory Value (at cost) + Dues
+    const totalValueBdt = cashBalanceCalc + inventoryCost + totalDues;
+
+    // Break-even: how much more revenue needed to recover investment
+    const avgSellingPrice = sales.length > 0 ? totalRevenue / sales.reduce((s, r) => s + r.quantity, 0) : 0;
+    const breakEvenGap = totalInvestment - totalRevenue;
+    const breakEvenRemaining = avgSellingPrice > 0 && breakEvenGap > 0 ? Math.ceil(breakEvenGap / avgSellingPrice) : 0;
+    const breakEvenProgress = totalInvestment > 0 ? Math.min(100, (totalRevenue / totalInvestment) * 100) : 0;
+
+    setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, revenue: totalRevenue, realizedProfit, totalExpenses, totalCOGS, cashBalance: cashBalanceCalc, breakEvenRemaining, breakEvenProgress, totalInvestment });
+    setCalculatedCash(cashBalanceCalc);
     setCashBalance(bizRes.data?.cash_balance ?? null);
 
     const partnerCapMap: Record<string, number> = {};
@@ -151,7 +177,7 @@ const Index = () => {
         const pct = equalSplit
           ? 100 / partnersList.length
           : (totalCap > 0 ? (invested / totalCap) * 100 : 0);
-        return { name: p.name, role: (p as any).role || "working", totalBdt: invested, percentage: pct, profitShare: netProfit > 0 ? (pct / 100) * netProfit : 0 };
+        return { name: p.name, role: (p as any).role || "working", totalBdt: invested, percentage: pct, profitShare: realizedProfit > 0 ? (pct / 100) * realizedProfit : 0 };
       })
       .sort((a, b) => b.percentage - a.percentage);
     setPartners(partnerEquities);
@@ -275,11 +301,12 @@ const Index = () => {
           )}
         </div>
 
-        {/* KPI Grid — 2×2 on mobile, single row on desktop */}
+        {/* KPI Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
           {[
             { label: "Revenue", value: fmt(kpis.revenue), icon: "point_of_sale", accent: "text-sky-600 bg-sky-100 dark:bg-sky-950/40" },
-            { label: "Net Profit", value: fmt(kpis.netProfit), icon: kpis.netProfit >= 0 ? "trending_up" : "trending_down", accent: kpis.netProfit >= 0 ? "text-emerald-600 bg-emerald-100 dark:bg-emerald-950/40" : "text-destructive bg-destructive/10" },
+            { label: "Realized Profit", value: fmt(kpis.realizedProfit), icon: kpis.realizedProfit >= 0 ? "trending_up" : "trending_down", accent: kpis.realizedProfit >= 0 ? "text-emerald-600 bg-emerald-100 dark:bg-emerald-950/40" : "text-destructive bg-destructive/10" },
+            { label: "Cash Balance", value: fmt(kpis.cashBalance), icon: "account_balance_wallet", accent: kpis.cashBalance >= 0 ? "text-teal-600 bg-teal-100 dark:bg-teal-950/40" : "text-destructive bg-destructive/10" },
             { label: "Inventory", value: fmt(kpis.inventory), icon: "inventory_2", accent: "text-purple-600 bg-purple-100 dark:bg-purple-950/40" },
             { label: "Dues", value: fmt(kpis.dues), icon: "person_search", accent: "text-amber-600 bg-amber-100 dark:bg-amber-950/40" },
           ].map((k, i) => (
@@ -290,10 +317,41 @@ const Index = () => {
                 </span>
                 <span className="text-[10px] lg:text-xs font-medium text-muted-foreground">{k.label}</span>
               </div>
-              <p className={`text-lg lg:text-xl font-black ${k.label === "Net Profit" && kpis.netProfit < 0 ? "text-destructive" : "text-foreground"}`}>{k.value}</p>
+              <p className={`text-lg lg:text-xl font-black ${
+                (k.label === "Realized Profit" && kpis.realizedProfit < 0) || (k.label === "Cash Balance" && kpis.cashBalance < 0) ? "text-destructive" : "text-foreground"
+              }`}>{k.value}</p>
             </div>
           ))}
         </div>
+
+        {/* Break-Even Tracker */}
+        {kpis.totalInvestment > 0 && (
+          <div className="bg-card rounded-xl border border-border p-3 lg:p-4 animate-fade-in">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[10px] lg:text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px] text-primary">flag</span>
+                Break-Even Tracker
+              </h3>
+              <span className={`text-[10px] lg:text-xs font-bold px-2 py-0.5 rounded-full ${
+                kpis.breakEvenProgress >= 100
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                  : "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+              }`}>
+                {kpis.breakEvenProgress >= 100 ? "Break-even reached ✓" : `${kpis.breakEvenRemaining} units to go`}
+              </span>
+            </div>
+            <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${kpis.breakEvenProgress >= 100 ? "bg-emerald-500" : "bg-primary"}`}
+                style={{ width: `${Math.min(100, kpis.breakEvenProgress)}%` }}
+              />
+            </div>
+            <div className="flex justify-between mt-1.5">
+              <span className="text-[9px] text-muted-foreground">Invested: {fmt(kpis.totalInvestment)}</span>
+              <span className="text-[9px] text-muted-foreground">Recovered: {fmt(kpis.revenue)} ({kpis.breakEvenProgress.toFixed(0)}%)</span>
+            </div>
+          </div>
+        )}
 
 
         {/* Mobile Tabs: Overview / Activity */}
