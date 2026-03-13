@@ -837,6 +837,7 @@ export type Database = {
           id: string
           item_id: string
           landed_cost_per_unit_bdt: number
+          paid: boolean
           quantity: number
           shipping_method: string
           shipping_rate_bdt_per_kg: number
@@ -852,6 +853,7 @@ export type Database = {
           id?: string
           item_id: string
           landed_cost_per_unit_bdt?: number
+          paid?: boolean
           quantity: number
           shipping_method?: string
           shipping_rate_bdt_per_kg?: number
@@ -867,6 +869,7 @@ export type Database = {
           id?: string
           item_id?: string
           landed_cost_per_unit_bdt?: number
+          paid?: boolean
           quantity?: number
           shipping_method?: string
           shipping_rate_bdt_per_kg?: number
@@ -1100,6 +1103,7 @@ export type Database = {
         Returns: undefined
       }
       create_join_request: { Args: { _join_code: string }; Returns: Json }
+      get_business_valuation: { Args: { p_business_id: string }; Returns: Json }
       get_user_business_id: { Args: { _user_id: string }; Returns: string }
       lookup_business_by_join_code: {
         Args: { _join_code: string }

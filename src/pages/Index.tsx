@@ -38,6 +38,7 @@ const Index = () => {
     inventory: 0, dues: 0, revenue: 0, realizedProfit: 0,
     totalExpenses: 0, totalCOGS: 0, cashBalance: 0,
     breakEvenRemaining: 0, breakEvenProgress: 0, totalInvestment: 0,
+    payables: 0,
   });
   const [cashBalance, setCashBalance] = useState<number | null>(null);
   const [calculatedCash, setCalculatedCash] = useState(0);
@@ -76,7 +77,7 @@ const Index = () => {
 
   const fetchDashboard = async () => {
     const sevenDaysAgo = startOfDay(subDays(new Date(), 6)).toISOString();
-    const [capsRes, salesRes, paymentsRes, expsRes, purchasesRes, invRes, custsRes, exchRes, partnersRes, actsRes, recentSalesRes, bizRes] = await Promise.all([
+    const [capsRes, salesRes, paymentsRes, expsRes, purchasesRes, invRes, custsRes, exchRes, partnersRes, actsRes, recentSalesRes, bizRes, valuationRes] = await Promise.all([
       supabase.from("capital_contributions").select("amount, currency, partner_id").eq("business_id", businessId!),
       supabase.from("sales").select("received_now_bdt, expected_profit, unit_price_bdt, quantity, item_id, cost_rate, due").eq("business_id", businessId!),
       supabase.from("customer_ledger").select("amount").eq("business_id", businessId!).eq("transaction_type", "payment"),
@@ -90,6 +91,7 @@ const Index = () => {
       supabase.from("sales").select("unit_price_bdt, quantity, expected_profit, created_at, item_id, inventory_items(name)")
         .eq("business_id", businessId!).gte("created_at", sevenDaysAgo),
       supabase.from("businesses").select("cash_balance").eq("id", businessId!).single(),
+      supabase.rpc("get_business_valuation", { p_business_id: businessId! }),
     ]);
 
     const caps = capsRes.data || [];
@@ -101,6 +103,9 @@ const Index = () => {
     const custs = custsRes.data || [];
     const exchanges = exchRes.data || [];
     const partnersList = partnersRes.data || [];
+
+    // Use server-side valuation if available
+    const valuation = valuationRes.data as any;
 
     let bdt = 0, rmb = 0;
     caps.forEach((c) => { if (c.currency === "BDT") bdt += c.amount; else rmb += c.amount; });
@@ -118,51 +123,37 @@ const Index = () => {
       else { rmb -= e.amount_from; bdt += e.amount_to; }
     });
 
-    // Inventory value at cost (last purchase landed cost)
-    let inventoryCost = 0;
-    const itemCostMap: Record<string, number> = {};
-    if (invItems.length > 0) {
-      for (const item of invItems) {
-        const { data: lastPurchase } = await supabase.from("purchase_transactions").select("landed_cost_per_unit_bdt")
-          .eq("item_id", item.id).eq("business_id", businessId!).order("created_at", { ascending: false }).limit(1);
-        const unitCost = lastPurchase?.[0]?.landed_cost_per_unit_bdt || 0;
-        itemCostMap[item.id] = unitCost;
-        inventoryCost += item.current_stock * unitCost;
-      }
-    }
-
-    // Realized Profit = sum(sales.quantity * (sales.unit_price - unit_cost_at_time_of_sale))
-    // We use cost_rate stored on each sale as the landed cost per unit at time of sale
+    // Realized Profit
     const realizedProfit = sales.reduce((s, sale: any) => {
       const costPerUnit = sale.cost_rate || 0;
       return s + sale.quantity * (sale.unit_price_bdt - costPerUnit);
     }, 0);
 
-    // Use the higher of: sum of customers.total_due OR sum of sales.due (to catch walk-in/unlinked dues)
-    const customerDues = custs.reduce((s, c) => s + (c.total_due || 0), 0);
-    const salesDues = sales.reduce((s, sale: any) => s + ((sale as any).due || 0), 0);
-    const totalDues = Math.max(customerDues, salesDues);
     const totalRevenue = sales.reduce((s, r) => s + r.unit_price_bdt * r.quantity, 0);
     const totalCOGS = sales.reduce((s, sale: any) => s + sale.quantity * (sale.cost_rate || 0), 0);
     const totalExpenses = exps.reduce((s, e) => s + (e.currency === "RMB" ? e.amount * exchangeRate : e.amount), 0);
-
-    // Total investment = all purchase costs
     const totalInvestment = purchases.reduce((s, p) => s + (p.total_landed_cost_bdt || 0), 0);
 
-    // Cash Balance = total revenue received - total purchase costs - total expenses (can be negative)
+    // Use RPC values if available, otherwise fallback to client-side
+    const cashBalanceCalc = valuation ? Number(valuation.cash) : (
+      sales.reduce((s, r) => s + r.received_now_bdt, 0) + payments.reduce((s, p) => s + p.amount, 0) - totalInvestment - totalExpenses
+    );
+    const inventoryCost = valuation ? Number(valuation.inventory_value) : 0;
+    const totalDues = valuation ? Number(valuation.dues_receivable) : Math.max(
+      custs.reduce((s, c) => s + (c.total_due || 0), 0),
+      sales.reduce((s, sale: any) => s + ((sale as any).due || 0), 0)
+    );
+    const payables = valuation ? Number(valuation.payables) : 0;
+    const totalAssets = cashBalanceCalc + inventoryCost + totalDues;
+    const totalValueBdt = totalAssets - payables;
+
+    // Break-even
     const totalReceived = sales.reduce((s, r) => s + r.received_now_bdt, 0) + payments.reduce((s, p) => s + p.amount, 0);
-    const totalPurchaseCosts = purchases.reduce((s, p) => s + (p.total_landed_cost_bdt || 0), 0);
-    const cashBalanceCalc = totalReceived - totalPurchaseCosts - totalExpenses;
-
-    // Business Value = Cash Balance + Inventory Value (at cost) + Dues
-    const totalValueBdt = cashBalanceCalc + inventoryCost + totalDues;
-
-    // Break-even: based on cash balance (how close inflow is to covering outflow)
-    const totalOutflow = totalPurchaseCosts + totalExpenses;
+    const totalOutflow = totalInvestment + totalExpenses;
     const breakEvenProgress = totalOutflow > 0 ? Math.min(100, (totalReceived / totalOutflow) * 100) : 100;
     const breakEvenRemaining = cashBalanceCalc < 0 ? Math.abs(cashBalanceCalc) : 0;
 
-    setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, revenue: totalRevenue, realizedProfit, totalExpenses, totalCOGS, cashBalance: cashBalanceCalc, breakEvenRemaining, breakEvenProgress, totalInvestment });
+    setKpis({ bdtBalance: bdt, rmbBalance: rmb, totalValueBdt, inventory: inventoryCost, dues: totalDues, revenue: totalRevenue, realizedProfit, totalExpenses, totalCOGS, cashBalance: cashBalanceCalc, breakEvenRemaining, breakEvenProgress, totalInvestment, payables });
     setCalculatedCash(cashBalanceCalc);
     setCashBalance(bizRes.data?.cash_balance ?? null);
 
@@ -303,6 +294,29 @@ const Index = () => {
           )}
         </div>
 
+        {/* Value Breakdown Strip */}
+        <div className="bg-card rounded-xl border border-border p-3 lg:p-4 animate-fade-in">
+          <h3 className="text-[10px] lg:text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[16px] text-primary">pie_chart</span>
+            Equity Breakdown
+          </h3>
+          <div className="flex items-center gap-1.5 flex-wrap text-[11px] lg:text-xs">
+            <span className="bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 px-2 py-1 rounded-lg font-semibold">Cash {fmt(kpis.cashBalance)}</span>
+            <span className="text-muted-foreground">+</span>
+            <span className="bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 px-2 py-1 rounded-lg font-semibold">Inventory {fmt(kpis.inventory)}</span>
+            <span className="text-muted-foreground">+</span>
+            <span className="bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-1 rounded-lg font-semibold">Dues {fmt(kpis.dues)}</span>
+            {kpis.payables > 0 && (
+              <>
+                <span className="text-muted-foreground">−</span>
+                <span className="bg-destructive/10 text-destructive px-2 py-1 rounded-lg font-semibold">Payables {fmt(kpis.payables)}</span>
+              </>
+            )}
+            <span className="text-muted-foreground">=</span>
+            <span className="bg-primary/10 text-primary px-2 py-1 rounded-lg font-bold">{fmt(kpis.totalValueBdt)}</span>
+          </div>
+        </div>
+
         {/* KPI Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
           {[
@@ -311,6 +325,7 @@ const Index = () => {
             { label: "Cash Balance", value: fmt(kpis.cashBalance), icon: "account_balance_wallet", accent: kpis.cashBalance >= 0 ? "text-teal-600 bg-teal-100 dark:bg-teal-950/40" : "text-destructive bg-destructive/10" },
             { label: "Inventory", value: fmt(kpis.inventory), icon: "inventory_2", accent: "text-purple-600 bg-purple-100 dark:bg-purple-950/40" },
             { label: "Dues", value: fmt(kpis.dues), icon: "person_search", accent: "text-amber-600 bg-amber-100 dark:bg-amber-950/40" },
+            ...(kpis.payables > 0 ? [{ label: "Payables", value: fmt(kpis.payables), icon: "money_off", accent: "text-destructive bg-destructive/10" }] : []),
           ].map((k, i) => (
             <div key={k.label} className="bg-card p-3 lg:p-4 rounded-xl border border-border animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
               <div className="flex items-center gap-2 mb-2">
@@ -320,7 +335,7 @@ const Index = () => {
                 <span className="text-[10px] lg:text-xs font-medium text-muted-foreground">{k.label}</span>
               </div>
               <p className={`text-lg lg:text-xl font-black ${
-                (k.label === "Realized Profit" && kpis.realizedProfit < 0) || (k.label === "Cash Balance" && kpis.cashBalance < 0) ? "text-destructive" : "text-foreground"
+                (k.label === "Realized Profit" && kpis.realizedProfit < 0) || (k.label === "Cash Balance" && kpis.cashBalance < 0) || k.label === "Payables" ? "text-destructive" : "text-foreground"
               }`}>{k.value}</p>
             </div>
           ))}
