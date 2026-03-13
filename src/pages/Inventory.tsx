@@ -505,8 +505,8 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
           shipping_method: "sea", shipping_rate_bdt_per_kg: 0,
           additional_cost_bdt: 0, total_landed_cost_bdt: soloCost,
           landed_cost_per_unit_bdt: soloCostPerUnit, exchange_rate_used: 1,
-          business_id: businessId, user_id: user.id,
-        });
+          business_id: businessId, user_id: user.id, paid: isPaid,
+        } as any);
       }
 
       await supabase.from("activity_log").insert({
