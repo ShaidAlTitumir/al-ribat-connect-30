@@ -315,6 +315,7 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
   const [savedCategories, setSavedCategories] = useState<string[]>([]);
   const [walletBdt, setWalletBdt] = useState(0);
   const [walletRmb, setWalletRmb] = useState(0);
+  const [isPaid, setIsPaid] = useState(true);
 
   const [form, setForm] = useState({
     name: "", category: "", quantity: "", totalWeight: "",
