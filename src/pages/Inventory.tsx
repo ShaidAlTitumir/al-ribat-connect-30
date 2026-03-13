@@ -638,6 +638,20 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
             </section>
           )}
 
+          {/* Paid Toggle — Solo mode */}
+          {soloCost > 0 && (
+            <div className="bg-card rounded-xl p-4 border border-border flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Paid to Supplier?</p>
+                <p className="text-[10px] text-muted-foreground">Mark unpaid to record as a payable/debt</p>
+              </div>
+              <button onClick={() => setIsPaid(!isPaid)}
+                className={`relative w-11 h-6 rounded-full transition-colors ${isPaid ? "bg-emerald-500" : "bg-muted"}`}>
+                <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${isPaid ? "translate-x-5" : ""}`} />
+              </button>
+            </div>
+          )}
+
           <div className="flex items-center gap-3 pt-1 pb-2">
             <button onClick={handleSoloSave} disabled={saving}
               className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] text-sm">
