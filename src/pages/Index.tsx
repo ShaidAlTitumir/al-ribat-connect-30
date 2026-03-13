@@ -294,6 +294,29 @@ const Index = () => {
           )}
         </div>
 
+        {/* Value Breakdown Strip */}
+        <div className="bg-card rounded-xl border border-border p-3 lg:p-4 animate-fade-in">
+          <h3 className="text-[10px] lg:text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[16px] text-primary">pie_chart</span>
+            Equity Breakdown
+          </h3>
+          <div className="flex items-center gap-1.5 flex-wrap text-[11px] lg:text-xs">
+            <span className="bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 px-2 py-1 rounded-lg font-semibold">Cash {fmt(kpis.cashBalance)}</span>
+            <span className="text-muted-foreground">+</span>
+            <span className="bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 px-2 py-1 rounded-lg font-semibold">Inventory {fmt(kpis.inventory)}</span>
+            <span className="text-muted-foreground">+</span>
+            <span className="bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-1 rounded-lg font-semibold">Dues {fmt(kpis.dues)}</span>
+            {kpis.payables > 0 && (
+              <>
+                <span className="text-muted-foreground">−</span>
+                <span className="bg-destructive/10 text-destructive px-2 py-1 rounded-lg font-semibold">Payables {fmt(kpis.payables)}</span>
+              </>
+            )}
+            <span className="text-muted-foreground">=</span>
+            <span className="bg-primary/10 text-primary px-2 py-1 rounded-lg font-bold">{fmt(kpis.totalValueBdt)}</span>
+          </div>
+        </div>
+
         {/* KPI Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
           {[
@@ -302,6 +325,7 @@ const Index = () => {
             { label: "Cash Balance", value: fmt(kpis.cashBalance), icon: "account_balance_wallet", accent: kpis.cashBalance >= 0 ? "text-teal-600 bg-teal-100 dark:bg-teal-950/40" : "text-destructive bg-destructive/10" },
             { label: "Inventory", value: fmt(kpis.inventory), icon: "inventory_2", accent: "text-purple-600 bg-purple-100 dark:bg-purple-950/40" },
             { label: "Dues", value: fmt(kpis.dues), icon: "person_search", accent: "text-amber-600 bg-amber-100 dark:bg-amber-950/40" },
+            ...(kpis.payables > 0 ? [{ label: "Payables", value: fmt(kpis.payables), icon: "money_off", accent: "text-destructive bg-destructive/10" }] : []),
           ].map((k, i) => (
             <div key={k.label} className="bg-card p-3 lg:p-4 rounded-xl border border-border animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
               <div className="flex items-center gap-2 mb-2">
@@ -311,7 +335,7 @@ const Index = () => {
                 <span className="text-[10px] lg:text-xs font-medium text-muted-foreground">{k.label}</span>
               </div>
               <p className={`text-lg lg:text-xl font-black ${
-                (k.label === "Realized Profit" && kpis.realizedProfit < 0) || (k.label === "Cash Balance" && kpis.cashBalance < 0) ? "text-destructive" : "text-foreground"
+                (k.label === "Realized Profit" && kpis.realizedProfit < 0) || (k.label === "Cash Balance" && kpis.cashBalance < 0) || k.label === "Payables" ? "text-destructive" : "text-foreground"
               }`}>{k.value}</p>
             </div>
           ))}
