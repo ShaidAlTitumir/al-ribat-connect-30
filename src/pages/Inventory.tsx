@@ -438,13 +438,13 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
 
       // Record purchase transaction (only for new purchases, not existing items)
       if (itemMode === "new" && totalLanded > 0) {
-        await supabase.from("purchase_transactions").insert({
+         await supabase.from("purchase_transactions").insert({
           item_id: itemId, quantity: qty, buying_cost_per_unit_rmb: buyRmb,
           shipping_method: shippingMethod, shipping_rate_bdt_per_kg: shipRate,
           additional_cost_bdt: addCostBdt, total_landed_cost_bdt: totalLanded,
           landed_cost_per_unit_bdt: landedPerUnit, exchange_rate_used: activeRate,
-          business_id: businessId, user_id: user.id,
-        });
+          business_id: businessId, user_id: user.id, paid: isPaid,
+        } as any);
       }
 
       // Log activity
