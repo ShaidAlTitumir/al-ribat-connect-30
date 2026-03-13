@@ -918,13 +918,26 @@ const AddItem = ({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
                 <span className="bg-white/20 px-2 py-0.5 rounded text-xs font-bold">{margin.toFixed(1)}%</span>
               </div>
             </div>
-            <div className="mt-6 pt-4 border-t border-white/20">
+            {/* Paid Toggle */}
+            {itemMode === "new" && totalLanded > 0 && (
+              <div className="mt-4 pt-4 border-t border-primary-foreground/20 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold">Paid to Supplier?</p>
+                  <p className="text-[10px] text-primary-foreground/60">Mark unpaid to record as a payable</p>
+                </div>
+                <button onClick={() => setIsPaid(!isPaid)}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${isPaid ? "bg-emerald-400" : "bg-primary-foreground/30"}`}>
+                  <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${isPaid ? "translate-x-5" : ""}`} />
+                </button>
+              </div>
+            )}
+            <div className="mt-6 pt-4 border-t border-primary-foreground/20">
               <button onClick={handleSave} disabled={saving}
                 className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50">
                 <span className="material-symbols-outlined">save</span>
                 {saving ? "Saving..." : "Save Item to Inventory"}
               </button>
-              <button onClick={onBack} className="w-full mt-3 bg-white/10 hover:bg-white/20 text-white font-semibold py-2.5 rounded-xl transition-all">
+              <button onClick={onBack} className="w-full mt-3 bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground font-semibold py-2.5 rounded-xl transition-all">
                 Cancel
               </button>
             </div>
