@@ -38,6 +38,7 @@ const Index = () => {
     inventory: 0, dues: 0, revenue: 0, realizedProfit: 0,
     totalExpenses: 0, totalCOGS: 0, cashBalance: 0,
     breakEvenRemaining: 0, breakEvenProgress: 0, totalInvestment: 0,
+    payables: 0,
   });
   const [cashBalance, setCashBalance] = useState<number | null>(null);
   const [calculatedCash, setCalculatedCash] = useState(0);
