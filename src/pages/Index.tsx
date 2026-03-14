@@ -306,13 +306,15 @@ const Index = () => {
           <div className="space-y-2">
             <div className="flex items-center gap-1.5 flex-wrap text-[11px] lg:text-xs">
               <span className="text-[9px] lg:text-[10px] font-bold text-muted-foreground uppercase w-14">Assets</span>
-              <span className="bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 px-2 py-1 rounded-lg font-semibold">Cash (Net) {fmt(kpis.cashBalance)}</span>
+              <span className="bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 px-2 py-1 rounded-lg font-semibold">BDT {fmt(kpis.bdtBalance)}</span>
+              <span className="text-muted-foreground">+</span>
+              <span className="bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-lg font-semibold">RMB ¥{Math.round(kpis.rmbBalance).toLocaleString("en-IN")} ({fmt(kpis.rmbBalance * exchangeRate)})</span>
               <span className="text-muted-foreground">+</span>
               <span className="bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 px-2 py-1 rounded-lg font-semibold">Inventory {fmt(kpis.inventory)}</span>
               <span className="text-muted-foreground">+</span>
               <span className="bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-1 rounded-lg font-semibold">Receivables {fmt(kpis.dues)}</span>
               <span className="text-muted-foreground">=</span>
-              <span className="bg-muted text-foreground px-2 py-1 rounded-lg font-bold">{fmt(kpis.cashBalance + kpis.inventory + kpis.dues)}</span>
+              <span className="bg-muted text-foreground px-2 py-1 rounded-lg font-bold">{fmt(kpis.bdtBalance + kpis.rmbBalance * exchangeRate + kpis.inventory + kpis.dues)}</span>
             </div>
             {kpis.payables > 0 && (
               <div className="flex items-center gap-1.5 flex-wrap text-[11px] lg:text-xs">
