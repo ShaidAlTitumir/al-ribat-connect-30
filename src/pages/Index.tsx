@@ -301,7 +301,7 @@ const Index = () => {
             Equity Breakdown
           </h3>
           <div className="flex items-center gap-1.5 flex-wrap text-[11px] lg:text-xs">
-            <span className="bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 px-2 py-1 rounded-lg font-semibold">Cash {fmt(kpis.cashBalance)}</span>
+            <span className="bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 px-2 py-1 rounded-lg font-semibold">Net Profit {fmt(kpis.cashBalance)}</span>
             <span className="text-muted-foreground">+</span>
             <span className="bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 px-2 py-1 rounded-lg font-semibold">Inventory {fmt(kpis.inventory)}</span>
             <span className="text-muted-foreground">+</span>
