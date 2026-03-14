@@ -263,6 +263,7 @@ const Index = () => {
             <div>
               <p className="text-[10px] lg:text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Business Value</p>
               <p className="text-2xl lg:text-4xl font-black text-foreground mt-1">{fmt(kpis.totalValueBdt)}</p>
+              <p className="text-[9px] lg:text-[10px] text-muted-foreground mt-0.5">Total Assets − Total Liabilities</p>
             </div>
             <div className="text-right space-y-0.5">
               <p className="text-[10px] lg:text-xs text-muted-foreground">৳{Math.round(kpis.bdtBalance).toLocaleString("en-IN") } BDT</p>
