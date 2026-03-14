@@ -297,24 +297,31 @@ const Index = () => {
 
         {/* Value Breakdown Strip */}
         <div className="bg-card rounded-xl border border-border p-3 lg:p-4 animate-fade-in">
-          <h3 className="text-[10px] lg:text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+          <h3 className="text-[10px] lg:text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[16px] text-primary">pie_chart</span>
-            Equity Breakdown
+            Value Breakdown
           </h3>
-          <div className="flex items-center gap-1.5 flex-wrap text-[11px] lg:text-xs">
-            <span className="bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 px-2 py-1 rounded-lg font-semibold">Net Profit {fmt(kpis.cashBalance)}</span>
-            <span className="text-muted-foreground">+</span>
-            <span className="bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 px-2 py-1 rounded-lg font-semibold">Inventory {fmt(kpis.inventory)}</span>
-            <span className="text-muted-foreground">+</span>
-            <span className="bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-1 rounded-lg font-semibold">Dues {fmt(kpis.dues)}</span>
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 flex-wrap text-[11px] lg:text-xs">
+              <span className="text-[9px] lg:text-[10px] font-bold text-muted-foreground uppercase w-14">Assets</span>
+              <span className="bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 px-2 py-1 rounded-lg font-semibold">Cash (Net) {fmt(kpis.cashBalance)}</span>
+              <span className="text-muted-foreground">+</span>
+              <span className="bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 px-2 py-1 rounded-lg font-semibold">Inventory {fmt(kpis.inventory)}</span>
+              <span className="text-muted-foreground">+</span>
+              <span className="bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-1 rounded-lg font-semibold">Receivables {fmt(kpis.dues)}</span>
+              <span className="text-muted-foreground">=</span>
+              <span className="bg-muted text-foreground px-2 py-1 rounded-lg font-bold">{fmt(kpis.cashBalance + kpis.inventory + kpis.dues)}</span>
+            </div>
             {kpis.payables > 0 && (
-              <>
-                <span className="text-muted-foreground">−</span>
+              <div className="flex items-center gap-1.5 flex-wrap text-[11px] lg:text-xs">
+                <span className="text-[9px] lg:text-[10px] font-bold text-muted-foreground uppercase w-14">Debts</span>
                 <span className="bg-destructive/10 text-destructive px-2 py-1 rounded-lg font-semibold">Payables {fmt(kpis.payables)}</span>
-              </>
+              </div>
             )}
-            <span className="text-muted-foreground">=</span>
-            <span className="bg-primary/10 text-primary px-2 py-1 rounded-lg font-bold">{fmt(kpis.totalValueBdt)}</span>
+            <div className="flex items-center gap-1.5 pt-2 border-t border-border/50 text-[11px] lg:text-xs">
+              <span className="text-[9px] lg:text-[10px] font-bold text-muted-foreground uppercase w-14">Value</span>
+              <span className="bg-primary/10 text-primary px-2 py-1 rounded-lg font-bold">{fmt(kpis.totalValueBdt)}</span>
+            </div>
           </div>
         </div>
 
