@@ -144,7 +144,9 @@ const Index = () => {
       sales.reduce((s, sale: any) => s + ((sale as any).due || 0), 0)
     );
     const payables = valuation ? Number(valuation.payables) : 0;
-    const totalAssets = cashBalanceCalc + inventoryCost + totalDues;
+    const rmbInBdt = rmb * exchangeRate;
+    const totalCashBdt = bdt + rmbInBdt;
+    const totalAssets = totalCashBdt + inventoryCost + totalDues;
     const totalValueBdt = totalAssets - payables;
 
     // Break-even
