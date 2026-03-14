@@ -263,6 +263,7 @@ const Index = () => {
             <div>
               <p className="text-[10px] lg:text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Business Value</p>
               <p className="text-2xl lg:text-4xl font-black text-foreground mt-1">{fmt(kpis.totalValueBdt)}</p>
+              <p className="text-[9px] lg:text-[10px] text-muted-foreground mt-0.5">Total Assets − Total Liabilities</p>
             </div>
             <div className="text-right space-y-0.5">
               <p className="text-[10px] lg:text-xs text-muted-foreground">৳{Math.round(kpis.bdtBalance).toLocaleString("en-IN") } BDT</p>
@@ -296,24 +297,31 @@ const Index = () => {
 
         {/* Value Breakdown Strip */}
         <div className="bg-card rounded-xl border border-border p-3 lg:p-4 animate-fade-in">
-          <h3 className="text-[10px] lg:text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+          <h3 className="text-[10px] lg:text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[16px] text-primary">pie_chart</span>
-            Equity Breakdown
+            Value Breakdown
           </h3>
-          <div className="flex items-center gap-1.5 flex-wrap text-[11px] lg:text-xs">
-            <span className="bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 px-2 py-1 rounded-lg font-semibold">Net Profit {fmt(kpis.cashBalance)}</span>
-            <span className="text-muted-foreground">+</span>
-            <span className="bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 px-2 py-1 rounded-lg font-semibold">Inventory {fmt(kpis.inventory)}</span>
-            <span className="text-muted-foreground">+</span>
-            <span className="bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-1 rounded-lg font-semibold">Dues {fmt(kpis.dues)}</span>
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 flex-wrap text-[11px] lg:text-xs">
+              <span className="text-[9px] lg:text-[10px] font-bold text-muted-foreground uppercase w-14">Assets</span>
+              <span className="bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 px-2 py-1 rounded-lg font-semibold">Cash (Net) {fmt(kpis.cashBalance)}</span>
+              <span className="text-muted-foreground">+</span>
+              <span className="bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 px-2 py-1 rounded-lg font-semibold">Inventory {fmt(kpis.inventory)}</span>
+              <span className="text-muted-foreground">+</span>
+              <span className="bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-1 rounded-lg font-semibold">Receivables {fmt(kpis.dues)}</span>
+              <span className="text-muted-foreground">=</span>
+              <span className="bg-muted text-foreground px-2 py-1 rounded-lg font-bold">{fmt(kpis.cashBalance + kpis.inventory + kpis.dues)}</span>
+            </div>
             {kpis.payables > 0 && (
-              <>
-                <span className="text-muted-foreground">−</span>
+              <div className="flex items-center gap-1.5 flex-wrap text-[11px] lg:text-xs">
+                <span className="text-[9px] lg:text-[10px] font-bold text-muted-foreground uppercase w-14">Debts</span>
                 <span className="bg-destructive/10 text-destructive px-2 py-1 rounded-lg font-semibold">Payables {fmt(kpis.payables)}</span>
-              </>
+              </div>
             )}
-            <span className="text-muted-foreground">=</span>
-            <span className="bg-primary/10 text-primary px-2 py-1 rounded-lg font-bold">{fmt(kpis.totalValueBdt)}</span>
+            <div className="flex items-center gap-1.5 pt-2 border-t border-border/50 text-[11px] lg:text-xs">
+              <span className="text-[9px] lg:text-[10px] font-bold text-muted-foreground uppercase w-14">Value</span>
+              <span className="bg-primary/10 text-primary px-2 py-1 rounded-lg font-bold">{fmt(kpis.totalValueBdt)}</span>
+            </div>
           </div>
         </div>
 
@@ -322,7 +330,7 @@ const Index = () => {
           {[
             { label: "Revenue", value: fmt(kpis.revenue), icon: "point_of_sale", accent: "text-sky-600 bg-sky-100 dark:bg-sky-950/40" },
             { label: "Realized Profit", value: fmt(kpis.realizedProfit), icon: kpis.realizedProfit >= 0 ? "trending_up" : "trending_down", accent: kpis.realizedProfit >= 0 ? "text-emerald-600 bg-emerald-100 dark:bg-emerald-950/40" : "text-destructive bg-destructive/10" },
-            { label: "Net Profit", value: fmt(kpis.cashBalance), icon: "account_balance_wallet", accent: kpis.cashBalance >= 0 ? "text-teal-600 bg-teal-100 dark:bg-teal-950/40" : "text-destructive bg-destructive/10" },
+            { label: "Cash (Net)", value: fmt(kpis.cashBalance), icon: "account_balance_wallet", accent: kpis.cashBalance >= 0 ? "text-teal-600 bg-teal-100 dark:bg-teal-950/40" : "text-destructive bg-destructive/10" },
             { label: "Inventory", value: fmt(kpis.inventory), icon: "inventory_2", accent: "text-purple-600 bg-purple-100 dark:bg-purple-950/40" },
             { label: "Dues", value: fmt(kpis.dues), icon: "person_search", accent: "text-amber-600 bg-amber-100 dark:bg-amber-950/40" },
             ...(kpis.payables > 0 ? [{ label: "Payables", value: fmt(kpis.payables), icon: "money_off", accent: "text-destructive bg-destructive/10" }] : []),
@@ -335,7 +343,7 @@ const Index = () => {
                 <span className="text-[10px] lg:text-xs font-medium text-muted-foreground">{k.label}</span>
               </div>
               <p className={`text-lg lg:text-xl font-black ${
-                (k.label === "Realized Profit" && kpis.realizedProfit < 0) || (k.label === "Net Profit" && kpis.cashBalance < 0) || k.label === "Payables" ? "text-destructive" : "text-foreground"
+                (k.label === "Realized Profit" && kpis.realizedProfit < 0) || (k.label === "Cash (Net)" && kpis.cashBalance < 0) || k.label === "Payables" ? "text-destructive" : "text-foreground"
               }`}>{k.value}</p>
             </div>
           ))}
