@@ -348,7 +348,7 @@ const Index = () => {
                 <span className="text-[10px] lg:text-xs font-medium text-muted-foreground">{k.label}</span>
               </div>
               <p className={`text-lg lg:text-xl font-black ${
-                (k.label === "Realized Profit" && kpis.realizedProfit < 0) || (k.label === "Cash (Net)" && kpis.cashBalance < 0) || k.label === "Payables" ? "text-destructive" : "text-foreground"
+                (k.label === "Realized Profit" && kpis.realizedProfit < 0) || (k.label === "BDT Balance" && kpis.bdtBalance < 0) || (k.label === "RMB Balance" && kpis.rmbBalance < 0) || k.label === "Payables" ? "text-destructive" : "text-foreground"
               }`}>{k.value}</p>
             </div>
           ))}
