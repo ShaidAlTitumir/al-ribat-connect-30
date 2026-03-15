@@ -334,8 +334,7 @@ const Index = () => {
           {[
             { label: "Revenue", value: fmt(kpis.revenue), icon: "point_of_sale", accent: "text-sky-600 bg-sky-100 dark:bg-sky-950/40" },
             { label: "Realized Profit", value: fmt(kpis.realizedProfit), icon: kpis.realizedProfit >= 0 ? "trending_up" : "trending_down", accent: kpis.realizedProfit >= 0 ? "text-emerald-600 bg-emerald-100 dark:bg-emerald-950/40" : "text-destructive bg-destructive/10" },
-            { label: "BDT Balance", value: fmt(kpis.bdtBalance), icon: "account_balance_wallet", accent: kpis.bdtBalance >= 0 ? "text-teal-600 bg-teal-100 dark:bg-teal-950/40" : "text-destructive bg-destructive/10" },
-            { label: "RMB Balance", value: `¥${Math.round(kpis.rmbBalance).toLocaleString("en-IN")}`, icon: "currency_yuan", accent: kpis.rmbBalance >= 0 ? "text-blue-600 bg-blue-100 dark:bg-blue-950/40" : "text-destructive bg-destructive/10" },
+            { label: "Net Profit", value: fmt(kpis.revenue - kpis.totalCOGS - kpis.totalExpenses), icon: (kpis.revenue - kpis.totalCOGS - kpis.totalExpenses) >= 0 ? "trending_up" : "trending_down", accent: (kpis.revenue - kpis.totalCOGS - kpis.totalExpenses) >= 0 ? "text-teal-600 bg-teal-100 dark:bg-teal-950/40" : "text-destructive bg-destructive/10" },
             { label: "Inventory", value: fmt(kpis.inventory), icon: "inventory_2", accent: "text-purple-600 bg-purple-100 dark:bg-purple-950/40" },
             { label: "Dues", value: fmt(kpis.dues), icon: "person_search", accent: "text-amber-600 bg-amber-100 dark:bg-amber-950/40" },
             ...(kpis.payables > 0 ? [{ label: "Payables", value: fmt(kpis.payables), icon: "money_off", accent: "text-destructive bg-destructive/10" }] : []),
